@@ -1,0 +1,86 @@
+# EXP06 residual PPO (rl_games) — adapted from the privileged-teacher config
+# (reBot_RL .../pick_place/agents/rl_games_ppo_cfg.yaml). Deltas for the residual:
+#   * obs 64-D / actions 6-D (spaces come from ResidualRlGamesWrapper)
+#   * mu head zero-init (const 0) -> training starts EXACTLY at the frozen base
+#   * sigma_init -1.0 (sigma ~ 0.37 pre-tanh; residual bound alpha*tanh keeps
+#     exploration within +/- alpha regardless)
+#   * minibatch_size 768 assumes horizon 24 x 128 envs = 3072; keep divisible if
+#     --num_envs changes.
+params:
+  seed: 1
+  algo:
+    name: a2c_continuous
+  model:
+    name: continuous_a2c_logstd
+  network:
+    name: actor_critic
+    separate: False
+    space:
+      continuous:
+        mu_activation: None
+        sigma_activation: None
+        mu_init:
+          name: const_initializer
+          val: 0.0
+        sigma_init:
+          name: const_initializer
+          # r1 lesson (EXP06 log): -1.0 (sigma 0.37, ~1 deg/joint/step) collapses the
+          # base's mm-precision grasping from epoch 1 -> PPO never sees the good
+          # regime -> 0% eval. -2.5 => applied exploration ~0.008 units ~ 2 mm
+          # fingertip, at the correction scale itself.
+          val: -2.5
+        fixed_sigma: True
+    mlp:
+      units: [256, 128, 64]
+      activation: elu
+      d2rl: False
+      initializer:
+        name: default
+      regularizer:
+        name: None
+  load_checkpoint: False
+  load_path: ''
+  config:
+    name: exp06_residual
+    env_name: rlgpu
+    device: cuda:0
+    device_name: cuda:0
+    multi_gpu: False
+    ppo: True
+    mixed_precision: False
+    normalize_input: True
+    normalize_value: True
+    value_bootstrap: True
+    num_actors: -1  # set from env at runtime
+    reward_shaper:
+      scale_value: 0.01
+    normalize_advantage: True
+    gamma: 0.99
+    tau: 0.95
+    learning_rate: 1.0e-4
+    lr_schedule: adaptive
+    schedule_type: legacy
+    kl_threshold: 0.01
+    score_to_win: 1000000
+    max_epochs: 3000
+    save_best_after: 100
+    save_frequency: 200
+    print_stats: True
+    grad_norm: 1.0
+    entropy_coef: 0.001
+    truncate_grads: True
+    e_clip: 0.2
+    horizon_length: 24
+    minibatch_size: 768
+    mini_epochs: 8
+    critic_coef: 4
+    clip_value: True
+    seq_length: 4
+    bounds_loss_coef: 0.0001
+  env:
+    clip_observations: 100.0
+    # MUST stay 1.0: rl_games preprocess_actions clamps samples to [-1,1] and then
+    # RESCALES them to the action-space bounds (a2c_common.py:1181-1184). With 100.0
+    # every action reached the wrapper x100 and saturated the tanh -> r1/r2 collapse
+    # (EXP06 log 2026-08-02). 1.0 makes the rescale the identity.
+    clip_actions: 1.0
