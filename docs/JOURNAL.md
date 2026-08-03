@@ -484,3 +484,60 @@ eval-suite noise at n=64 is ±5–10 pts (N3 +9.4, v3 −9.4 across suites) — 
 numbers. Experiment ladder EXP01–03 COMPLETE (task #25); next: EXP06 residual RL design
 (grasp-bit + base-action + phase inputs; ResiP baseline, RFS x0-steering expectation),
 pending Big Will's read of the ladder results.
+
+## 2026-08-02 morning–afternoon — EXP06 additive residual: two burned runs, then CLOSED exactly flat
+
+Design per EXP06_residual_rl.md (pre-registered): frozen N3 base + per-step
+α·tanh arm-joint residual (α=0.1), 64-D obs, PPO. What happened:
+- r1/r2 collapsed to 0% with episodic reward ≈ −30. Root cause (found by diffing
+  the executed actions, not the configs): **rl_games `clip_actions: 100` default
+  rescales sampled actions ×100 before our tanh** — saturated, slammed joints.
+  Standing rule: **clip_actions MUST be 1.0** in every rl_games config here.
+- r3 (fixed) trained healthy (+1610 episodic) but the held-out verdict was
+  **exactly flat: 55.5% → 55.5% pooled**, 26 fixed / 26 broken on identical
+  spawns (causal, not churn-vs-noise), learned residual state-independent
+  (~0.0084 |res| on success AND failure episodes).
+- Side measurement that set up EXP07: **frozen-x0 sweep** — success spans
+  14.1–56.2% across x0 draws; x0=zeros is the best single mode (55.5% pooled
+  deterministic vs 64.1% stochastic = an 8.6-pt determinism tax).
+- Verdict: additive nudging can't re-select the chunk family; the base's
+  failures are mode errors. Pivot to x0-steering approved by Big Will.
+
+## 2026-08-02 afternoon–evening — EXP07 x0-steering: designed, gated, trained, CLOSED at 91.4%
+
+Doc-first per convention (EXP07_x0_steering.md: 6 pre-registered beliefs incl. a
+62–72% result guess, gates S0/1/2/3, escalation + seed-variance rules). Build:
+z ∈ R⁷ per 15-step window, x0 = tanh(z) broadcast over the chunk, free-running
+controller (z enters only via refill x0), 56-D steering obs, window-aligned
+eval-protocol training env (drop termination+penalty off; 30 s = 100 windows),
+bare placed-stream reward. Gates:
+- **Gate 1:** z=0 bit-exact vs the x0-zeros base, both suites, zero flips.
+- **Gate S0:** exploration response measured BEFORE training — bias U(±0.125)
+  harmless (60.9%), σ0.3 ≈ −2 pts (locally flat), σ0.6 −20 pts (real slope);
+  σ_init −1.2 chosen from data.
+- **Gate 2:** smoke + full run healthy. Window-RL logging lesson: episodic
+  metrics are silently 0.0 until ~epoch 5 (episode=100 windows > epoch=24
+  windows); judge at first episode completion (+1450 ≈ base level).
+- Training s1_seed1: 200 epochs @2048 envs (~3.7 h wall, paused/resumed cleanly
+  at ep~105 via rl_games --checkpoint; reward +1450 → +2133 → +2320 → +2416).
+- **Gate 3 (held-out, deterministic z=clamp(mu)): 89.1% @42, 93.8% @123 =
+  91.4% pooled vs 55.5% base — Gate 6 (90%) cleared.** Taxonomy
+  (exp07_analyze_s1.py): 51 fixed / 5 broken; never-lifted collapsed 18/19;
+  z state-dependent (|x0| 0.220 success vs 0.282 failure; z_std 0.21 vs 0.26).
+  Belief scorecard in the EXP07 doc; POSTMORTEM §9 has the distilled mechanism.
+- **Champion stack: frozen `runs/exp03_N3/ckpt_final.pt` + steering head
+  `runs/exp07_steer/s1_seed1/nn/exp07_steer.pth`.**
+
+## 2026-08-02/03 — eva_bc shared repo + cutover
+
+- Curated public repo `github.com/wwangg22/eva_bc` (act/, expert/, experiments/
+  code; docs/ with all write-ups; README with staged pipeline + Lessons
+  Learned). Initial push 1c04eca; EXP07 verdict synced as 4471be9.
+- **Cutover done per Big Will's plan: reBot_ACT is now the eva_bc working
+  clone** (adopted its git history in place; runs//weights/assets/third_party
+  stay local via .gitignore + .git/info/exclude; sync_from_source.sh retired in
+  fc21c45). Docs live under docs/ — the old root-level copies are pending
+  deletion. Pushes now happen straight from reBot_ACT.
+- Close-up success videos of the final policy: eval_steer.py gained
+  --video/--viewer-eye (ported from eval_act.py); recording in
+  runs/exp07_steer/videos_closeup/ for Big Will's review.

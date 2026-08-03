@@ -55,6 +55,25 @@ Companion docs: PLAN.md (design), JOURNAL.md (full experiment ladder), HANDOFF.m
 >   64.1% pooled (128 eps)** — the frozen base for residual RL. v1's 59.4% was one
 >   lucky-seed, one-suite reading.
 
+> **FINAL UPDATE (2026-08-02/03, residual-RL arc complete — see §9 for the full
+> mechanism):** the TL;DR's closing bet ("the remaining failure profile is precision,
+> residual RL's documented sweet spot") was **half right**. Reward supervision on the
+> frozen base DID break the plateau — but not via precision correction:
+> - **Additive per-step residual (EXP06): exactly flat**, 55.5%→55.5% pooled, with
+>   symmetric 26-fixed/26-broken churn and a state-independent learned residual.
+>   Off-manifold nudging cannot change which chunk the base commits to.
+> - **x0-steering (EXP07): 55.5% → 91.4% pooled (89.1/93.8), Gate 6 (90%) cleared**
+>   in one pre-registered config. Chunk-level RL picks the flow base's integration
+>   noise x0 per 15-step window — i.e., it *selects among the base's own modes*
+>   instead of perturbing its output. 51 fixed / 5 broken; the never-lifted bucket
+>   collapsed 18/19; learned z is state-dependent.
+> - The correct final diagnosis of the BC plateau: **the base's failures were wrong
+>   MODE CHOICES, not imprecise executions of the right choice.** The multimodal
+>   flow head already contained successful behavior for ~91% of spawns; what was
+>   missing was a state-conditioned selector. RL supplied exactly that.
+> - Final stack: frozen `runs/exp03_N3/ckpt_final.pt` (BC, 64.1% stochastic) +
+>   steering head `runs/exp07_steer/s1_seed1/nn/exp07_steer.pth` → **91.4% pooled**.
+
 ---
 
 ## 2. The architecture we used
@@ -422,6 +441,137 @@ well-matched to what's actually left:
 > - Full log + belief scorecard: `experiments/EXP07_x0_steering.md`. Champion:
 >   frozen `runs/exp03_N3/ckpt_final.pt` + steering head
 >   `runs/exp07_steer/s1_seed1/nn/exp07_steer.pth`.
+
+## 9. The residual-RL arc (EXP06 → EXP07): why additive failed and steering worked
+
+*Added 2026-08-03 after both experiments closed. Full logs with pre-registered
+beliefs, gates, and per-run forensics: `experiments/EXP06_residual_rl.md`,
+`experiments/EXP07_x0_steering.md`. This section is the distilled mechanism.*
+
+### 9a. The two interventions, stated precisely
+
+Both froze the same base (`exp03_N3`, chunk 50 / execute 15) and trained PPO
+against the env's placement reward. They differ ONLY in where the learned policy's
+output enters the pipeline:
+
+- **EXP06 additive (ResiP-style):** per env step, executed action = base chunk's
+  queued action + α·tanh(residual), α=0.1, arm joints only. The correction lands
+  AFTER the decoder, on the executed trajectory.
+- **EXP07 steering (RFS-style):** per 15-step window, z ∈ R⁷ (6 arm + 1 grip
+  column) sets the flow integration's starting noise x0 = tanh(z), broadcast over
+  all 50 chunk positions; the base decodes from there. The correction lands
+  BEFORE the decoder, inside the base's own input space.
+
+Outcome: additive exactly flat (55.5→55.5 pooled, 26 fixed/26 broken symmetric
+churn, causal on identical spawns); steering +35.9 pts (55.5→91.4 pooled, 51
+fixed / 5 broken). Same base, same reward, same PPO lineage. The entry point is
+the whole story.
+
+### 9b. Why additive failed — the base's failures were mode errors, not aim errors
+
+Three measured facts, one conclusion:
+
+1. **Frozen-x0 sweep (EXP06 gate 2b):** freezing the integration noise at
+   different draws spans **14.1%–56.2%** success; zeros (the mode) is best. The
+   x0 → outcome map has enormous spread: WHICH chunk family the decoder commits
+   to dominates the outcome.
+2. **Determinism tax:** the stochastic base (fresh x0 every refill) scores 64.1%
+   pooled; frozen at its best single x0, 55.5%. Blind mode RESAMPLING alone is
+   worth +8.6 pts — i.e., a stuck mode is costly, and even a random re-roll of
+   the mode beats committing to one.
+3. **The additive residual PPO actually learned:** state-independent ~0.0084
+   mean |residual| everywhere (same on success and failure episodes), i.e., a
+   tiny uniform nudge — and its per-episode effect was symmetric churn.
+
+Conclusion: N3's failures (never-lifted, closed-on-air, stuck carries) are the
+decoder committing to a WRONG CHUNK FAMILY for that state — wrong approach
+vector, premature close, no retry — not millimeter misses on a correct plan. A
+per-step offset is the wrong operator for that error class: it translates the
+executed trajectory but cannot re-select the plan. Translating a wrong plan
+helps a marginal miss exactly as often as it breaks a marginal success — hence
+symmetric churn — and PPO, seeing symmetric reward, correctly converges to
+"do almost nothing," state-independently. §8's original premise ("the residue is
+precision-shaped, ResiP's sweet spot") mis-diagnosed mode errors as aim errors
+because the failure taxonomy (where the can ended up) looks similar for both.
+Two structural aggravators: the correction is invisible to the base within the
+committed 15-step window (open-loop execution, EXP02: commitment is
+load-bearing and must not be shortened), and the arm-only action space had no
+route to the 12 carry/release failures at all.
+
+### 9c. Why steering worked — RL as a state-conditioned mode selector
+
+The flow-matching head is a *distribution* over chunks; x0 indexes it. The base
+was trained to decode ANY x0 ~ N(0,I) into a coherent chunk, which gives the
+steering policy four properties the additive one lacked:
+
+1. **On-manifold by construction.** Every z produces a chunk the base itself
+   would emit. Steering picks among existing competent behaviors; it cannot
+   produce an incoherent action. This breaks EXP06's helps-one-breaks-another
+   symmetry: z≈0 (the best blind mode) remains available per state, so PPO only
+   departs from it where the expected gain is positive. Measured signature:
+   51 fixed vs 5 broken, and state-DEPENDENT z (mean |x0| 0.220 on success
+   episodes vs 0.282 on failures; within-episode z_std 0.21 vs 0.26 — the
+   policy searches harder exactly where the base struggles).
+2. **Decision-granularity credit assignment.** The failure happens at chunk
+   selection, and that is exactly where the RL acts: one choice per 15-step
+   window, 100 per episode, window-summed reward. Re-choosing z each window is
+   closed-loop retry logic — the 56-D obs (base obs + finger channels + grasp
+   bit + can-in-gripper pose + basket delta) shows whether the last chunk
+   grasped anything, and the policy switches strategy if not. That is why the
+   never-lifted bucket collapsed 18/19: those were exactly the
+   "committed to a bad grasp family, never re-tried" episodes.
+3. **Gripper access through the decoder.** x0's grip column steers release
+   timing while the decoder keeps it coherent with the arm trajectory —
+   carry/release failures went 10/11 fixed. The additive design had no grip
+   channel; adding one raw would have meant off-manifold gripper commands.
+4. **Benign exploration geometry — measured before training (gate S0).** The
+   x0 surface is locally flat (σ=0.3 costs −2 pts) and steep further out
+   (σ=0.6 costs −20 pts): exploration near the mode is almost free while real
+   leverage exists beyond it, so PPO's Gaussian exploration never destroyed
+   data collection (rollout reward stayed at base level from epoch 5).
+
+Net effect: 91.4% > 64.1% (stochastic base) says *chosen* modes beat *random*
+modes — the RL recovered the determinism tax AND converted blind multimodality
+into deliberate selection. The RFS literature's plain-residual-43% vs
+steering-86% pattern reproduced on our stack almost quantitatively (55.5→55.5
+vs 55.5→91.4).
+
+### 9d. What made it work in ONE run (process, not luck)
+
+EXP06 burned two runs on an rl_games action-scaling default (clip_actions=100 —
+samples rescaled ×100 then tanh-saturated; must be 1.0); EXP07 burned zero.
+The differences were all pre-registered discipline:
+
+- **Bit-exactness gate before training:** the z=0 path reproduced the x0-zeros
+  base episode-for-episode on both suites. The free-running-controller design
+  (z only enters via refill x0; no forced re-sync) is what made bit-exactness
+  achievable rather than approximate.
+- **Exploration response measured before training** (gate S0) — σ_init chosen
+  from data (−1.2 → σ≈0.30), and the measurement doubles as the epoch-0 health
+  reference.
+- **Train protocol = eval protocol** (drop termination + its penalty off; 30 s
+  = exactly 100 windows so resets land on window boundaries): chosen for RL
+  bookkeeping, but it also eliminated train/eval mismatch entirely.
+- **Window-RL logging rule:** an episode (100 windows) outlives an epoch (24),
+  so episodic metrics are silently zero until ~epoch 5 — judged health at first
+  episode completion (+1450 ≈ base level) instead of pattern-matching the
+  earlier r1/r2 collapse (≈ −30) at epoch 1.
+- Verdict thresholds (55.5 like-for-like / 60.5 = +5 rule / 64.1 headline / 90
+  Gate 6) and the escalation path were written down before the run; the seed-
+  variance rule (±5 pts) was pre-committed, and the +35.9-pt margin made a
+  single seed decisive.
+
+### 9e. Honest limitations of the 91.4%
+
+- Nominal spawn suites only; the perturbed/robustness composite (full Gate-6
+  criterion) has not been run on the steered stack.
+- One RL seed (decisive by the pre-registered margin rule, but replicas would
+  tighten the estimate).
+- The steering head is specific to this base checkpoint by construction — a
+  retrained base needs a retrained (cheap, ~4 h) steering head.
+- Deterministic-mu eval; the remaining 11 failures (4 placed1_stuck_low,
+  3 placed1_stuck_lift, 2 lifted_never_placed, 2 never_lifted) are unstudied
+  beyond bucketing — close-up video review pending.
 
 ## Sources
 

@@ -295,3 +295,9 @@ exp07_steer.pth` (steering head) on frozen base `runs/exp03_N3/ckpt_final.pt`.
 Follow-ups (not blocking closure): optional seed replicas; perturbed/robustness
 composite for the full Gate-6 criterion (parked dynamics-diversity round); close-up
 failure video of the 11 residual failures on request.
+- 2026-08-03: post-closure infra: `eval_steer.py` gained `--video/--video-length/
+  --video-folder/--viewer-eye/--viewer-lookat` (ported from eval_act.py) for
+  close-up renders of the final policy; success-episode recording (seed 42,
+  1 env, 3 eps) → `runs/exp07_steer/videos_closeup/` + `video_success_seed42.json`.
+  Distilled mechanism write-up added as POSTMORTEM §9; JOURNAL updated with the
+  full EXP06→EXP07 arc.

@@ -56,9 +56,18 @@ def main() -> None:
     parser.add_argument("--flush", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--episode-length-s", type=float, default=30.0)
     parser.add_argument("--out", required=True, help="results JSON path")
+    parser.add_argument("--video", action="store_true", help="record an rgb_array video (offscreen render)")
+    parser.add_argument("--video-length", type=int, default=3000, help="video length in env steps")
+    parser.add_argument("--video-folder", default=None, help="output dir (default: videos/ next to --out)")
+    parser.add_argument("--viewer-eye", type=float, nargs=3, default=None,
+                        help="viewer camera eye xyz (close-up framing)")
+    parser.add_argument("--viewer-lookat", type=float, nargs=3, default=None,
+                        help="viewer camera lookat xyz")
     AppLauncher.add_app_launcher_args(parser)
     args = parser.parse_args()
     args.headless = True
+    if args.video:
+        args.enable_cameras = True
     app = AppLauncher(args).app  # noqa: F841
 
     import gymnasium as gym
@@ -90,7 +99,19 @@ def main() -> None:
     env_cfg.rewards.dropping_penalty = None
     env_cfg.episode_length_s = args.episode_length_s
     env_cfg.seed = args.seed
-    env = gym.make(args.task, cfg=env_cfg)
+    if args.viewer_eye is not None:
+        env_cfg.viewer.eye = tuple(args.viewer_eye)
+    if args.viewer_lookat is not None:
+        env_cfg.viewer.lookat = tuple(args.viewer_lookat)
+    env = gym.make(args.task, cfg=env_cfg, render_mode="rgb_array" if args.video else None)
+    if args.video:
+        env = gym.wrappers.RecordVideo(
+            env,
+            video_folder=args.video_folder or str(Path(args.out).parent / "videos"),
+            step_trigger=lambda step: step == 0,
+            video_length=args.video_length,
+            disable_logger=True,
+        )
     u = env.unwrapped
     n = args.num_envs
     assert u.max_episode_length % window == 0, (

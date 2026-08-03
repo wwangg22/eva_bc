@@ -9,9 +9,21 @@
 > `experiments/exp07_analyze_s1.py`; eval JSONs `runs/exp07_steer/s1_best_seed{42,123}.json`.
 > **Champion: frozen `runs/exp03_N3/ckpt_final.pt` + steering head
 > `runs/exp07_steer/s1_seed1/nn/exp07_steer.pth`.**
-> **REMAINING: §3 step 6 (eva_bc cutover) + optional follow-ups (seed replicas,
-> perturbed composite, failure video). GPU free.** The sections below are the
-> pre-resume snapshot, kept for context.
+> **STATUS UPDATE 2 (2026-08-03): §3 step 6 ALSO DONE — reBot_ACT is now the
+> eva_bc working clone** (eva_bc git history adopted in place; docs live in
+> `docs/`; runs//weights/assets/third_party local-only via .gitignore +
+> .git/info/exclude; sync script retired in fc21c45). Deep write-ups landed:
+> **POSTMORTEM §9** (why additive failed / steering worked — mode errors vs aim
+> errors, RL as state-conditioned mode selector) + JOURNAL entries for the whole
+> EXP06/EXP07 arc. eval_steer.py gained --video/--viewer-eye; close-up success
+> videos of the final policy render to `runs/exp07_steer/videos_closeup/`.
+> **Pending Big Will only:** `git push -u origin main` from reBot_ACT (new
+> commits), then the rm lists (old-layout doc duplicates, old ckpts, failed-run
+> dirs, the redundant ~/…/reBot/eva_bc staging clone after push).
+> **Open follow-ups:** perturbed/robustness composite on the steered stack (the
+> full Gate-6 criterion), optional steering seed replicas, review of the 11
+> remaining failures. The sections below are the pre-resume snapshot, kept for
+> context.
 
 For the next session. Read this + `experiments/EXP07_x0_steering.md` (pre-registered
 beliefs, gates, full log) + `experiments/EXP06_residual_rl.md` (the closed additive
