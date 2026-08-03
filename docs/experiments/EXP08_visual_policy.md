@@ -122,6 +122,13 @@ DAgger → steering — with vision obs; agreed NO after this reasoning):
 - 2026-08-03 ~03:15: doc created; step 0 script next. GPU verified free; both
   repos synced (reBot_ACT @818391b + uncommitted HANDOFF, reBot_RL @e56e7df
   confirmed on eva_rl).
+- 2026-08-03 (post-compaction session): repos synced (reBot_ACT still 2 ahead of
+  origin — push pending Big Will; reBot_RL up to date), GPU free. Big Will's
+  directive this session: **ensure the policy gets NO privileged information** —
+  codified as the §4 contract (23-D proprio = obs41[0:16]⊕[34:41]; objects_canonical
+  AND basket_center_xy excluded; programmatic obs-group audit in Gate A). §4
+  Gates A–E pre-registered with result guesses BEFORE env code, per convention.
+  Next: Step 1, build `pick_place_vision` + Gate A smoke.
 - 2026-08-03 ~03:40, **step 0 run 1 (v1) complete**: 3/3 episodes SUCCESS (each
   1500 steps, both cans placed), 180 stills in
   `runs/exp08_vision/wrist_strip_seed123/ep{0,1,2}/`. **Belief 2 CONFIRMED**:
@@ -271,3 +278,104 @@ DAgger → steering — with vision obs; agreed NO after this reasoning):
 confirmation: `runs/exp08_vision/wrist_strip_seed123/ep{0,1,2}/` (v1, valid
 renders) + telemetry `runs/exp08_vision/wrist_strip_seed123_v4/summary.txt`.
 Next: the §3 design conversation.
+
+## §4 Gates — PRE-REGISTERED 2026-08-03 (before any env code, per convention)
+
+### The no-privileged-information contract (Big Will's explicit directive)
+
+The champion's obs is 41-D (`act/dataset.py` layout, source of truth
+`pick_place_v1_env_cfg.py`):
+
+| slice     | term                | dims | student? |
+|-----------|---------------------|------|----------|
+| `[0:8]`   | joint_pos_rel       | 8    | YES — encoders exist on hardware |
+| `[8:16]`  | joint_vel_rel       | 8    | YES — encoders |
+| `[16:32]` | objects_canonical   | 16   | **NO** — ground-truth can poses + placed flags; needs an object tracker on hardware |
+| `[32:34]` | basket_center_xy    | 2    | **NO** — randomized per episode; the D455 sees the basket, the student must read the goal from pixels |
+| `[34:41]` | last_action         | 7    | YES — the policy's own memory |
+
+**Student input = wrist D405 RGB 160×90 + workspace D455 RGB 160×90 + 23-D
+proprio (`obs41[0:16]` ⊕ `obs41[34:41]`). Nothing else. Ever.**
+
+`basket_center_xy` note: we considered treating it as a legitimate goal command
+(a static, measurable quantity on the real rig). Rejected — it would demand a
+per-placement calibration step at deployment, and the D455 frames contain the
+basket anyway. Strict exclusion.
+
+Enforcement (not vibes):
+1. Vision env cfg keeps TWO obs groups: `policy` = the full privileged 41-D
+   (consumed ONLY by the champion teacher at collection/DAgger time) and
+   `student` = images + 23-D proprio. The student network never receives the
+   `policy` group.
+2. A `STUDENT_PROPRIO_SLICES` constant beside `OBS_DIM` in the ACT-side code;
+   collection and training both `assert proprio.shape[-1] == 23`.
+3. Gate A includes a programmatic obs-group audit: iterate the student group's
+   cfg terms and assert none of {`objects_canonical`, `basket_center_xy`,
+   `object_pose_in_robot_root_frame`, `objects_placed_flags`} appears.
+4. If depth channels are added later, they must come from the cameras'
+   `distance_to_image_plane`, never from sim state.
+
+### Gate A — vision env build + render sanity
+
+Build `pick_place_vision` pkg in reBot_RL (based on `RebotPickPlaceV1EnvCfg_PLAY`
++ `WRIST_CAM_CFG`/`WORKSPACE_CAM_CFG` at 160×90, `update_period = 8/400 = 0.02`),
+register `Rebot-PickPlace-Vision-Play-v1` (play/collection variant only — no
+train variant until something needs it). Smoke test must check, on a moving
+robot (champion or scripted motion):
+- a. obs shapes/dtypes for both groups; student group passes the audit in (3).
+- b. **Per-camera frame freshness over ≥100 steps** (temporal mean-abs-diff per
+  camera stays above threshold — the step-0 twin froze after ~35 steps).
+- c. Wrist depth-min ≈2–5 cm every frame (gripper housing → proof the RENDER
+  tracks the link even though `Camera.data` poses don't).
+- d. FPS at 1/16/64 envs (collection budget planning).
+- e. Same seed ⇒ the privileged 41-D trajectory matches the CAMERA-FREE env
+  bitwise-or-near under the champion (states, NOT pixels — renders are
+  non-deterministic).
+- **Result guess:** the multi-camera freshness artifact recurs and costs a
+  debugging round; FPS at 64 envs lands ~200–600 env-steps/s total; state
+  trajectories match.
+
+### Gate B — collection audit
+
+Champion (frozen N3 base + exp07 steering, deterministic) driven in the vision
+env; standard protocol (seeds 42/123, 64 eps each, 30 s, drop-term off);
+first episode per env discarded (frame sync). Recorded success must land
+≈91.4% — accept 88–94%. Shards store images + 23-D proprio + champion actions;
+the 41-D privileged obs is kept in shards but flagged `teacher_only` (audit/
+DAgger use, excluded from student loaders by construction).
+- **Result guess:** 89–93%; if outside, suspect camera-load physics jitter or a
+  frame-sync bug before blaming the champion.
+
+### Gate C — vision flow-BC
+
+Flow-BC head (chunk 50 / execute 15) on own-CNN features from both cameras +
+23-D proprio. Eval on the standard protocol.
+- **Result guess:** 55–75% pooled (grasp-precision loss vs the state base's
+  64.1%; vision fills some gaps, loses others).
+- **Decision rule:** ≥50% → proceed to DAgger (Gate D). 35–50% → one
+  architecture iteration (first fallback: truncated-resnet18 512-d features),
+  then proceed regardless. <35% → stop, diagnose (per-phase failure breakdown),
+  consult Big Will.
+
+### Gate D — champion-DAgger
+
+DAgger rounds with champion labels on student-visited states (student sees
+images+proprio; teacher labels from the privileged group — that's the whole
+point of the two-group env). Target: **≥90% pooled** (champion parity −1.4).
+- **Result guess:** 82–90% after 2–3 rounds.
+- **Decision rule:** ≥90% → EXP08 nominal goal MET. 85–90% and rising → more
+  rounds. Stalled <85% after 3 rounds → Gate E.
+
+### Gate E — fallback finisher: x0-steering on the vision base
+
+EXP07 recipe on the frozen vision base. **Deployment subtlety pre-registered:**
+the EXP07 steering head consumed privileged obs56 — a vision-base steering head
+must instead consume student-visible features (CNN features + proprio + the
+controller-free steer features), or it re-smuggles privileged state into the
+deployed stack. Guess: +4–10 pts if ever needed.
+
+### After the gates
+
+Step 6 (domain randomization, sim2real) starts only after Gate D/E passes —
+`lift_vision/visual_randomization.py` is the template. Not part of EXP08's
+nominal goal.
