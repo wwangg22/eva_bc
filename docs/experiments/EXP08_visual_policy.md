@@ -129,6 +129,24 @@ DAgger → steering — with vision obs; agreed NO after this reasoning):
   AND basket_center_xy excluded; programmatic obs-group audit in Gate A). §4
   Gates A–E pre-registered with result guesses BEFORE env code, per convention.
   Next: Step 1, build `pick_place_vision` + Gate A smoke.
+- 2026-08-03: **GATE A PASSED — all 5 checks** (`reBot_RL/runs/exp08_gateA/`,
+  smoke script `scripts/test_pick_place_vision_env.py`, env pkg
+  `tasks/manager_based/pick_place_vision/`, task `Rebot-PickPlace-Vision-Play-v1`).
+  - a. shapes/dtypes: policy (N,41) f32; wrist/workspace (N,90,160,3) uint8 with
+    real content; student proprio exactly 23; cfg audit found no privileged funcs.
+  - b. freshness: NO stale frames at 4/16/64 envs — the step-0 twin-freeze
+    artifact did NOT recur in the real two-camera env (pre-registered guess
+    wrong, in the good direction). Threshold lesson: a frozen buffer repeats the
+    same tensor (diff ~0); the distant D455 view legitimately changes by only
+    ~0.44–2.5 uint8-units/frame at 160×90 — the discriminator must be ~0, not
+    "small" (first run false-failed at thresh 0.5; fixed to 0.05).
+  - c. wrist image-min depth [0.024, 0.051] m every frame = gripper housing →
+    render tracks the link.
+  - d. FPS (120 steps, sinusoid drive): 67 @ 4 envs / 243 @ 16 / 813 @ 64
+    env-steps/s — near-linear, rendering is batch-efficient at this resolution.
+  - e. state match vs camera-free env (same seed/actions, spacing-matched 6.0):
+    **max abs diff 0.000e+00 over 120 steps — bitwise identical.** Cameras do
+    not perturb physics; Gate B can lean on the state-env 91.4% anchor directly.
 - 2026-08-03 ~03:40, **step 0 run 1 (v1) complete**: 3/3 episodes SUCCESS (each
   1500 steps, both cans placed), 180 stills in
   `runs/exp08_vision/wrist_strip_seed123/ep{0,1,2}/`. **Belief 2 CONFIRMED**:
