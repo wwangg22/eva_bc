@@ -60,3 +60,13 @@ logs. CPU-side work (EXP01 probe, analysis scripts, doc writing) runs concurrent
   (18/19); learned z state-dependent. Docs: EXP06_residual_rl.md,
   EXP07_x0_steering.md (verdict + belief scorecard). Champion = frozen exp03_N3
   base + `runs/exp07_steer/s1_seed1/nn/exp07_steer.pth` steering head.
+- 2026-08-03: **EXP08 (visual policy) OPENED — step 0 (wrist-cam grasp strip)
+  DONE, verdict: the −30° D405 mount is GOOD through real grasps** (active can in
+  wrist FOV 79% of its approach+grasp+carry phase, near-centered while held; no
+  re-pick). Two Isaac Lab 3.0 discoveries with teeth: link-mounted `Camera.data`
+  poses are FROZEN at spawn (render tracks the link, telemetry doesn't — derive
+  pose from the gripper body's physics pose; see experiments/exp08_wrist_strip.py)
+  and a multi-camera frame-freshness artifact (second sensor froze after ~35
+  steps once) → vision env must smoke-test frame freshness per camera. Renders
+  not bit-deterministic (~5 px denoiser noise); states are. Doc:
+  EXP08_visual_policy.md (running log + §3 design recommendation for Big Will).

@@ -1,0 +1,246 @@
+# EXP08 — pick-place VISUAL policy (distill the 91.4% champion to cameras)
+
+*2026-08-03. Status: STEP 0 IN PROGRESS — this doc pre-registered before any code
+(project convention). The full pipeline design (§3) is NOT final: it is the
+recommendation brought to Big Will for the design conversation. Only step 0 (a
+mechanical render check) runs before that conversation.*
+
+## Question
+
+Can a camera-based policy (wrist D405 + workspace D455, no privileged object
+state) reach >90% on the pick-place suites — matching the state-based champion —
+via teacher-student distillation from the 91.4% stack?
+
+## Context / anchors
+
+- Champion (teacher): frozen flow-BC base `runs/exp03_N3/ckpt_final.pt` +
+  steering head `runs/exp07_steer/s1_seed1/nn/exp07_steer.pth`, deterministic:
+  **91.4% pooled** (89.1 @seed42 / 93.8 @seed123, 64 eps each, 30 s, drop-term off).
+- Wrist D405 mount fixed 2026-08-03 (reBot_RL `e56e7df`): −30° about camera-local
+  X, optical axis 1.8° off TCP, camera→TCP 0.171 m, →fingertips 0.208 m. Picked by
+  Big Will from static start-pose renders ONLY — behavior through a grasp unverified.
+- Workspace D455: `WORKSPACE_CAM_CFG`, 0.9 m back, 40° down, unchanged.
+- Control at 50 Hz (sim 400 Hz, decimation 8); episodes 1500 steps.
+
+## Step 0 (pre-registered): grasp-sequence strip through the NEW wrist cam
+
+**Why:** the −30° pick was made from start-pose stills. If the can leaves the wrist
+view during approach/grasp/carry, every frame of collected data inherits a blind
+camera — cheap to re-pick the tilt now, expensive after collection.
+
+**Protocol:** drive the champion stack (deterministic, exact ladder eval protocol:
+drop-term off, 30 s, window-aligned) in **1 env**, wrist cam at 640×360 grafted
+onto the Play task scene (spawn-time OffsetCfg — the training-faithful path;
+runtime pose writes render blank, EXP07-era lesson). Save a wrist still every
+**25 steps (0.5 s)** for 3 episodes at spawn seed 123 (3/3 success in the close-up
+videos, so the strip should cover approach→grasp→carry→place for both cans).
+Per frame, log numerically (no image viewing by Claude — Big Will reviews):
+frame std (near-uniform tripwire <2.0), mean abs pixel diff vs previous frame,
+camera→each-can distance, angle of each can off the optical axis (in-FOV proxy:
+HFOV 84° → half-angle 42°; V half-angle ≈27° at 16:9), placed count.
+
+**Beliefs (before running):**
+
+1. The can being grasped stays inside the wrist FOV through approach and grasp
+   (off-axis angle < ~40°) and the strip shows it clearly until the fingers close.
+   Risk flagged: during CARRY the can sits at/below the fingertips (~0.21 m,
+   inside D405 range) but may be partially finger-occluded — acceptable if visible
+   at approach + grasp moments.
+2. No near-uniform frames (std < 2.0) at any capture point — the −30° view never
+   points into the wrist housing or empty sky during a normal episode.
+3. The NON-target can and the basket enter the wrist view only incidentally; the
+   workspace D455 is what carries scene-level context. (This shapes the obs design:
+   wrist = servoing detail, workspace = task layout.)
+
+**Decision rule (pre-registered):** Big Will reviews the strips. If the active can
+is out of frame at the grasp moment → re-run the fine tilt sweep around −22.5°
+and re-pick BEFORE any data collection. If frames go near-uniform → mount bug,
+debug before proceeding. Otherwise → proceed to the design conversation (§3).
+
+## Step 0 artifacts
+
+- Script: `experiments/exp08_wrist_strip.py` (reBot_ACT)
+- Output: `runs/exp08_vision/wrist_strip_seed123/ep{k}/step{NNNN}_placed{p}.png`
+  + `summary.txt` (per-frame numerics + per-episode success)
+
+## §3 Design recommendation (FOR the conversation with Big Will — not final)
+
+1. **Distillation, not RL-from-pixels.** lift_vision RL-from-pixels needed
+   curriculum surgery and still lagged; rendering cuts env counts 4–16× (hurts RL
+   far more than supervised collection); we own a 91.4% teacher + proven flow-BC
+   recipe + proven steering finisher.
+2. **Student obs:** wrist D405 + workspace D455 RGB at ~160×90 + non-privileged
+   proprio (the 41-D base obs MINUS the two can poses + placed flags — exact split
+   to settle). No privileged state in the student.
+3. **Architecture fork to settle:** (a) flow-BC head on own-CNN features, chunk 50 /
+   execute 15 — keeps the ENTIRE EXP07 steering recipe applicable on the vision
+   base later (recommended; EXP02 showed chunk commitment is load-bearing); vs
+   (b) the simpler Nature-CNN per-step student from scripts/distillation.
+   Gotcha carried over: Isaac Lab `image_features` resnet18 outputs the FULL
+   1000-d classifier vector, not 512-d pooled — prefer raw pixels + own CNN.
+4. **Protocol:** same spawn suites (seeds 42/123, 64 eps, 30 s, drop-term off) so
+   every number is comparable to the 55.5 / 64.1 / 91.4 anchors. Gates to be
+   pre-registered here AFTER the design conversation (env-build → render sanity →
+   collection audit → BC gate → DAgger gate → steering gate), each with a result
+   guess.
+5. **Order:** nominal vision policy first; domain randomization for sim2real
+   (lift_vision `visual_randomization.py` template) only after the nominal gate.
+6. **Fallbacks, in order:** truncated-resnet features if own-CNN underfits;
+   workspace-cam-only if the wrist view proves unstable through grasps (step 0
+   tells us); asymmetric RL fine-tune (vision actor / privileged critic) only if
+   BC+DAgger+steering all stall.
+
+## Running log
+
+- 2026-08-03 ~03:15: doc created; step 0 script next. GPU verified free; both
+  repos synced (reBot_ACT @818391b + uncommitted HANDOFF, reBot_RL @e56e7df
+  confirmed on eva_rl).
+- 2026-08-03 ~03:40, **step 0 run 1 (v1) complete**: 3/3 episodes SUCCESS (each
+  1500 steps, both cans placed), 180 stills in
+  `runs/exp08_vision/wrist_strip_seed123/ep{0,1,2}/`. **Belief 2 CONFIRMED**:
+  zero near-uniform frames (frame std 20.6–62.8 across all 180) — the −30° view
+  never points into the housing or empty space. **Belief 1 numerically DOUBTFUL**:
+  at 0.5 s sampling the active can's off-axis angle only falls to 34–53° at the
+  closest pre-grasp sample (half-FOV: 42° H / ~27° V / ~46° corner) — the can
+  seems to enter frame only in the final ~1 s of approach, and sits at 45–70°
+  (likely out of frame) during transit/carry. Episode anatomy visible in the
+  numerics: ~2–3 s initial dwell (camera pose frozen, big frame std swings =
+  gripper/scene motion only), then approach (cam→can distance falls 0.28→0.18 m),
+  grasp+carry between samples, placed-count flips 0→1→2 mid-episode.
+- **Protocol amendment (pre-registered before v2 run)**: the total off-axis angle
+  can't separate horizontal from vertical error, which is exactly what decides
+  whether a DIFFERENT tilt would help (vertical error → re-tilt; horizontal →
+  tilt won't fix it). v2 logs signed camera-frame angles h (about up-axis) and
+  v (pitch) + an explicit in-FOV flag every **5 steps** (0.1 s, catches the grasp
+  instant); stills unchanged at every 25 steps. Same seed + deterministic stack →
+  stills should reproduce v1 bit-identically (free determinism check, verified
+  by md5 after the run).
+- 2026-08-03 ~04:10, **v2 complete** (same 3/3 success, same placed-flip steps and
+  distances as v1 → policy rollout deterministic). Findings:
+  - **Renders are NOT bit-deterministic**: v1↔v2 stills differ ~5 mean-abs-pixel
+    on 179/180 pairs (RTX denoiser noise; states identical). LESSON: determinism
+    audits in vision collection must compare states/actions, not pixels.
+  - `placed_mask` verified a real containment test (±5 cm XY of basket center AND
+    below the 4.8 cm rim) — placed flips are genuine in-basket events.
+  - **h/v decomposition (ep1 grasp of the 2nd can)**: at closest approach the can
+    crosses h≈0 (horizontally centered) but sits at **v ≈ −34°…−50° (below the
+    ±27° vertical half-FOV)** — by these numbers the can would be just below the
+    frame's bottom edge even at the grasp instant, and 25–30° below frame during
+    transit. Would argue for MORE downward tilt — BUT see anomaly.
+  - **ANOMALY blocking any conclusion**: during the second approach the camera
+    closes 0.305→0.180 m on can B while the reading to placed can A stays frozen
+    at exactly 0.296 m / h+53.5 / v−59.5 for 100+ steps — physically impossible
+    for a static placed can + moving camera (would require A rigidly attached to
+    the wrist). Either a pose buffer is stale in a way not yet understood or the
+    scene story differs from assumption. **v3 launched** with ground truth: raw
+    world coords of camera + cans, cam→TCP h/v every sample (wrist-rigid ⇒ must
+    be constant ~1.8°; validates the rotation math), TCP→can distance
+    (in-gripper test). No mount verdict until v3 explains the anomaly.
+- 2026-08-03 ~04:40, **v3 complete — ANOMALY SOLVED, and it's serious: the wrist
+  camera never moves.** Ground truth: `cam pos_w = (+0.210, +0.000, +0.260)`
+  CONSTANT through the whole episode while the TCP sweeps 0.138–0.296 m away at
+  ±60° — the "wrist" camera sits at a fixed world pose (= gripper_end spawn pose
+  ∘ offset) and does not follow the link. Corollaries:
+  - The cam→TCP "1.8° off-axis" from the tilt sweep was true only AT the start
+    pose (arm parked at spawn) — a fixed camera is indistinguishable from a
+    wrist-mounted one in start-pose stills, which is all anyone ever reviewed.
+  - Re-reading v2/v3 with this key: the champion's actual behavior is clean
+    grasp→lift→transport→release (TCP→can pinned at 0.047 m through the carry,
+    lift to z≈0.10, release drops it into the basket). All earlier "the can never
+    reaches the TCP" confusion was the static camera's parallax, not behavior.
+  - **Code forensics (IsaacLab-3.0 worktree)**: `Camera` reads poses via
+    `FabricFrameView.get_world_poses`, which decomposes the cached fabric
+    `omni:fabric:worldMatrix` WITHOUT calling
+    `fabric_hierarchy.update_world_xforms()` (only `set_world_poses`/
+    `set_scales`/init call it). PhysX writes link transforms to fabric, but
+    nothing recomposes CHILD prims' world matrices — so a camera prim under an
+    articulation link keeps its spawn-time world matrix forever. The renderer
+    reads the same fabric matrix → the RENDER is almost certainly static too.
+  - **Twin test launched (decisive, numeric)**: second camera spawned under the
+    ENV ROOT at exactly the reported frozen pose (0.210, 0, 0.260, same rot);
+    per-5-step mean-abs frame diff wrist-vs-twin. Diff at denoiser level (~5)
+    for 600 steps ⟹ wrist render static CONFIRMED; large motion-correlated
+    diffs ⟹ render tracks the link and only the telemetry was stale.
+  - If confirmed: **every wrist-cam artifact to date was a fixed-viewpoint
+    camera** (tilt sweeps, Big Will's −30° pick, lift_vision's wrist feed), and
+    the vision-env design needs a real mounting mechanism (candidate: env-root
+    camera + per-step `set_world_poses` from the link's physics pose — that API
+    path DOES call `update_world_xforms`; the old "runtime pose writes render
+    blank" failure was on a LINK-PARENTED camera where the write composes against
+    the stale parent, which fits the theory).
+- 2026-08-03 ~05:10, **twin tests inconclusive by themselves, but two facts
+  established**: (1) the wrist cam's reported world quat EXACTLY equals the cfg
+  offset rot and pos = gripper_end spawn + offset (parent prim IS world-aligned
+  at spawn — old cfg comment vindicated); (2) an env-root twin camera at that
+  exact pose (verified by runtime pose copy) **freezes its frame buffer after
+  ~35 steps** (std pinned at 52.8 for 560 steps while the arm provably crosses
+  its view) — a SECOND camera-freshness artifact, so twin-vs-wrist diffs (~60)
+  can't separate "wrist static+live" from "wrist tracking". Twin approach
+  abandoned. NEW LESSON: with multiple Camera sensors only the first appears to
+  re-render every step in this setup — sweep-style scripts that grab each camera
+  ONCE at a static pose never noticed. **Depth discriminator launched** on the
+  wrist cam alone: center-pixel depth ~constant 0.10–0.17 m all episode ⟹
+  wrist-mounted; center depth tracking the frozen ray's background (~0.3–0.5 m,
+  dips on arm pass) ⟹ static render.
+- 2026-08-03 ~05:30, **depth test DECIDES IT — the RENDER IS WRIST-MOUNTED; only
+  the pose telemetry is stale.** Image-min depth stayed 0.024–0.051 m in all 120
+  samples over 600 steps: the gripper/mount sits permanently a few cm in front of
+  the lens — impossible for a camera fixed in mid-air after the arm departs
+  (center depth 0.063–0.325 m: fingers/objects/table alternating at frame
+  center). Reconciliation: the RTX renderer composes child-prim transforms
+  itself, while `Camera.data.pos_w/quat_w_*` read the never-recomposed fabric
+  `worldMatrix` → frozen at the spawn pose. Consequences:
+  1. **The v1 stills ARE genuine wrist-view strips** — Big Will's review plan
+     stands; the −30° mount needs no fix; lift_vision's historical wrist feed
+     was real. The twin-vs-wrist diff (~60) is fully explained (static twin view
+     vs live moving wrist view).
+  2. **RETRACTION**: all v1/v2 h/v / off-axis / in-FOV numbers used the stale
+     camera pose — meaningless. The "can sits below the vertical FOV even at
+     grasp" concern is WITHDRAWN, not confirmed. (The v3 champion-behavior story
+     — grasp→carry with TCP→can 0.047 m→release — used robot/object physics
+     buffers and REMAINS valid.)
+  3. LESSON: NEVER consume `Camera.data` poses on link-mounted cameras in Isaac
+     Lab 3.0 — derive camera pose as (gripper body physics pose) ∘ (camera-in-
+     body measured at reset), or use render-side signals (depth). Start-pose
+     scripts (tilt sweeps) were accidentally correct: stale == true at spawn.
+  4. Open artifact for the vision-env smoke test: the env-root twin camera's
+     frames froze after ~35 steps — every camera in the vision env needs a
+     frames-actually-update check over ~100 steps (std/diff over time), since
+     lift_vision's smoke test only checked shapes.
+- **v4 strip launched** (3 episodes, stills + CORRECT telemetry): camera pose
+  composed from live gripper body pose; built-in checks (step-1 pose must
+  reproduce spawn telemetry; cam→TCP rigid ≈0.171 m all episode). First attempt
+  crashed (`_GRIPPER_END` is a prim path, body_names wants the leaf) — fixed,
+  relaunched. (A 3-episode relaunch was killed externally ~2 min in — cause
+  unknown, not Claude; re-run as 1 episode which suffices: same seed/trajectory.)
+- 2026-08-03 ~06:05, **v4 complete — STEP 0 VERDICT: the −30° mount is GOOD
+  through real grasps (pending Big Will's visual confirmation).** Composition
+  validated: cam→TCP pinned at 0.170 m / h+0.0 v−1.4 across ALL 300 samples.
+  True per-phase in-FOV rates (ep0, success, both cans placed):
+  - can-1 active phase (56 samples): active can IN FOV **79%**; out ONLY during
+    the first ~0.7 s swing from the spawn pose (h+50°→in frame by h≈+27°,
+    step ~40), then **near-centered (|h|≲8°, |v|≲2°) through descent, grasp
+    (TCP→can 0.037 m), the ~2.7 s carry, and release (−10° at placement)**.
+  - can-2 active phase (57 samples): active can IN **79%** — same shape.
+  - idle after both placed (187 samples): cans still visible 58–68% (basket
+    region in view).
+  - Depth-at-center falls 0.32→0.10 m through the descent (can/gripper at frame
+    center) — ideal terminal-servoing signal.
+  - Also corrects the v1-era behavior misread: grasp happens EARLY (can-1 held
+    by step ~146), then a slow deliberate carry — placed-flip timing ≠ grasp
+    timing.
+
+## Step 0 belief scorecard
+
+1. Active can inside FOV through approach+grasp — **CONFIRMED** (79% of active
+   phase; the misses are the initial swing, when the workspace D455 is the
+   relevant sensor anyway). Carry occlusion caveat moot: can rides at frame
+   center while held.
+2. No near-uniform frames — **CONFIRMED** (std 20.6–62.8 across 180 v1 stills).
+3. Wrist = servoing detail / D455 = scene context split — **SUPPORTED** (active
+   can out of wrist view exactly when far; near-centered when close).
+
+**Decision per pre-registered rule: NO re-pick needed.** Stills for Big Will's
+confirmation: `runs/exp08_vision/wrist_strip_seed123/ep{0,1,2}/` (v1, valid
+renders) + telemetry `runs/exp08_vision/wrist_strip_seed123_v4/summary.txt`.
+Next: the §3 design conversation.
