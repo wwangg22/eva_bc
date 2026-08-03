@@ -147,6 +147,21 @@ DAgger → steering — with vision obs; agreed NO after this reasoning):
   - e. state match vs camera-free env (same seed/actions, spacing-matched 6.0):
     **max abs diff 0.000e+00 over 120 steps — bitwise identical.** Cameras do
     not perturb physics; Gate B can lean on the state-env 91.4% anchor directly.
+- 2026-08-03: **Gate B seed 42: 61/64 = 95.3%** (`experiments/exp08_collect.py`,
+  shards + meta in `data/exp08_vision/seed42/`, 3.8 GB, flush_count 4). One tick
+  ABOVE the pre-registered 88–94% window — benign direction, and explained:
+  (a) binomial sd at n=64 is ±3.5 pts (champion's own s42 eval: 89.1%,
+  s123: 93.75%); (b) the recorded episodes are each env's episodes 2–5 (first
+  discarded for frame sync) — a DIFFERENT spawn draw than the eval's episodes
+  1–4, so per-seed rates are not episode-comparable, only distribution-
+  comparable. Judgement deferred to the pooled 2-seed number. Per-step contract
+  self-audit (proprio == obs41 slices) held every step. Seed 123 collecting.
+- 2026-08-03: **GATE B PASSED — pooled 120/128 = 93.75%** (seed 123: 59/64 =
+  92.2%, flush_count 10; seed 42 above). Inside the pre-registered 88–94%
+  window; champion anchor 91.4% pooled. Dataset: 7.6 GB, 128 episodes (120
+  successes → the Gate C training pool). Gate C training launched:
+  `act/train_flow_vision.py`, both seeds, success-only, chunk 50 / execute 15,
+  100k steps, batch 64, lr 1e-4 → `runs/exp08_bc/v1/`.
 - 2026-08-03 ~03:40, **step 0 run 1 (v1) complete**: 3/3 episodes SUCCESS (each
   1500 steps, both cans placed), 180 stills in
   `runs/exp08_vision/wrist_strip_seed123/ep{0,1,2}/`. **Belief 2 CONFIRMED**:
