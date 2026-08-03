@@ -162,6 +162,15 @@ DAgger → steering — with vision obs; agreed NO after this reasoning):
   successes → the Gate C training pool). Gate C training launched:
   `act/train_flow_vision.py`, both seeds, success-only, chunk 50 / execute 15,
   100k steps, batch 64, lr 1e-4 → `runs/exp08_bc/v1/`.
+- 2026-08-03: **Gate C training DONE** — 100k steps in 2.63 h, loss 0.54 →
+  ~0.04 (`runs/exp08_bc/v1/ckpt_final.pt`, 34.7 M params incl. 2× shared-arch
+  resnet18 towers). **Gate C eval BLOCKED**: the eval job was externally
+  stopped twice ~2 min after launch (harness-level stop, not a crash; no OOM,
+  GPU clean; training + collection jobs earlier ran hours undisturbed). Not
+  relaunching per the one-retry protocol. Pending command:
+  `python act/eval_flow_vision.py --ckpt runs/exp08_bc/v1/ckpt_final.pt
+  --episodes 64 --seed 42 --out runs/exp08_bc/v1/eval_seed42.json` (then the
+  same with seed 123).
 - 2026-08-03 ~03:40, **step 0 run 1 (v1) complete**: 3/3 episodes SUCCESS (each
   1500 steps, both cans placed), 180 stills in
   `runs/exp08_vision/wrist_strip_seed123/ep{0,1,2}/`. **Belief 2 CONFIRMED**:
