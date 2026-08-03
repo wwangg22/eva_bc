@@ -301,3 +301,7 @@ failure video of the 11 residual failures on request.
   1 env, 3 eps) → `runs/exp07_steer/videos_closeup/` + `video_success_seed42.json`.
   Distilled mechanism write-up added as POSTMORTEM §9; JOURNAL updated with the
   full EXP06→EXP07 arc.
+- 2026-08-03: second close-up batch (seed 123, 1 env, 3 eps): 3/3 success →
+  `runs/exp07_steer/videos_closeup_s123/`. Totals across both batches: 5
+  successes + 1 failure (batch-1 ep0, placed 1/2) on camera, awaiting Big Will's
+  review.
