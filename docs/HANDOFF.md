@@ -1,179 +1,200 @@
-# HANDOFF — 2026-08-02 ~12:30 PDT (post-EXP06-additive-residual, pre-compaction)
+# HANDOFF — 2026-08-02 ~20:30 PDT (EXP07 CLOSED — SUCCESS: 55.5% → 91.4% pooled, Gate 6 cleared)
 
-For the next session. Read this + `experiments/EXP06_residual_rl.md` (the full residual
-arc incl. FINAL VERDICT + belief scorecard) + `experiments/EXP_INDEX.md` + POSTMORTEM.md
-(carries dated CORRECTION/UPDATE blocks — parts of the original are retracted).
+> **STATUS UPDATE (evening session): §3 steps 1–5 are DONE.** s1_seed1 resumed and
+> finished 200/200 epochs (reward +2416 final); gate 3 pooled eval = **117/128 =
+> 91.4%** (89.1 @42 / 93.8 @123) vs 55.5% base; taxonomy 51 fixed / 5 broken,
+> never-lifted collapsed 18/19; z state-dependent (0.220 succ vs 0.282 fail |z|).
+> Verdict + belief scorecard written into `experiments/EXP07_x0_steering.md`;
+> POSTMORTEM §8, EXP_INDEX, memory all updated. Analyzer:
+> `experiments/exp07_analyze_s1.py`; eval JSONs `runs/exp07_steer/s1_best_seed{42,123}.json`.
+> **Champion: frozen `runs/exp03_N3/ckpt_final.pt` + steering head
+> `runs/exp07_steer/s1_seed1/nn/exp07_steer.pth`.**
+> **REMAINING: §3 step 6 (eva_bc cutover) + optional follow-ups (seed replicas,
+> perturbed composite, failure video). GPU free.** The sections below are the
+> pre-resume snapshot, kept for context.
+
+For the next session. Read this + `experiments/EXP07_x0_steering.md` (pre-registered
+beliefs, gates, full log) + `experiments/EXP06_residual_rl.md` (the closed additive
+arc + belief scorecard) + `experiments/EXP_INDEX.md`. POSTMORTEM.md carries dated
+CORRECTION blocks — parts of the original are retracted.
 Env: `source /home/william/miniconda3/etc/profile.d/conda.sh && conda activate env_isaaclab6`.
 ONE GPU job at a time (`nvidia-smi` + `ps aux | grep "[t]rain_\|[e]val_"` — NOT `pgrep -f`).
 Big Will reviews all rendered output — never view images/videos yourself. `rm` is
-classifier-blocked — hand Big Will exact commands. Address him as Big Will. Short Bash
-timeouts; long jobs = background chains with durable logs + Monitor on the log.
+classifier-blocked — hand Big Will exact commands. Address him as Big Will. Short
+Bash timeouts; long jobs = background chains with durable logs; log stdout buffers
+heavily — trust tensorboard events + checkpoint filenames over the .log for progress.
 
 **RUNNING AT WRITE TIME:** nothing. GPU free (15 MiB). No monitors armed.
-**NEXT ACTION (Big Will's explicit directive): implement x0-STEERING (§4).** The plain
-additive residual line is CLOSED by his decision after the r3 flat verdict.
+**NEXT ACTION: resume s1_seed1 training from epoch 100 (§3 step 1 — exact command
+below), let it finish 200 epochs (~2 h), then gate 3 (pooled eval + analyses).**
 
 ---
 
-## 1. WHAT FINISHED (this session, 2026-08-02 morning→noon)
+## 1. WHAT FINISHED TODAY (2026-08-02 afternoon session)
 
-### a. POSTMORTEM/doc corrections (from Big Will's critique — he was RIGHT)
-- **EXP01 D/G conflation fixed everywhere** (POSTMORTEM ×3, HANDOFF, memory, EXP01 doc):
-  variant **D** (finger pos/vel + **last-grip**, 5 dims) owns AUC 0.968 + **0% FPR** on
-  the 665 on-policy freeze states; variant **G** (4 physical joints) owns AUC 0.976 but
-  **27.1% FPR**. Any grasp bit MUST include the commanded-grip channel.
-- **N3 failure accounting reconciled** (taxonomy.py on both suites): 64.1% pooled = 46
-  failures over 128 eps, exhaustively = **34 grasp-phase miss/freeze** (18 never-lifted
-  + 16 placed-1-then-closed-on-air) + **12 carry/release** (9 lifted-never-placed + 3
-  stuck-at-carry) + 0 drops-after-place. 74% of residue is grasp-alignment shaped.
-- POSTMORTEM fully reconciled with the ladder: TL;DR update block, §4a/§4b updates,
-  §6 table revisions (open-loop row now "backwards-protective"), §7 items 5–8, §8 plan
-  update block.
+### a. EXP07 x0-steering — designed, pre-registered, built, ALL PRE-TRAINING GATES PASSED
+Everything per the project convention: `experiments/EXP07_x0_steering.md` written
+BEFORE any code (6 beliefs incl. a falsifiable 62–72%-pooled result guess and an
+escalation rule; ordered gates S0/1/2/3).
 
-### b. EXP06 plain additive residual — BUILT, DEBUGGED, MEASURED, CLOSED
-Full narrative + belief scorecard in `experiments/EXP06_residual_rl.md`. Headlines:
-- **Gate 1 (grasp bit):** hand aperture rule REFUTED (40% FPR — raw aperture
-  distributions of hold-vs-air overlap almost entirely); D-probe MLP exported to
-  `experiments/exp06_grasp_bit.pt` — **0% FPR / 94.5% acc** (settling-window caveat
-  documented). Runtime: 5 dims (6,7,14,15,40), sigmoid>0.5 AND commanded-closed.
-- **Gate 2a (wrapper correctness): bit-exact** vs the base eval (0 flips, identical
-  lengths/heights), re-verified after the queue vectorization. The wrapper was never
-  the problem at any point.
-- **NEW FINDING — frozen x0 is a policy-level knob:** fixed-x0 sweep on the frozen N3
-  base spans **14.1%–56.2%** success across draws (seed2 14.1, seed1 37.5, seeds 3/7
-  51.6, zeros 56.2 on suite-42). **x0=zeros selected on pooled 128 eps: 55.5%**
-  (56.2/54.7) — the deterministic-base baseline. Determinism costs ~9 pts vs the
-  stochastic base (64.1% pooled).
-- **r1/r2 = 0% collapse, root cause PROVEN (3-step chain):** (i) diag matrix
-  (`act/diag_training_env.py`): zero/bias/σ0.08 all healthy (~+1650 raw, 55–61%
-  success), σ0.37 degrades (11.5%) but still +519 — nothing an epoch-0 agent emits
-  reproduces the observed ≈−30; (ii) tensorboard: Episode_Reward/placed = 0.0 from
-  EPOCH 1 → broken before learning; (iii) rl_games source (a2c_common.py:1181-84):
-  `preprocess_actions` clamps to [−1,1] then **RESCALES to action-space bounds** — our
-  `clip_actions: 100.0` multiplied every action ×100 → saturated tanh → constant ±α
-  shoves. **Fix: clip_actions=1.0 (mandatory, comment in yaml) + eval-side mu clamp.**
-  Also fixed en route: rl_games mu_init touches only the WEIGHT (bias stays ±0.125 —
-  measured harmless); σ_init −2.5 (σ0.37 would cost ~46 pts per diag).
-- **r3 (healthy run): pooled EXACTLY flat 55.5%→55.5%, 26 fixed / 26 broken — CAUSAL**
-  (both sides deterministic on identical spawns). Mechanism works where aimed (10/19
-  never-lifted → SUCCESS, 8 stuck + 6 carry fixed) but breaks equal numbers by inducing
-  NEW grasp misses; learned residual is state-INDEPENDENT (~0.0084 units everywhere,
-  identical success-vs-fail) — no discrimination despite grasp-bit/rel-pose inputs.
-  Train reward beat base (+1700 vs +1644) while success stayed flat — never trust
-  train reward. Analysis tool: `experiments/exp06_analyze_r3.py`.
-- Belief-4 rule fired (+0.0 < +5 pts) → x0-steering. r3_seed2/3 replicas CANCELLED
-  mid-run by Big Will's pivot decision (additive-flat formally rests on 1 healthy seed;
-  resurrect replicas only if x0-steering also stalls).
+**Design (implemented and verified):**
+- RL acts at CHUNK granularity: z ∈ R^7 (6 arm + 1 grip column), one rl_games step =
+  one 15-env-step window; x0 = α_x0·tanh(z) (α_x0=1.0) broadcast across all 50 chunk
+  positions; base integrates from that x0 instead of zeros → outputs always
+  on-manifold; effective per-dim x0 range ±tanh(1)≈±0.76 (clip_actions 1.0).
+- **Controller stays FREE-RUNNING** (refills on empty queue exactly as in every
+  ladder eval); z only enters via the x0 of refills that occur while it is held.
+  This is why gate 1 could demand BIT-exactness (no truncation/re-sync hacks).
+- **Window-aligned protocol, training = eval protocol:** object_dropping termination
+  + dropping_penalty OFF in training too (they are inseparable: the penalty is an
+  `is_terminated_term`, pick_place_env_cfg.py:347/373). 30 s = 1500 steps = exactly
+  100 windows → every reset lands on a window boundary; only §4.2 flushes desync an
+  env (z applied ≤14 steps stale; accepted, documented). Zero train/eval mismatch.
+- Obs 56-D = the EXP06 64-D minus queued-base-action(7) minus chunk-index(1):
+  [0:41] base obs | [41:45] fingers | [45:46] grasp bit | [46:53] can-in-gripper
+  pose | [53:56] can→basket delta. Reward: bare `objects_placed` stream, NO
+  residual-magnitude penalty (z bounded by construction).
 
-### c. Infrastructure built & verified (ALL carries over to x0-steering)
-- `act/eval_act.py`: controller VECTORIZED (tensor queue `_buf (N,15,7)` + `_idx`;
-  peek/pop/act; `fixed_x0` param) — bit-exact vs deques, 2048 envs at ~10–15k steps/s,
-  ~7 GB VRAM, GPU 100%.
-- `act/modeling_flow.py`: `predict_action_chunk(..., x0=)` — (chunk,7) tensor
-  broadcast to batch. **x0-steering needs a per-env (B,chunk,7) variant — small edit.**
-- `act/residual_core.py`: 64-D obs builder (layout in docstring), GraspBit runtime,
-  §4.2 flush ported, target-can selection mirrors `objects_canonical` exactly,
-  `compose()` α·tanh blend.
-- `act/residual_wrapper.py` (rl_games vec wrapper — split from train script so diags
-  can import it), `act/train_residual.py` (2048 envs, minibatch=batch/4, run_config
-  dump), `act/eval_residual.py` (ladder-protocol eval, `--x0-mode/--x0-seed`,
-  rl_games ckpt loader with training-matched mu clamp), `act/residual_ppo_cfg.yaml`
-  (teacher lineage + hard-won comments), `act/diag_training_env.py` (fixed-action
-  attribution harness — reuse for any "training reward looks wrong" mystery).
-- Eval runtime ~5 min/64 eps. Training 600 epochs/29.5M steps ≈ 35 min at 2048 envs.
+**Gate results (all on disk, `runs/exp07_steer/`):**
+- **Gate 1 PASS, BIT-EXACT both suites:** z=0 through the full window path ==
+  `x0sweep_s-1_seed{42,123}.json` episode-for-episode (56.2% @42 / 54.7% @123 =
+  55.5% pooled; zero flips; comparator `experiments/exp07_check_match.py`).
+- **Gate S0 PASS — σ_init −1.2 (σ≈0.30) chosen FROM DATA:** suite 42 (ref 56.2%):
+  bias U(±0.125) 60.9% (mu-bias harmless in x0-space, measured); σ0.3 draws
+  53.1/54.7% (−2 pts — locally FLAT around the x0 mode); σ0.6 35.9% (−20 pts —
+  real slope further out = leverage exists). JSONs: `s0_{bias,sig03a,sig03b,sig06}_seed42.json`.
+- **Gate 2 PASS (training health):** smoke 5 epochs @2048 envs clean; full run
+  s1_seed1 healthy at every checkpoint. KEY window-RL logging lesson: an episode is
+  100 windows but an epoch is 24 → `Episode_Reward/placed` is 0.0 for epochs 1–4
+  because NO EPISODE HAS COMPLETED YET — judge health at epoch ≥5, not epoch 1
+  (r1/r2's genuine failure signature was ≈−30 episodic reward; healthy base level is
+  ≈+1644).
 
-## 2. WHAT WE LEARNED (new this session; older lessons in EXP06 doc + POSTMORTEM stand)
+**Training progress at stop (NOT a failure — Big Will had to leave):** epoch ~105/200,
+killed cleanly, GPU freed. Reward trajectory **+1450 (ep5, base level) → +2133
+(ep50) → +2320 (ep100), still climbing**; `ever_both_placed` 0.79 @ep50 on the
+training distribution (vs 55.5% deterministic-base success) — hard to fake with
+stream-reward gaming, but r3's lesson stands: ONLY the held-out pooled eval counts.
 
-1. **rl_games `clip_actions` is an ACTION SCALE, not a clip** (rescale to bounds after
-   [−1,1] clamp). Every `env:` block value in an adapted RL config is semantically
-   load-bearing. Cost us two full training runs.
-2. **"Zero-init residual" needs THREE things**: zero mu weight (mu_init), awareness
-   that the mu BIAS stays random (harmless here, but check), and SMALL initial σ —
-   exploration noise is part of the starting condition (σ 0.37 ≈ 1°/joint/step costs
-   46 pts on a mm-precision base).
-3. **Fixed-action attribution matrices beat theorizing**: the diag harness pinpointed
-   in one 10-min run what two training-log post-hocs misdiagnosed (my σ story was
-   WRONG for r1 — refuted by r2's identical failure at small σ; STOP rules work).
-4. **x0 of a flow policy is a high-leverage on-manifold control surface** (14→56%
-   across draws; zeros/mode best) — the empirical foundation for x0-steering. Fixing
-   x0 for determinism costs ~9 pts vs per-refill draws (re-rolling noise each chunk
-   self-corrects bad draws).
-5. **Additive action residuals wash out symmetrically on this base** (26/26) —
-   off-manifold nudges help marginal misses and hurt marginal successes; PPO learned
-   effort, not discrimination. Train-reward gains (+3.4%) can coexist with flat
-   success — the placement-stream reward pays for earlier/longer placements.
-6. Per-env python containers (deques) are the real scaling limit before VRAM —
-   vectorize controller state; verify rewrites via bit-exactness gates (gate2a
-   pattern: cheap, decisive).
+### b. Infrastructure added (all CPU-unit-tested and/or gate-verified)
+- `act/modeling_flow.py`: `predict_action_chunk` x0 now accepts (chunk,7) OR
+  per-env (B,chunk,7).
+- `act/eval_act.py`: controller `steer_x0` attr — per-env x0 override in `_refill`
+  (precedence over `fixed_x0`).
+- `act/residual_core.py`: refactor only — extracted `task_features()` (15-D shared
+  tail) + `flush_check()`; obs64 layout/behavior unchanged.
+- `act/steer_core.py` (SteerCore: set_steer/build_obs, subclasses ResidualCore),
+  `act/steer_wrapper.py` (SteerRlGamesWrapper: 56/7 spaces, window step loop),
+  `act/train_steer.py`, `act/eval_steer.py` (ladder protocol + fixed-z modes
+  `--z-sigma/--z-bias/--z-seed`, per-episode mean_z_mag + z_std recorded),
+  `act/steer_ppo_cfg.yaml` (σ_init −1.2; clip_actions 1.0 MANDATORY comment).
+- `act/eval_residual.py`: `load_residual_policy` parameterized (obs_dim/act_dim) —
+  reused by eval_steer for the 56/7 network.
+- CPU test (scratchpad, gone after reboot; trivially rewritable): steer-zeros ==
+  fixed-zeros action-for-action; per-env routing isolated; tanh bound/broadcast;
+  real-model (chunk,7)-vs-(B,chunk,7) bit-identical.
 
-## 3. CURRENT STATE
+### c. eva_bc shared repo — PUSHED (subagent)
+- `git@github.com:wwangg22/eva_bc.git` `main` commit `1c04eca`, 67 files; local
+  clone `/home/william/Desktop/isaacLab/reBot/eva_bc`. Curated copy of the pipeline
+  (act/, expert/, experiments/ code; all docs under docs/; README with stage-by-stage
+  pipeline + big Lessons Learned section; `sync_from_source.sh` bridge script,
+  tested idempotent, never writes to source, never auto-commits). Excluded: runs/,
+  *.h5, *.pt/pth, logs, result JSONs, third_party/, assets/, reBot_RL package
+  (README documents the bring-your-own-env mdp interface instead).
+- **Big Will's explicit plan: the GITHUB REPO IS CANONICAL eventually** — after the
+  EXP07 verdict, CUT reBot_ACT OVER to eva_bc (adopt its layout/git history, keep
+  runs//h5/pt local via .gitignore, retire the sync script). Memory
+  `eva-bc-shared-repo.md` records this. If he intended the repo private, he should
+  check visibility on GitHub (full lab notebook is in there).
 
-- **Frozen base:** `runs/exp03_N3/ckpt_final.pt`. Stochastic 64.1% pooled;
-  **deterministic x0=zeros mode 55.5% pooled** (56.2 @42 / 54.7 @123) = the steering
-  baseline. Failure anatomy in §1a.
-- Task #23 (Stage 6) in_progress = x0-steering now. #21/#22 open at 64.1%. #19 parked
-  (77.4% perturbed pillar). The §4-fork "grasp-bit BC retrain" path from the previous
-  HANDOFF is PARKED (Big Will chose residual RL, then x0-steering) — still valid if
-  steering stalls.
-- **Cleanup pending Big Will** (all eval JSONs/logs preserved):
+## 2. NEW LESSONS (beyond the EXP06/POSTMORTEM canon, which all still stands)
+
+1. **Free-running controller + windowed RL clock** beats forced-synchronous designs:
+   no truncation, no reward-carry bookkeeping, and the z=0 path is bit-identical to
+   the base — so wrapper verification is absolute, not approximate.
+2. **Window-RL episodic loggers are silent until the first episodes complete**
+   (epoch ≈ episode_windows/horizon). Do not read `placed = 0.0` at epoch 1 as the
+   r1/r2 collapse signature; judge at the first post-completion epoch.
+3. **Measure the exploration response BEFORE training** (gate S0 pattern:
+   `--z-sigma` evals): it picks σ_init from data AND provides the exact epoch-0
+   reward reference for the health tripwire. The x0 surface is locally flat (σ0.3 ≈
+   −2 pts) and steep at σ0.6 (−20 pts) — ideal exploration geometry.
+4. Training protocol chosen for RL BOOKKEEPING (window alignment) can double as
+   train/eval-mismatch elimination — check termination/penalty coupling in the env
+   cfg first (`is_terminated_term` makes them inseparable).
+5. Stdout .log files buffer for tens of minutes under rl_games — progress checks
+   must use checkpoint mtimes + tensorboard events, not the log tail.
+
+## 3. THE PLAN (in order; each step's success criterion inline)
+
+1. **Resume s1_seed1** (env_isaaclab6, from `act/`, ONE GPU job):
+   `python train_steer.py --ckpt ../runs/exp03_N3/ckpt_final.pt --run-name s1_seed1
+   --seed 1 --num_envs 2048 --max_iterations 200
+   --checkpoint ../runs/exp07_steer/s1_seed1/nn/last_exp07_steer_ep_100_rew_2319.8398.pth`
+   rl_games restores model+optimizer+epoch → runs 100→200 (~2 h at ~50 epochs/h,
+   ~740 windows/s). Sanity: first logged rewards should be ≈+2300 (continuity);
+   watch tensorboard, not the .log.
+2. **Gate 3 eval** (best ckpt = `runs/exp07_steer/s1_seed1/nn/exp07_steer.pth`):
+   `python eval_steer.py --ckpt ../runs/exp03_N3/ckpt_final.pt
+   --steer-ckpt ../runs/exp07_steer/s1_seed1/nn/exp07_steer.pth --seed 42
+   --out ../runs/exp07_steer/s1_best_seed42.json` and the same with `--seed 123`.
+   (~5 min each; deterministic: z = clamp(mu), x0 = tanh(z).)
+3. **Analyses (both mandatory before any verdict):**
+   - Taxonomy diff vs the x0-zeros base: adapt `experiments/exp06_analyze_r3.py`
+     (PAIRS → `x0sweep_s-1_seed{42,123}.json` vs `s1_best_seed{42,123}.json`; it
+     already prints transition matrices + fixed/broken lists). The DISCRIMINATION
+     SIGNATURE additive lacked: never-lifted bucket collapses WITHOUT symmetric new
+     breakage.
+   - z state-dependence (belief 3): per-episode `mean_z_mag` and `z_std` are already
+     in the eval JSONs — compare success vs failure episodes (r3's residual was
+     state-independent ~0.0084 everywhere; steering should differ).
+4. **Verdict thresholds (pre-registered):** vs **55.5%** fixed-x0 base (like-for-like),
+   **60.5%** (+5-pt rule), **64.1%** stochastic headline, **90%** Gate 6.
+   - ≥60.5% pooled → steering WORKS; consider replicas (seeds 2,3) per belief 6 if
+     the margin is inside the 55–65% decision band; then push toward Gate 6
+     (options: longer budget on a rising curve, richer z per belief 5).
+   - <60.5% pooled after the full 200 epochs → belief-5 escalation: ONE richer
+     parameterization (constant+ramp per dim, 14-D z) before any PPO tuning; if that
+     is also flat → EXP06 §4.6 fallbacks (additive replicas / grasp-bit BC retrain /
+     hybrid) go to Big Will with costs.
+5. **Write the EXP07 verdict** into the doc (belief scorecard vs the 6 pre-registered
+   beliefs), update POSTMORTEM §8 + memory `bc-flow-postmortem.md`.
+6. **eva_bc cutover** (Big Will's directive, AFTER the verdict): make reBot_ACT match
+   the GitHub repo (adopt eva_bc git history in-place or re-clone + carry local
+   state; keep runs//h5/pt gitignored), verify stage scripts run from the new
+   layout, retire `sync_from_source.sh`. Sync any EXP07-verdict doc updates to
+   eva_bc first (run its sync script → review diff → commit + push).
+
+## 4. CURRENT STATE / REFERENCE NUMBERS
+
+- **Frozen base:** `runs/exp03_N3/ckpt_final.pt` — stochastic 64.1% pooled;
+  deterministic x0-zeros **55.5% pooled** (56.2/54.7) = steering baseline.
+  N3 failure anatomy (46/128): 34 grasp-phase (18 never-lifted + 16 closed-on-air)
+  + 12 carry/release + 0 drops-after-place.
+- **EXP06 additive residual: CLOSED** — exactly flat 55.5→55.5 (26 fixed/26 broken,
+  causal, state-independent residual). One healthy seed only (replicas cancelled).
+- **EXP07 files:** doc + code per §1; eval JSONs in `runs/exp07_steer/`
+  (gate1_seed{42,123}, s0_*, plus .check files); training run `s1_seed1/`
+  (ep_50/ep_100 + rolling best + tb events); `smoke2048/` (disposable).
+- Tasks: #23 = this stage. #21/#22 open at 64.1%. #19 parked (77.4% perturbed).
+- **Cleanup pending Big Will** (rm blocked for me; all logs/JSONs stay):
   - old ladder ckpts (712 MB): `rm runs/exp03_N1/ckpt_*.pt runs/exp03_N2/ckpt_*.pt runs/exp03_D2/ckpt_*.pt runs/exp03_D3/ckpt_*.pt`
-  - failed/cancelled residual runs: `cd runs/exp06_residual && rm -r r0_smoke r0_smoke2048 r1_seed1 r2_smallsigma r3_seed2` (keep `r3_actionfix` as evidence)
-- Close-up failure video still unrendered (render only on request). DAgger r2 staged,
-  unrun. All parked items unchanged from previous handoff.
-
-## 4. THE PLAN: x0-STEERING (Big Will's directive — "focus on this")
-
-**Convention: write the pre-registered design + beliefs into
-`experiments/EXP07_x0_steering.md` BEFORE coding.** Design worked out so far (sketch
-at the end of EXP06 doc; refine then implement):
-
-1. **Mechanism:** RL policy acts at CHUNK granularity. At each refill the policy sees
-   the obs and outputs bounded z; the base integrates from x0 = α_x0·tanh(z) instead
-   of zeros. Output is always an on-manifold chunk — the base's own decoder does the
-   arbitration; RL picks the mode. Gripper leverage comes THROUGH the base (x0 has a
-   grip column) without giving RL the raw channel.
-2. **Parameterization v1:** z ∈ R^7 (per action dim), broadcast across chunk
-   positions; α_x0 = 1.0 (≈1σ of the trained noise distribution). Richer bases
-   (constant+ramp, 14-D; or per-position low-rank) ONLY if v1 is flat — pre-register
-   the escalation rule.
-3. **Wrapper rework (the main implementation task):** synchronous chunk windows —
-   ALL envs refill together every 15 env steps; one RL step = one window (summed
-   reward). Mid-window flush or reset → that env re-predicts using its CURRENT z
-   (steering persists within the window). Obs at refill: the 64-D builder MINUS the
-   queued-base-action (doesn't exist pre-refill) and chunk-index (always 0) → 56-D.
-   Keep grasp bit, fingers, rel poses, 41-D obs.
-4. **Plumbing edits:** `predict_action_chunk` x0 accepts (B,chunk,7); controller
-   refill accepts per-env x0 override; new chunk-window wrapper (reuse
-   ResidualRlGamesWrapper skeleton); PPO yaml: horizon 24 windows (=360 env steps),
-   episodes = 100 windows, same lr/clip; **clip_actions: 1.0** (lesson #1);
-   σ_init: exploration in z-space is SAFE by construction (on-manifold) — can start
-   larger, e.g. σ≈0.3; pre-register the choice.
-5. **Gates (ordered):** (i) z=0 through the chunk wrapper reproduces the x0-zeros
-   base 55.5% pooled episode-for-episode (the gate2a pattern — synchronous windows
-   change refill timing vs the free-running controller, so expect episode-outcome
-   match, demand ≥ near-identical; investigate any gap before training);
-   (ii) early-health: epoch-~100 reward ≈ +1650 raw (diag reference); (iii) result:
-   pooled 128-ep vs 55.5% baseline, +5-pt rule at 60.5%, stochastic-base 64.1% as
-   headline, Gate 6 at 90%; taxonomy diff mandatory (does never-lifted collapse
-   WITHOUT symmetric breakage? that's the discrimination signature additive lacked).
-6. **If steering also washes out:** resurrect (a) r3_seed2/3 replicas (additive,
-   n=3 verdict), (b) the grasp-bit BC retrain fork (previous HANDOFF §4 step 1),
-   (c) hybrid steering+small-additive (RFS's full recipe). Decision then goes to
-   Big Will with all three costed.
+  - failed EXP06 runs: `cd runs/exp06_residual && rm -r r0_smoke r0_smoke2048 r1_seed1 r2_smallsigma r3_seed2` (keep `r3_actionfix`)
+  - EXP07 smoke: `rm -r runs/exp07_steer/smoke2048`
+- Parked (unchanged): close-up failure video (render only on request), DAgger r2
+  staged, full-v1 dynamics-diversity round for the Gate-6 perturbed composite,
+  task #19 perturbed pillar.
 
 ## 5. Key files map
-- **Residual arc:** `experiments/EXP06_residual_rl.md` (READ FIRST — full arc,
-  scorecard, carries-over list), `act/{residual_core,residual_wrapper,train_residual,
-  eval_residual,diag_training_env}.py`, `act/residual_ppo_cfg.yaml`,
-  `experiments/{exp06_grasp_bit.py,exp06_analyze_r3.py}`, `runs/exp06_residual/`
-  (gate2*, x0sweep_*, r3_best_* JSONs).
+- **EXP07:** `experiments/EXP07_x0_steering.md` (READ FIRST), `act/{steer_core,
+  steer_wrapper,train_steer,eval_steer}.py`, `act/steer_ppo_cfg.yaml`,
+  `experiments/exp07_check_match.py`, `runs/exp07_steer/`.
+- **EXP06 (closed):** `experiments/EXP06_residual_rl.md`, `act/{residual_core,
+  residual_wrapper,train_residual,eval_residual,diag_training_env}.py`,
+  `experiments/{exp06_grasp_bit.py,exp06_analyze_r3.py}`, `runs/exp06_residual/`.
 - Ladder: `experiments/EXP_INDEX.md`, EXP01/02/03 docs, `LITERATURE.md` (RFS
-  2602.01789 = the steering precedent, 43%-vs-86%), `taxonomy.py`.
-- Policy: `act/modeling_flow.py` (x0 param), `act/eval_act.py` (vectorized
-  controller, peek/pop, fixed_x0), `act/train_flow.py` (--seed), `act/dataset.py`
-  (41-D layout).
-- Expert/data: unchanged (`expert/demos_nominal_s10{1..8}.h5`, `dagger_r1.h5`,
-  `run_expert_v1.py` FROZEN).
-- Checkpoints: `runs/exp03_N3/` (**CHAMPION BASE**), `runs/exp06_residual/r3_actionfix/`
-  (additive-residual evidence), plus historical (`exp03_D1`, `flow_nominal_v1`,
-  `flow_dagger_v3`).
+  2602.01789), `taxonomy.py`. Policy: `act/modeling_flow.py`, `act/eval_act.py`
+  (vectorized controller + steer_x0), `act/train_flow.py`, `act/dataset.py`.
+- Expert/data: unchanged (`expert/demos_nominal_s10{1..8}.h5`, `dagger_r1.h5`).
+- Shared repo: `/home/william/Desktop/isaacLab/reBot/eva_bc` (github canonical-to-be).

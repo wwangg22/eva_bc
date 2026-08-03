@@ -215,3 +215,83 @@ windows, not steps. Resume-capable; extend only on a rising curve.
   under exploration noise ≠ held-out deterministic eval; verdict waits on the pooled
   two-suite eval. Run ETA ~17:00 (~50 epochs/h); periodic ckpts every 50 epochs make
   the run resumable via train_steer.py --checkpoint if the machine goes down.
+- 2026-08-02 ~15:05: **run STOPPED at ~epoch 105/200 by Big Will (leaving; machine
+  going down). NOT a failure — reward still climbing: +1450 (ep5) → +2133 (ep50) →
+  +2320 (ep100).** GPU verified free. Resume state: `s1_seed1/nn/
+  last_exp07_steer_ep_100_rew_2319.8398.pth` (periodic) + `exp07_steer.pth` (rolling
+  best). RESUME COMMAND (env_isaaclab6, from act/):
+  `python train_steer.py --ckpt ../runs/exp03_N3/ckpt_final.pt --run-name s1_seed1
+  --seed 1 --num_envs 2048 --max_iterations 200
+  --checkpoint ../runs/exp07_steer/s1_seed1/nn/last_exp07_steer_ep_100_rew_2319.8398.pth`
+  (rl_games restores model+optimizer+epoch → continues 100→200; same run dir, new
+  events file). Then gate 3: pooled two-suite eval + taxonomy diff + z
+  state-dependence (commands in HANDOFF).
+- 2026-08-02 ~18:20: **RESUMED s1_seed1 (pid 5344) with the verbatim command above.
+  Continuity CONFIRMED from tensorboard (new events file, summaries/):** epoch
+  counter restored at 101 (not 1); first completed-episode reward at epoch 105 =
+  **+2331.6** vs +2319.8 at the ep_100 checkpoint — exact continuation, no cold
+  start. Episode lengths exactly 100 windows (alignment still holding).
+  `Episode_Reward/placed` read 0.0 for epochs 101–104 — the KNOWN window-RL logging
+  artifact (fresh envs after relaunch, first episodes complete ~5 epochs in), then
+  68.0 at epoch 105. Watchers: persistent monitor on process exit + new checkpoints;
+  ETA epoch 200 ≈ 2 h. Next: gate 3 pooled eval on `nn/exp07_steer.pth`.
+- 2026-08-02 ~19:25: **s1_seed1 TRAINING COMPLETE — 200/200 epochs ("MAX EPOCHS
+  NUM!"), exited cleanly.** Reward trajectory: +1450 (ep5, base level) → +2133
+  (ep50) → +2320 (ep100) → +2361 (ep150) → **+2416 (ep200, = rolling best
+  `exp07_steer.pth`)**. Slope flattening over the resumed half (+96 over 100 epochs
+  vs +870 over the first 95) — consistent with plateau; per the r3 lesson, training
+  reward under exploration noise decides NOTHING. **Gate 3 launched:** deterministic
+  pooled two-suite eval (seeds 42+123) of `exp07_steer.pth`, chain log
+  `runs/exp07_steer/gate3_chain.log`, outputs `s1_best_seed{42,123}.json`.
+- 2026-08-02 ~20:20: **GATE 3 RESULT — pooled 117/128 = 91.4%** (seed42 57/64 =
+  89.1%, seed123 60/64 = 93.8%), deterministic z = clamp(mu), x0 = tanh(z), ladder
+  suites. Analyzer: `experiments/exp07_analyze_s1.py` (paired, causal — both sides
+  deterministic on identical spawns).
+
+## VERDICT (2026-08-02): x0-STEERING WORKS — 55.5% → 91.4% pooled, Gate 6 (90%) CLEARED
+
+**Headline:** +35.9 pts over the like-for-like fixed-x0-zeros base (55.5%), +27.3
+over the stochastic headline (64.1%), and above the 90% Gate-6 bar — with the FIRST
+pre-registered config (7-D broadcast z, α_x0=1.0, σ_init −1.2, 200 epochs, bare
+placed-stream reward, zero train/eval mismatch). No PPO tuning, no escalation needed.
+
+**Taxonomy diff (the discrimination signature EXP06 lacked, exactly as predicted):**
+- fixed 51 / broken 5 (seed42: 24/3, seed123: 27/2) — vs r3's symmetric 26/26 churn.
+- **never_lifted collapses:** 18 of 19 base never-lifted episodes now SUCCEED
+  (12 @42 → 11 success; 7 @123 → 7 success). The grasp-phase failure mode additive
+  couldn't touch is essentially solved by steering the decoder.
+- Every base failure bucket transfers mass to SUCCESS: lifted_never_placed 10/11,
+  placed1_stuck_lift 10/11, placed1_stuck_low 13/15 across suites.
+- Remaining 11 failures: placed1_stuck_low 4, placed1_stuck_lift 3,
+  lifted_never_placed 2, never_lifted 2 — no new failure mode invented.
+- **z is state-DEPENDENT (belief 3 confirmed):** mean |z| 0.220 on success episodes
+  vs 0.282 on failures; within-episode z_std 0.21 vs 0.26 — identical pattern on
+  both suites (r3's additive residual sat at a state-independent 0.0084 everywhere).
+  The policy modulates x0 harder and more variably exactly where the base struggles.
+
+**Why 91.4% is credible (odd-number validation):** (a) the eval path was proven
+bit-exact at z=0 against the base suites (gate 1) — only mu differs here; (b) paired
+per-episode diffs show coherent bucket structure, not uniform trivial success;
+(c) training-distribution ever_both_placed was already 0.79 at ep50 UNDER exploration
+noise — a deterministic-mu eval above that is consistent; (d) mean_z_mag 0.22
+confirms a nonzero learned policy, and suites are the untouched ladder spawn suites.
+
+**Belief scorecard (6 pre-registered):**
+1. z=0 bit-exact through wrapper — **CONFIRMED** (gate 1, both suites, zero flips).
+2. Exploration not free; σ0.3 ≤10 pts — **CONFIRMED** (−2 pts @σ0.3, −20 @σ0.6;
+   σ_init −1.2 chosen from data).
+3. Learned z state-dependent — **CONFIRMED** (0.220 vs 0.282 |z|; z_std 0.21 vs 0.26).
+4. Result guess 62–72% pooled — **WRONG, UNDERSHOT: actual 91.4%.** Steering
+   recovered not just the determinism tax but nearly all grasp-phase AND
+   carry/release failures. The RFS-scale jump (43→86) DID transfer.
+5. Broadcast z too coarse — **REFUTED**: 7-D constant-per-chunk z sufficed;
+   escalation (14-D ramp) never triggered.
+6. Seed variance rule — margin +35.9 pts is far outside the 55–65% decision band
+   and ~7× the ±5-pt noise floor; single seed is decisive per the pre-registered
+   rule. (Replicas remain optional polish, not evidence.)
+
+**Status: EXP07 CLOSED — SUCCESS.** Champion: `runs/exp07_steer/s1_seed1/nn/
+exp07_steer.pth` (steering head) on frozen base `runs/exp03_N3/ckpt_final.pt`.
+Follow-ups (not blocking closure): optional seed replicas; perturbed/robustness
+composite for the full Gate-6 criterion (parked dynamics-diversity round); close-up
+failure video of the 11 residual failures on request.

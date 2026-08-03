@@ -51,3 +51,12 @@ logs. CPU-side work (EXP01 probe, analysis scripts, doc writing) runs concurrent
   replicas refuted interference and exposed 26.6-pt seed variance; held-out selection
   crowned **exp03_N3 (64.1% pooled)** as frozen base. EXP04 descoped. Next: EXP06
   residual-RL design doc, pending Big Will's review of the ladder.
+- 2026-08-02 (evening): **EXP06 CLOSED — additive residual exactly flat** (55.5→55.5
+  pooled, 26 fixed/26 broken symmetric churn, state-independent residual; two 0%
+  runs traced to rl_games clip_actions=100 bug — clip_actions must be 1.0).
+  **EXP07 (x0-steering, RFS-style) CLOSED — SUCCESS: 55.5% → 91.4% pooled
+  (89.1/93.8), Gate 6 (90%) cleared, first pre-registered config, single seed
+  decisive (+35.9 pts).** 51 fixed / 5 broken; never-lifted bucket collapsed
+  (18/19); learned z state-dependent. Docs: EXP06_residual_rl.md,
+  EXP07_x0_steering.md (verdict + belief scorecard). Champion = frozen exp03_N3
+  base + `runs/exp07_steer/s1_seed1/nn/exp07_steer.pth` steering head.

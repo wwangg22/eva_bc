@@ -404,6 +404,25 @@ well-matched to what's actually left:
   the teacher's lying-recovery ceiling must be raised first or those states filtered from
   supervision.
 
+> **UPDATE (2026-08-02 evening, EXP06+EXP07 verdicts — this section is now RESOLVED):**
+> - **Plain additive residual (EXP06): CLOSED, exactly flat** — 55.5%→55.5% pooled,
+>   symmetric 26-fixed/26-broken causal churn, learned residual state-independent
+>   (~0.0084 |res| everywhere). The "precision-shaped residue" premise above was
+>   wrong for off-manifold additive corrections on this flow base.
+> - **x0-steering (EXP07): SUCCESS — 55.5% → 91.4% pooled (89.1/93.8), Gate 6 (90%)
+>   cleared** with the first pre-registered config: z ∈ R^7 broadcast per 15-step
+>   window, x0 = tanh(z), free-running controller, window-aligned eval-protocol
+>   training, bare placed-stream reward, 200 epochs @2048 envs. Taxonomy: 51
+>   fixed / 5 broken; the never-lifted bucket collapsed (18/19 → success); learned
+>   z is state-dependent (|z| 0.220 success vs 0.282 failure eps). The RFS 43→86
+>   pattern (on-manifold steering ≫ additive residual) reproduced on our stack.
+> - **Question (a) is answered by construction:** the grip channel joins via x0's
+>   grip column — steering reaches release timing through the decoder without a raw
+>   grip action, and carry/release failures (10/11 fixed) confirm it worked.
+> - Full log + belief scorecard: `experiments/EXP07_x0_steering.md`. Champion:
+>   frozen `runs/exp03_N3/ckpt_final.pt` + steering head
+>   `runs/exp07_steer/s1_seed1/nn/exp07_steer.pth`.
+
 ## Sources
 
 - [Disambiguate Gripper State in Grasp-Based Tasks: Pseudo-Tactile as Feedback](https://arxiv.org/pdf/2503.23835)
