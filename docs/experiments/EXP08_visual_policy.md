@@ -63,7 +63,34 @@ debug before proceeding. Otherwise → proceed to the design conversation (§3).
 - Output: `runs/exp08_vision/wrist_strip_seed123/ep{k}/step{NNNN}_placed{p}.png`
   + `summary.txt` (per-frame numerics + per-episode success)
 
-## §3 Design recommendation (FOR the conversation with Big Will — not final)
+## §3 Design — AGREED with Big Will 2026-08-03
+
+**DECIDED: teacher-student distillation from the 91.4% champion** (Big Will
+asked whether to instead rerun the expert pipeline — planner demos → flow-BC →
+DAgger → steering — with vision obs; agreed NO after this reasoning):
+
+1. Expert demos are multi-modal (planner mode choices) — exactly what capped
+   state BC at 55.5%; the EXP07 steering RL is what fixed mode selection
+   (+36 pts). Re-running that pipeline on vision re-imports the plateau, and the
+   rescue (steering RL) would then run WITH rendering in the loop at 4–16× fewer
+   envs. Champion rollouts have mode selection already resolved — the student
+   inherits it via plain BC.
+2. DAgger labels: champion labels any student-drift state at a network forward's
+   cost and handles its own distribution at ~91%; the planner's takeover ceiling
+   from policy-visited states is only 68% — weakest exactly where DAgger needs
+   labels.
+3. The EXP07 steering head consumes privileged obs56 — deployable on a state
+   teacher, not on a vision student; champion distillation keeps ALL privileged
+   inputs on the teacher side at collection time.
+4. Collection audit gate for free: recorded episodes must reproduce ~91%.
+5. Ceiling caveat (honest): pure distillation tops out at the champion (~91.4%).
+   If BC+DAgger stalls short of 90%, the finisher is x0-steering on the VISION
+   base (recipe is base-agnostic) — fallback, not plan. Do NOT mix expert demos
+   into the student data (re-introduces conflicting modes); expert-labeled
+   recovery segments only as a targeted later supplement for beyond-champion
+   robustness.
+
+(original recommendation notes below, kept for the record)
 
 1. **Distillation, not RL-from-pixels.** lift_vision RL-from-pixels needed
    curriculum surgery and still lagged; rendering cuts env counts 4–16× (hurts RL
