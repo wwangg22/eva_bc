@@ -30,6 +30,10 @@ def main() -> None:
     parser.add_argument("--vision-ckpt", default="runs/exp08_bc/v4_dagger3/ckpt_final.pt")
     parser.add_argument("--head-ckpt", default=None, help="steering head (tokens->z); absent = z~N(0,1)")
     parser.add_argument("--explore-std", type=float, default=1.0)
+    parser.add_argument("--x0-scale", type=float, default=1.0,
+                        help="alpha: x0 = alpha*tanh(z). Iteration-0 at alpha=1 drove 0.39-0.41 "
+                             "vs the base's 0.64-0.69 -- chunk-shared full-magnitude x0 is "
+                             "out-of-distribution for the vision base")
     parser.add_argument("--episodes", type=int, default=64)
     parser.add_argument("--num-envs", type=int, default=16)
     parser.add_argument("--task", default="Rebot-PickPlace-Vision-Play-v1")
@@ -86,7 +90,7 @@ def main() -> None:
             z = head(enc_out.permute(1, 0, 2)) + args.explore_std * torch.randn(n, 7, device=device)
         else:
             z = torch.randn(n, 7, device=device)
-        x = torch.tanh(z).unsqueeze(1).expand(-1, chunk_size, -1).clone()
+        x = args.x0_scale * torch.tanh(z).unsqueeze(1).expand(-1, chunk_size, -1).clone()
         dt = 1.0 / n_steps_int
         for i in range(n_steps_int):
             tau = torch.full((n,), i * dt, device=device)
