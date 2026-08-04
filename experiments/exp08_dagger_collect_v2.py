@@ -98,6 +98,10 @@ def main() -> None:
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--episode-length-s", type=float, default=30.0)
     parser.add_argument("--out-dir", required=True)
+    parser.add_argument("--keep-first", action="store_true",
+                        help="keep each env's FIRST episode (DLSS-cold frames). Cold frames + "
+                             "correct post-hoc labels = the cold-start training pool; the first "
+                             "1-2 frames may be render-warmup blanks, accepted deliberately")
     parser.add_argument("--validate-features", action="store_true",
                         help="VALIDATION: at each boundary also run the live core.build_obs and "
                              "compare with obs56_from_raw (perturbs frames -- discard the data)")
@@ -194,7 +198,7 @@ def main() -> None:
         done = (terminated | truncated).view(-1).cpu().nonzero(as_tuple=False).squeeze(-1)
         if done.numel():
             for i in done.tolist():
-                if ep_count[i] > 0 and saved < args.episodes:
+                if (args.keep_first or ep_count[i] > 0) and saved < args.episodes:
                     pending.append(
                         {
                             **{k: torch.stack(v) for k, v in bufs[i].items()},

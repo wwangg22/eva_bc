@@ -264,6 +264,15 @@ DAgger → steering — with vision obs; agreed NO after this reasoning):
   chain launched: collect from the v2 student (post-hoc, audit-guarded ≥0.6)
   → train v3 on BC + r1v2 + r2 (6 dirs) → eval both seeds →
   `runs/exp08_bc/v3_dagger2/`.
+- 2026-08-03 (post-compaction check-in): round-2 chain healthy — r2 s42 shards
+  complete, r2 s123 at 48/64 with driving success 40/48 (83.3%, consistent
+  with the ~80% warm audit band). While the chain runs (CPU-only side work):
+  added `--keep-first` to `exp08_dagger_collect_v2.py` — the cold-start-pool
+  lever from HANDOFF §4 (keep each env's DLSS-cold FIRST episode; post-hoc
+  champion labels don't need warm frames, cold frames + correct labels is
+  exactly the training signal the student has never seen; first 1–2
+  render-warmup frames accepted). Ready to launch 2–4 fresh 16-ep processes →
+  `data/exp08_dagger/cold_*` if the v3 decision rule calls for round 3.
   states. Labels are full 50-step chunks computed champion-side (steering z
   from privileged obs56 → x0 = tanh(z) → frozen base flow), collected at the
   student's 15-step window boundaries ONLY — those are the exact states where
