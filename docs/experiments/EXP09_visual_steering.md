@@ -134,6 +134,29 @@ of x0-steering — both bigger conversations with Big Will.
   still proceed with MEASURED noise injected — PPO-under-noise then tells us
   directly whether steering tolerates ~5 cm sensing error.
 
+- 2026-08-04: **S3v2 (frozen v4 encoder tokens + MLP head,
+  `experiments/exp09_s3v2_perception.py`): tgt-pos 3.5 cm mean / 8.8 p95 (v1:
+  5.5/11.8), basket 4.4 cm, flags vec_mean 0.063.** Better everywhere, still
+  ~1.5–2× the sanity bar. The v4 tokens demonstrably carry metric state — the
+  residual gap is head/likelihood-level or DLSS pixel noise, and further
+  polishing is NOT the critical path because:
+- 2026-08-04: **DESIGN KILL — R1 (state-env PPO → deploy on vision base) is
+  broken in principle, caught before building.** The vision base's x0→behavior
+  geometry was constructed independently during distillation (rectified-flow
+  training samples its own x0 ~ N(0,1) against champion chunks) — it shares NO
+  correspondence with the state base's x0 geometry. A steering z learned
+  against the state base is meaningless to the vision base. S1's spread ratio
+  only shows the vision base RESPONDS to x0, not that the geometries align.
+  ⇒ Steering must be trained AGAINST the frozen vision base itself. Revised
+  routes: **R2' (preferred): PPO in the vision env, steering head on the
+  frozen v4 encoder tokens (integrated forward — zero extra per-step loop
+  work; S3v2 proves the tokens carry the state), updates between horizon
+  chunks — gated on S2.** R3' (if S2 fails): C2-safe offline loop — collect
+  vision-env rollouts with per-chunk RANDOM z (x0 arg replaces the internal
+  randn, identical loop compute), post-hoc advantage-weighted regression
+  tokens→z, iterate. The perception head (S3v2 ckpt) is shelved for now —
+  useful later for diagnostics/real-rig cross-checks, not in the deploy path.
+
 ## 5. Phases (after smoke tests, subject to change)
 
 P0 = S1–S3 (~half a day, mostly reusing existing shards + eval loop).
