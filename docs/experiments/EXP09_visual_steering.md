@@ -96,6 +96,29 @@ of x0-steering — both bigger conversations with Big Will.
   basket_delta ≲ 3 cm (thresholds to sanity-check with Big Will — these are
   roughly the precision the state policy needed).
 
+## 4.5 Running log
+
+- 2026-08-04: **S1 PASSED decisively** (`experiments/exp09_s1_x0probe.py`,
+  `runs/exp09/s1_x0probe.json`): on 305 matched states (Gate B BC shards,
+  which store images + obs41 per step), 8 shared x0 draws, executed-15-step
+  action-space spread: vision base (v4) 0.345 mean / 0.360 median vs state
+  base 0.436 / 0.439 → **ratio median 0.805, p10 0.663** (bar: ≥0.5). The
+  distilled vision base retained x0-responsiveness — steering is viable.
+- 2026-08-04: **design simplification after reading the obs code.** The
+  DAgger-v2 shards do NOT store raw ground truth (only images/proprio/labels)
+  — §3a's "targets already exist" claim was wrong for DAgger shards; it's the
+  BC shards that carry per-step obs41. Better targets anyway:
+  `objects_canonical` (obs41[16:32]) is already target-first object poses IN
+  ROBOT-ROOT FRAME + placed flags, and obs41[32:34] is basket_center_xy. So
+  the perception head predicts **obs41[16:34] (18-D) directly**, and the
+  steering obs becomes the reconstructed obs41 = [proprio(23) rearranged ⊕
+  predicted 18-D]. No obs56 rebuild, no EE-frame math, no FK. R1 then trains
+  a NEW steering head by PPO in the state env on obs41 with measured noise
+  injected on [16:34] — EXP07's recipe, new input. S3 targets: train on BC
+  seed42, validate cross-seed on seed123 (caveat: both are training-stream
+  seeds; a small fresh-seed collection with obs41 saved is the true held-out
+  check later).
+
 ## 5. Phases (after smoke tests, subject to change)
 
 P0 = S1–S3 (~half a day, mostly reusing existing shards + eval loop).
