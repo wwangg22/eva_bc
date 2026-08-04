@@ -273,6 +273,38 @@ DAgger → steering — with vision obs; agreed NO after this reasoning):
   exactly the training signal the student has never seen; first 1–2
   render-warmup frames accepted). Ready to launch 2–4 fresh 16-ep processes →
   `data/exp08_dagger/cold_*` if the v3 decision rule calls for round 3.
+- 2026-08-04: **external kill #3** — the round-2 chain was killed (harness-level,
+  same signature as the two earlier mystery kills; not Big Will last time). It
+  landed at the train→eval boundary: r2 s123 collection had finished clean (64
+  shards, driving audit 82.8%; s42 was 85.9%) and v3 training had completed all
+  100k steps (loss 0.585→0.053, dataset 376 eps / 106.9k samples). Per the
+  one-relaunch protocol, only the two missing evals were relaunched; both ran
+  clean.
+- 2026-08-04: **Gate D round 2: 68.0% pooled (87/128) — REGRESSION, −7.0 vs
+  v2's 75.0%.** s42 65.6 (rounds 5,11,15,11), s123 70.3 (rounds 8,13,14,10).
+  Honest stats: 87/128 vs 96/128 is z≈1.2 pooled — not individually conclusive
+  — but warm-rounds tell the same story (v3 warm 37/48 = 77.1% BOTH seeds vs
+  v2's ~85% pooled warm, s42 91.7%), so this is at best a flat round, likely a
+  real regression. Texture: stall-after-can-1 33 (v2: 25), never-placed 8 (7);
+  s123 ep42 is the FIRST observed loss of an already-placed can (placed_max 2 →
+  placed_final 1). Hypotheses (not yet separable): (i) from-scratch training
+  variance — v2 vs v3 differ in BOTH data and init; (ii) r2 dilution — r2 was
+  collected from the 75% student under the SAME env seeds (42/123) as every
+  other dir, so it mostly revisits already-covered on-path states and dilutes
+  the corrective r1v2 signal; (iii) the deeper version of (ii): ALL training
+  data to date shares the two spawn-draw streams of seeds 42/123 — which are
+  also the EVAL streams — a diversity ceiling, not a leak we can exploit (the
+  student clearly doesn't memorize them anyway, per the failures).
+  **Decision per pre-registered rule** (round-count rule: Gate E only after 3
+  stalled rounds; band rule says round 3 + cold-start pool): **round 3 + cold
+  pool now**, with two documented deviations aimed at the hypotheses: (a)
+  collect from the BEST student (v2, 75.0) — not v3; (b) FRESH env seeds
+  (777/888 warm r3; 777/888/999/1111 cold, --keep-first) to break the
+  seed-42/123 spawn-stream monoculture — cold runs keep episode-1s, r3 runs
+  discard them, so same-seed cold+warm are complementary, no overlap. v4 =
+  BC(2) + r1v2(2) + r2(2) + r3(2) + cold(4) from scratch, then eval 42/123.
+  **Stall rule armed: if v4 ≤ 75.0 pooled, that is round 3 stalled → Gate E
+  scoping conversation with Big Will before any further training.**
   states. Labels are full 50-step chunks computed champion-side (steering z
   from privileged obs56 → x0 = tanh(z) → frozen base flow), collected at the
   student's 15-step window boundaries ONLY — those are the exact states where
