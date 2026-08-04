@@ -15,9 +15,10 @@ longer exists. **`REFERENCE.md` is what was kept.** Next action: **P40**.
 
 ## Read
 
-1. **`REFERENCE.md`** — everything durable, and the commands
-2. **`HANDOFF.md`** — the task, the plan, what is on disk
-3. **`16_DISTURBANCE_ANATOMY.md`** — why the expert fails and what to do about it
+1. **`HANDOFF.md`** — ⭐ the full record: task, what happened this session probe by probe, what
+   worked and what didn't, the ordered plan, what is on disk. **Start here.**
+2. **`REFERENCE.md`** — everything durable and metric-independent, and the commands
+3. **`16_DISTURBANCE_ANATOMY.md`** — why the expert fails, measured four ways
 4. `15_STRICT_METRIC.md` — what the criterion is now and why it is trustworthy
 
 ## The next action
