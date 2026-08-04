@@ -255,6 +255,15 @@ DAgger → steering — with vision obs; agreed NO after this reasoning):
   (128 eps, all outcomes) = 248 episodes / 94.1k samples, from scratch, same
   recipe, 100k steps → `runs/exp08_bc/v2_dagger/`. Then Gate D eval, seeds
   42/123 × 64 eps, target ≥90% pooled.
+- 2026-08-03: **Gate D round 1: 75.0% pooled (96/128)** — v2 trained clean
+  (2.64 h, loss 0.60→0.05); eval s42 79.7% / s123 70.3%. **+7.8 pts over
+  Gate C's 67.2%** — rising, so per the decision rule: round 2. Texture:
+  warm-renderer rounds hit 91.7% on s42 (15,15,14 /16) and ~79% on s123;
+  stall-after-can-1 25 (was 29), never-placed 7 (was 13); cold round 1 still
+  ~7/16 both seeds (DLSS warmup handicap, constant across gates). Round-2
+  chain launched: collect from the v2 student (post-hoc, audit-guarded ≥0.6)
+  → train v3 on BC + r1v2 + r2 (6 dirs) → eval both seeds →
+  `runs/exp08_bc/v3_dagger2/`.
   states. Labels are full 50-step chunks computed champion-side (steering z
   from privileged obs56 → x0 = tanh(z) → frozen base flow), collected at the
   student's 15-step window boundaries ONLY — those are the exact states where
