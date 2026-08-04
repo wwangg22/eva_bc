@@ -33,33 +33,48 @@ STUDENT_STATE_DIM = 23
 
 # Keys a student sample is built from. obs41 is teacher-only and must never be here.
 _STUDENT_KEYS = ("wrist_rgb", "workspace_rgb", "proprio", "actions")
+# DAgger variant (experiments/exp08_dagger_collect.py): champion chunk labels instead
+# of executed actions; auto-detected via the label_chunks key.
+_DAGGER_KEYS = ("wrist_rgb", "workspace_rgb", "proprio", "label_chunks")
 
 
 class VisionShardDataset(Dataset):
-    """RAM-preloaded (uint8 images) dataset over exp08 collection shards."""
+    """RAM-preloaded (uint8 images) dataset over exp08 collection shards.
+
+    Two shard formats, mixable freely: executed-action episodes (chunks sliced from
+    the action stream, success-filtered) and DAgger chunk-labeled episodes (champion
+    labels used directly; ALL kept — the labels are champion-quality regardless of
+    the student's outcome, and failed episodes are exactly where DAgger helps)."""
 
     def __init__(self, data_dirs: list[str], chunk_size: int = 50, success_only: bool = True):
         self.chunk_size = chunk_size
         self.episodes: list[dict[str, torch.Tensor]] = []
-        n_skipped = 0
+        n_skipped = n_dagger = 0
         for d in data_dirs:
             for shard_path in sorted(Path(d).glob("ep_*.pt")):
                 shard = torch.load(shard_path, map_location="cpu")
-                if success_only and not shard["success"]:
+                is_dagger = "label_chunks" in shard
+                if not is_dagger and success_only and not shard["success"]:
                     n_skipped += 1
                     continue
                 assert shard["proprio"].shape[1] == STUDENT_STATE_DIM, shard_path
+                if is_dagger:
+                    assert shard["label_chunks"].shape[1:] == (chunk_size, ACTION_DIM), shard_path
+                    n_dagger += 1
                 # keep ONLY the student keys -- drop obs41 (privileged) immediately
-                self.episodes.append({k: shard[k] for k in _STUDENT_KEYS})
+                self.episodes.append({k: shard[k] for k in (_DAGGER_KEYS if is_dagger else _STUDENT_KEYS)})
         if not self.episodes:
             raise ValueError(f"no episodes loaded from {data_dirs}")
         self.index: list[tuple[int, int]] = [
-            (e, t) for e, ep in enumerate(self.episodes) for t in range(ep["actions"].shape[0])
+            (e, t)
+            for e, ep in enumerate(self.episodes)
+            for t in range(ep["label_chunks" if "label_chunks" in ep else "actions"].shape[0])
         ]
+        self._n_dagger = n_dagger
         n_bytes = sum(ep["wrist_rgb"].numel() + ep["workspace_rgb"].numel() for ep in self.episodes)
         print(
-            f"[dataset_vision] {len(self.episodes)} episodes ({n_skipped} filtered out), "
-            f"{len(self.index)} samples, images ~{n_bytes / 1e9:.1f} GB RAM"
+            f"[dataset_vision] {len(self.episodes)} episodes ({n_dagger} DAgger-labeled, "
+            f"{n_skipped} filtered out), {len(self.index)} samples, images ~{n_bytes / 1e9:.1f} GB RAM"
         )
 
     def __len__(self) -> int:
@@ -68,14 +83,17 @@ class VisionShardDataset(Dataset):
     def __getitem__(self, i: int) -> dict[str, torch.Tensor]:
         e, t = self.index[i]
         ep = self.episodes[e]
-        T = ep["actions"].shape[0]
-        end = min(t + self.chunk_size, T)
-
-        chunk = torch.empty(self.chunk_size, ACTION_DIM, dtype=torch.float32)
-        chunk[: end - t] = ep["actions"][t:end]
-        chunk[end - t :] = ep["actions"][T - 1]  # edge-pad past episode end (masked anyway)
-        is_pad = torch.ones(self.chunk_size, dtype=torch.bool)
-        is_pad[: end - t] = False
+        if "label_chunks" in ep:  # DAgger shard: champion chunk label, nothing padded
+            chunk = ep["label_chunks"][t]
+            is_pad = torch.zeros(self.chunk_size, dtype=torch.bool)
+        else:
+            T = ep["actions"].shape[0]
+            end = min(t + self.chunk_size, T)
+            chunk = torch.empty(self.chunk_size, ACTION_DIM, dtype=torch.float32)
+            chunk[: end - t] = ep["actions"][t:end]
+            chunk[end - t :] = ep["actions"][T - 1]  # edge-pad past episode end (masked anyway)
+            is_pad = torch.ones(self.chunk_size, dtype=torch.bool)
+            is_pad[: end - t] = False
 
         return {
             "observation.state": ep["proprio"][t],
@@ -90,7 +108,13 @@ def compute_stats_vision(dataset: VisionShardDataset) -> dict[str, dict[str, tor
     """Mean/std for state and action only -- images use fixed ImageNet constants inside
     the model (act/modeling_flow_vision.py), so they never enter the normalizer."""
     proprio = torch.cat([ep["proprio"] for ep in dataset.episodes], dim=0)
-    actions = torch.cat([ep["actions"] for ep in dataset.episodes], dim=0)
+    actions = torch.cat(
+        [
+            ep["actions"] if "actions" in ep else ep["label_chunks"].reshape(-1, ACTION_DIM)
+            for ep in dataset.episodes
+        ],
+        dim=0,
+    )
     return {
         "observation.state": {"mean": proprio.mean(dim=0), "std": proprio.std(dim=0)},
         "action": {"mean": actions.mean(dim=0), "std": actions.std(dim=0)},

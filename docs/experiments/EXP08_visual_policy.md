@@ -171,6 +171,25 @@ DAgger → steering — with vision obs; agreed NO after this reasoning):
   `python act/eval_flow_vision.py --ckpt runs/exp08_bc/v1/ckpt_final.pt
   --episodes 64 --seed 42 --out runs/exp08_bc/v1/eval_seed42.json` (then the
   same with seed 123).
+- 2026-08-03: kills resolved-ish: Big Will confirms he did NOT stop the jobs
+  (cause still unknown); relaunch on his instruction ran clean end-to-end.
+- 2026-08-03: **GATE C: 86/128 = 67.2% pooled** (s42 68.8%, s123 65.6%) —
+  inside the pre-registered 55–75% guess, clears the ≥50% rule → **Gate D
+  (champion-DAgger)**. First fully non-privileged number of the project, and it
+  already beats the state BC base (55.5%) and matches planner-DAgger (64.1%).
+  Failure anatomy (from per-episode records): ever_placed≥1 = 115/128 (89.8%),
+  final_placed==1 = 29 (stalls after can 1 — the dominant mode, 23%),
+  placed 0 = 13 (10%); no episode placed 2 then lost one. Classic compounding
+  BC drift → exactly DAgger's target. Results:
+  `runs/exp08_bc/v1/eval_seed{42,123}.json`.
+- Gate D design (per §4): student DRIVES, champion labels student-visited
+  states. Labels are full 50-step chunks computed champion-side (steering z
+  from privileged obs56 → x0 = tanh(z) → frozen base flow), collected at the
+  student's 15-step window boundaries ONLY — those are the exact states where
+  a deployed student commits chunks (its only decision points), and labeling
+  is 15× cheaper than every-step. All episodes kept (labels are
+  champion-quality regardless of student outcome). Round-1 training: from
+  scratch on BC pool + DAgger round (aggregated), same recipe.
 - 2026-08-03 ~03:40, **step 0 run 1 (v1) complete**: 3/3 episodes SUCCESS (each
   1500 steps, both cans placed), 180 stills in
   `runs/exp08_vision/wrist_strip_seed123/ep{0,1,2}/`. **Belief 2 CONFIRMED**:
