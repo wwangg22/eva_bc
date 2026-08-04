@@ -217,7 +217,25 @@ claim. This session retracted two single-seed claims already (§9d, EXP_DEPTH §
 
 ---
 
-## 1a-s7. SESSION 7 STATE (2026-08-03 18:40) — read this before §1a
+## ▶ 1a-s8. START HERE — SESSION 7+8 (2026-08-03 20:35)
+
+**The full record is at the BOTTOM of this file: "SESSION 7+8 FULL RECORD".** Read `S8-STATE`
+first — vision collection is RUNNING and the next stage is one command.
+
+Two efforts this session:
+* **EXP_STEER** — finished, PPO launch **withdrawn**. Headline: a constant flow latent takes the
+  champion 0.146 -> 0.823 under 2 % action noise with no training at all. Still **unvalidated out
+  of sample**. See `S7-RESULT`.
+* **The VISUAL policy** — Big Will's live ask, 80 % bar, no privileged info. Stack ported from
+  EXP08, cameras attached, render configuration decided by measurement, 256 champion episodes
+  collecting now. See `S8-a` ... `S8-f`.
+
+Also read `docs/slot/README.md` (the orientation map) and `docs/slot/VISION_PLAN.md` (the vision
+pre-registration + results).
+
+---
+
+## 1a-s7. SESSION 7 STATE (2026-08-03 18:40) — superseded by 1a-s8 above
 
 **Pushed.** Commit `b1540a8` is on `origin/main` (`git@github.com:wwangg22/eva_bc.git`), 122
 files / 1.3 MB: `slot/` source + scripts + analysis + `docs/slot/`. The push was **not** a
@@ -1565,3 +1583,251 @@ almost every effect measured. Session 5 showed the learning curve plateaus at 30
 **Standing constraints:** `eva_rl` is shared — **0 modifications, and it must stay that way**.
 `eva_bc` has only untracked `slot/` and `docs/slot/`. **No push is authorised** — Big Will said
 "when i tell you to". Use `env_isaaclab6`. One GPU job at a time.
+
+---
+---
+
+# ▶▶ SESSION 7+8 FULL RECORD (2026-08-03) — EXP_STEER, then the VISUAL policy
+
+*Written 20:35 while vision collection runs. This session covers two distinct efforts: the
+x0-steering investigation (§S7) and the start of the visual policy (§S8). Read §S8-STATE first
+if you are picking this up cold.*
+
+## S8-STATE. ⏳ WHAT IS RUNNING RIGHT NOW
+
+```
+bash -c 'for S in 101 202; do python scripts/collect_vision.py --episodes 128 \
+    --num-envs 16 --seed $S --out data/vision_bc/seed$S; done'
+```
+
+* **seed 101: 80/128 episodes done, champion success 0.963** (reference 0.979 — healthy).
+  ~14 min left. Then seed 202 starts, ~40 min.
+* Log: `/tmp/claude-1000/.../scratchpad/collect.log`. **Idempotent**: `meta.json` marks a
+  finished seed, so re-running the loop resumes rather than redoing.
+* Output: `slot/data/vision_bc/seed{101,202}/ep_XXXX.pt`, ~52 MB/episode, ~13 GB total.
+
+**When it finishes, the whole next stage is one command:**
+
+```
+bash scripts/run_vision_bc.sh          # blind control, then visual policy, then both evals
+```
+
+`STEPS=60000` by default; it trains the **blind arm first on purpose** (see S8-c).
+
+---
+
+## S8-a. The visual policy — what was built
+
+Big Will's directive: *"start training the VISUAL policy… cameras should already be defined in
+the RL github, check commit e56e7df… We want visual to achieve 80%+ success rate. The visual
+policy should use NO privileged information (visual + proprioception only)"*, then
+*"there is a new commit in eva_bc that implements the visual backbone, lets use that! Yes we want
+our visual policy to still use flow!"*
+
+**The contract (VISION_PLAN §0).** Student = wrist D405 RGB 160×90 + workspace D455 RGB 160×90 +
+**23-D proprio** = `obs34[0:16] ⊕ obs34[27:34]`. Deleted as privileged: `block_pose_in_root`
+(`[16:23]`) and `slot_frame` (`[23:27]`) — the latter's 4th element **is the success predicate**.
+The scripted expert / champion teacher stays privileged; only the deployed policy is constrained.
+
+**Ported from EXP08 (`c10bf1a`), `act/` → `slot_act/`:**
+
+| file | how it ported |
+|---|---|
+| `modeling_flow_vision.py` | **verbatim**, one string differs. `slot_act/modeling_flow.py` is byte-identical to `act/`'s, so a verbatim copy means future divergence shows as a diff, not drift. `FlowMatchingVisionPolicy` = flow head, env_state token replaced by ResNet camera tokens; 15 tokens/camera at 160×90; encoder seq = `[state, wrist×15, workspace×15]` = 31 tokens. |
+| `dataset_vision.py` | `obs41` → `obs34`; student contract identical at 23-D |
+| `train_flow_vision.py`, `eval_flow_vision.py` | `act.*` → `slot_act.*` |
+
+**Written new:**
+
+* **`slot_act/cameras.py`** — post-`parse_env_cfg` camera attach (so **`eva_rl` stays untouched**;
+  EXP08's `Rebot-PickPlace-Vision-Play-v1` does not exist in this checkout and we do not need it),
+  the single `student_proprio()`, `audit_no_privileged()`, `rgb()`/`rgb_native()`,
+  `frame_freshness()`, `wrist_camera_pose()`.
+* **`scripts/vision_g0.py`** — camera render/freshness/depth gate.
+* **`scripts/vision_render_probe.py`** + **`run_render_sweep.sh`** — render-quality sweep.
+* **`scripts/vision_shimmer_probe.py`** — temporal-shimmer measurement.
+* **`scripts/vision_fps.py`** — throughput vs (supersample, num_envs).
+* **`scripts/collect_vision.py`** — champion → shards, EXP08's no-GPU-work rule obeyed.
+* **`scripts/eval_vision.py`** — our own runner (the ported eval wants a registered `student`
+  obs group we deliberately do not have).
+* **`scripts/run_vision_bc.sh`** — blind control then visual policy, idempotent.
+
+**Trainer/dataset changes:** `--blind` (zero the images, identical architecture) and the
+**render contract** — dataset carries it from shards and asserts all shards agree, trainer stamps
+it into the checkpoint, `eval_vision.py` refuses a mismatch (including blind-vs-sighted).
+
+## S8-b. The measurements that decided the configuration
+
+**G0 — cameras (PASSED).** Champion driving, 1 env, 300 steps: both cameras `frozen 0/299`;
+wrist depth-min **0.0244–0.0504 m** for all 300 frames (the gripper housing sits a few cm in
+front of the D405 — proof the *render* rides the link even though `Camera.data` poses are frozen
+at spawn); no near-uniform frames. Stills in `slot/runs/vision_g0/{wrist,workspace}/`.
+
+**Render quality — Big Will rejected the first stills as "super noisy". He was right.**
+Isaac defaults `samples_per_pixel = 1` and I had set AA off. Sweep at a pinned pose
+(`runs/vision_render_probe/`), noise proxy on the 160×90 frame the policy consumes:
+
+| variant | render res | noise | vs 4× ref |
+|---|---|---|---|
+| `off_spp1` (what G0 shipped) | 160×90 | 27.51 | 29.28 |
+| `off_spp8` | 160×90 | **27.51** | 29.28 |
+| `fxaa_spp8` | 160×90 | **27.51** | 29.28 |
+| ss2 | 320×180 | 14.24 | 16.15 |
+| ss4 | 640×360 | 7.88 | — |
+| ss8 | 1280×720 | 4.64 | 8.16 |
+| ss16 | 2560×1440 | 3.20 | 7.53 |
+| `dlss_spp1` | 160×90 | 2.35 | **22.58** |
+
+* **`samples_per_pixel` and `FXAA` are NO-OPS in this build** — bit-identical output. Do not
+  waste time on them again.
+* Noise falls as **1/k** with supersample k — classic independent-per-pixel-noise averaging.
+* **DLSS is rejected**: `vs_ref` 22.58 means it reconstructs from a lower internal resolution
+  rather than denoising, and it is EXP08's prime suspect for GPU-load-dependent frames.
+
+**Shimmer (the decisive one).** After pulling EXP08's `2846bb8`, I retested my own G0 claim and
+**it was wrong** — see S8-e. Per-pixel **temporal** std on a held pose, 40 frames:
+
+| render | wrist temporal std | pixels > 2 | drift |
+|---|---|---|---|
+| 1× | **35.24** | 99.8 % | 37.9 |
+| 4× | 9.06 | 99.9 % | 10.7 |
+| 8× | 4.68 | 99.4 % | 5.8 |
+| DLSS @ 1× | 3.89 | 70.0 % | 13.6 |
+
+**EXP08's independently measured 31–37 reproduces exactly.** Their diagnosis is right. But their
+conclusion (take DLSS) does not follow for us, because they only compared non-temporal modes at
+1×; supersampling reaches DLSS-class stability **without a temporal filter**, hence without the
+GPU-load coupling that floored their DAgger driver 80 % → 40 %.
+
+**Throughput decided `supersample = 4`, not 8** (`scripts/vision_fps.py`):
+
+| config | envs | ep-steps/s | 256 eps | temporal std |
+|---|---|---|---|---|
+| no cameras | 16 | 369.0 | 0.12 h | — |
+| ss2 | 16 | 79.6 | 0.54 h | ~18 |
+| **ss4** | **16** | **35.8** | **1.19 h** | **9.06** |
+| ss8 | 8 | 10.5 | 4.06 h | 4.68 |
+| ss8 | 16 | **CUDA OOM** (11 GB card) | — | — |
+
+8× is memory-bound to 8 envs and 3.4× slower per episode. 4× keeps 16 envs and still cuts raw
+shimmer 3.9×. **Residual shimmer at 9.06 is the live suspect if the student's failures look like
+perception rather than precision** — bump to 8 and re-collect (which invalidates all shards).
+
+## S8-c. Why the blind control runs FIRST
+
+The slot **never moves** (`SLOT_CENTER = (0.245, 0.0)`, welded). The only randomisation is the
+block spawn: x ± 20 mm, y ± 30 mm, yaw ± 0.35 rad. So a blind policy can execute the entire
+insertion — it just cannot find the block, and an 89 mm gripper opening on a 30 mm block absorbs
+a lot of ± 30 mm.
+
+**If blind ≥ 0.60, the eval barely tests vision** and no visual number means anything until the
+spawn box is widened. Running blind first puts that verdict on the table *before* there is a
+visual number to be pleased about. `run_vision_bc.sh` enforces the order.
+
+## S8-d. Four traps inherited from EXP08 — adopted as code, not memory
+
+1. **Train/test render mismatch is catastrophic, not gradual.** DLSS-trained student evaluated
+   AA-off: **0.0 % / 1.6 %**. → the render config is part of the dataset, stamped and asserted.
+2. **Optional GPU work in a policy-driving loop perturbs frames** (their in-loop DAgger collector
+   cost 40 points). → our collection loop does buffer reads + one host copy, nothing else;
+   `student_proprio` is computed after the episode ends.
+3. **Renderer cold start**: their Gate C 67.2 % includes a cold round-1 at 6/16; warm is 78–83 %.
+   → `--warmup-episodes 1` discards the first episode per env (also our PhysX rule).
+4. **Quarantine data from a suspect config** — they excluded v1 DAgger data outright.
+
+## S8-e. TWO OF MY OWN INSTRUMENTS WERE BROKEN, AND BOTH FAILED THE SAME WAY
+
+Worth naming as a pattern: **a check whose passing condition is guaranteed by its own
+implementation.**
+
+1. **G0 v1 reported both cameras `frozen 299/299`.** The cameras were fine. `rgb()` did
+   `data[..., :3].to(uint8)` — a **no-op on already-uint8 data that returns the same tensor** — so
+   "last frame" and "this frame" were one buffer and the diff was structurally 0. Fixed by
+   `.clone()`.
+2. **G0's "static-render diff = 0.0 → deterministic render"** — I reported this to Big Will as
+   *clean*. It called `sim.render()` twice **without advancing the frame index**, and the jitter
+   is frame-index-deterministic, so 0.0 was guaranteed. The real number is **35.24**. Corrected
+   in VISION_PLAN §11b.
+
+## S8-f. Gotchas added this session
+
+41. `.to(uint8)` on uint8 is a no-op returning the SAME tensor — clone before storing as "previous".
+42. `sim.render()` twice does not advance the render frame index; to see temporal artifacts you
+    must `env.step()`.
+43. `samples_per_pixel` and `antialiasing_mode="FXAA"` are no-ops in this Isaac Lab build.
+44. Supersample 8 at 16 envs OOMs an 11 GB card with two cameras.
+45. Nulling `terminations.block_dropped` without also nulling `rewards.dropping_penalty` raises at
+    manager build — the penalty is an `is_terminated_term` that resolves its termination by name.
+46. **Never collect training data on an eval seed.** My first instinct was seed 777 — the seed
+    every eval on this project uses. Collection runs 101/202; 777/888 stay clean.
+
+---
+
+## S7-RESULT. EXP_STEER — the summary that matters
+
+Full detail in `docs/slot/EXP_STEER.md` (867 lines). The short version:
+
+* **Gate passed in its strong form**: `eval_steer.py` reproduces `eval_act.py`
+  **episode-for-episode**, 96/96, zero mismatches.
+* **A constant integration latent takes the champion 0.146 → 0.823** under 2 % action noise,
+  with **no training at all** (p = 6 × 10⁻²¹). 81 % of the deficit, recovered by sampling choice.
+* **Every latent fails the same way** — frozen at the staging waypoint, block at carried height,
+  on-axis. Only the *frequency* changes, and the frozen fraction is monotone in success.
+* **The steering action space cannot contain the good latent.** `SteerCore` broadcasts one
+  7-vector across all 50 chunk positions; all four broadcast cells score **0.000/96**, two by
+  never lifting the block. **The pre-registered PPO launch was withdrawn.**
+* **Selection ≫ commitment**: +51.4 vs +16.3 points. (An earlier +37/+30 split from n = 4 was
+  **wrong and is corrected in place** — EXP_STEER §11c.)
+* **Latent selection is saturated**: the oracle over 9 latents is 0.885 vs 0.823 for the best
+  single — **+6.2 pts** — and it did **not move** when the pool nearly doubled. 11/96 episodes
+  are failed by every latent.
+* **Norm is a live axis**: 0.302 / 0.573 / 0.771 / **0.875** at 0.30× / 0.76× / 1.00× / 1.50×,
+  not turned over at ‖x0‖ = 29.3 (prior shell 18.7). Steering caps at 14.25 and initialises at
+  5.61 — the wrong half of the axis.
+* **Not free**: the good latent costs **14.6 pts clean** (0.833 vs 0.979) and buys **nothing** at
+  5 % noise (0.000).
+
+**UNVALIDATED**: 0.823 is the max of 9 candidates on the *same* 96 episodes.
+`scripts/run_x0_holdout.sh 4` has **not run**. Do not quote it as a headline until it does.
+
+---
+
+## S7-S8-PLAN. FORWARD PLAN — subject to change
+
+**Priority 1 — finish the visual policy (the live deliverable).**
+
+1. Collection completes (~1 h left). Read **G2**: pooled champion success must be ≈ 0.979
+   (accept 0.93–1.00). Below that, suspect camera-load physics or frame sync — *not* the teacher.
+2. `bash scripts/run_vision_bc.sh` → blind control trained + evaluated, then the visual policy.
+   Read the visual number **only** against blind on the same seed.
+3. **Decision rule** (VISION_PLAN §6): blind ≥ 0.60 → widen the spawn box before claiming
+   anything. Visual ≥ 0.50 → proceed to DAgger. 0.35–0.50 → one architecture iteration
+   (resolution first, given the 1.5 mm clearance). < 0.35 → stop and diagnose per phase.
+4. **DAgger to the bar.** EXP08's ladder was teacher 93.75 % → BC 67.2 % → DAgger targeting ≥ 90.
+   Ours: teacher 0.979 → BC ? → DAgger ≥ 0.80. Port `exp08_dagger_collect_v2.py`, which computes
+   labels **post-hoc** (validated exact to 7.8e-8) precisely to avoid the in-loop perturbation.
+5. Two seeds before any headline.
+
+**Priority 2 — close the EXP_STEER loose ends (cheap, ~1 h total).**
+
+* `bash scripts/run_x0_holdout.sh 4` — validate 0.823 out of sample. **Blocking for any claim.**
+* `bash scripts/run_x0_norm.sh` — is scaled *sampled* x0 a general robustness knob (no latent
+  search)? Stopped mid-run at Big Will's redirect; idempotent.
+* `bash scripts/run_x0_bcast_ladder.sh` — the path PPO would have walked, for the record.
+* `bash scripts/run_obs_shift.sh` — EXP_STEER §8d + the causal cell (`shift_act002_s4`).
+
+**Priority 3 — repo hygiene.**
+
+* `check_port.py` does not yet cover the four new vision files.
+* The 116 eval JSONs the docs cite are gitignored under `runs/` — Big Will was offered tracking
+  them and has not decided.
+* Vision work is **uncommitted**: `slot_act/cameras.py`, `slot_act/*vision*.py`,
+  `scripts/vision_*.py`, `scripts/collect_vision.py`, `scripts/eval_vision.py`,
+  `scripts/run_vision_bc.sh`, `scripts/run_render_sweep.sh`, `docs/slot/VISION_PLAN.md`.
+
+**Explicitly NOT worth doing, with the evidence that killed it:**
+
+* x0-steering PPO as pre-registered — the action space is a joint-bias term (§12).
+* A contextual bandit over latents — oracle headroom is +6.2 pts and did not grow (§13b).
+* Screening latents offline by summary statistics — seeds 1 (0.771) and 3 (0.031) are
+  indistinguishable on norm, DC, AC spread and gripper DC (§13c).

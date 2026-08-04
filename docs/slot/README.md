@@ -36,7 +36,8 @@ The last row is session 7's result and the most surprising thing the project has
 
 | if you want to know… | read |
 |---|---|
-| **what happened this session** | `EXP_STEER.md` — read its Status block, then §8 → §9 → §11 → §12 → §13 |
+| **the visual policy (live work)** | `VISION_PLAN.md` — §0 contract, §11 the renderer verdict, then `HANDOFF.md` S8-STATE |
+| what happened in the x0/steering session | `EXP_STEER.md` — Status block, then §8 → §9 → §11 → §12 → §13 |
 | the current state, what is running, what is next | `HANDOFF.md` §1, §1-NEXT, §1a |
 | how robust the policy is to a changed world | `EXP_ROBUSTNESS.md` (long; §8 and §13b are the load-bearing bits) |
 | whether the clearance is what makes it hard | `EXP_TIGHT.md`, then `EXP_DEPTH.md` §6 |
