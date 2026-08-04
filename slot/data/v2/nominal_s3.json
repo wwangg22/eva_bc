@@ -1,0 +1,221 @@
+{
+  "task": "Rebot-PrecisionSlot-v0",
+  "args": {
+    "task": "Rebot-PrecisionSlot-v0",
+    "num_envs": 128,
+    "rollouts": 1,
+    "noise_std": 0.0,
+    "noise_rho": 0.95,
+    "noise_phases": "reach,lift,back,spin,turn,push",
+    "hold_decay": 0.7,
+    "slip_tol_mm": 0.0,
+    "grasp_h": 0.031,
+    "carry_z": 0.095,
+    "stage_x": 0.165,
+    "insert_x": 0.2545,
+    "turn_per_wp": 3,
+    "seed": 3,
+    "out": "data/v2/nominal_s3.hdf5",
+    "dry_run": false,
+    "enable_cameras": false,
+    "xr": false,
+    "device": "cuda:0",
+    "visualizer": [],
+    "cpu": false,
+    "verbose": false,
+    "info": false,
+    "deterministic": false,
+    "rendering_mode": null,
+    "kit_args": "",
+    "anim_recording_enabled": false,
+    "anim_recording_start_time": 0,
+    "anim_recording_stop_time": 10,
+    "headless": true,
+    "hide_ui": true,
+    "create_new_stage": false,
+    "physics_gpu": 0,
+    "active_gpu": 0
+  },
+  "rollouts": [
+    {
+      "rollout": 0,
+      "T": 599,
+      "kept": 128,
+      "reset": 0,
+      "seated": 128,
+      "rate": 1.0,
+      "plan_converged": 120,
+      "carry_dev_mrad": 144.8080837726593,
+      "phases": {
+        "warmup": {
+          "t_end": 5,
+          "gap_mm": 89.04803466796875,
+          "held": 0,
+          "blk_mm": [
+            219.74274516105652,
+            -129.8586130142212,
+            31.999923288822174
+          ],
+          "arm_dev_mrad": 1177.5779724121094,
+          "arm_dev_mrad_p90": 1455.9028148651123,
+          "arm_dev_mean_mrad": 867.2897219657898,
+          "slip_mm": 0.0
+        },
+        "reach": {
+          "t_end": 41,
+          "gap_mm": 89.06511688232422,
+          "held": 0,
+          "blk_mm": [
+            219.74274516105652,
+            -129.85859811306,
+            31.999923288822174
+          ],
+          "arm_dev_mrad": 511.83903217315674,
+          "arm_dev_mrad_p90": 633.135199546814,
+          "arm_dev_mean_mrad": 92.73047745227814,
+          "slip_mm": 0.0
+        },
+        "close": {
+          "t_end": 71,
+          "gap_mm": 29.9487247467041,
+          "held": 128,
+          "blk_mm": [
+            220.01340985298157,
+            -129.22531366348267,
+            32.13265538215637
+          ],
+          "arm_dev_mrad": 6.1908625066280365,
+          "arm_dev_mrad_p90": 7.391032297164202,
+          "arm_dev_mean_mrad": 4.720404744148254,
+          "slip_mm": 0.0
+        },
+        "lift": {
+          "t_end": 99,
+          "gap_mm": 29.950054168701172,
+          "held": 128,
+          "blk_mm": [
+            222.78660535812378,
+            -130.45725226402283,
+            61.21177226305008
+          ],
+          "arm_dev_mrad": 32.988041639328,
+          "arm_dev_mrad_p90": 36.94304823875427,
+          "arm_dev_mean_mrad": 18.80684867501259,
+          "slip_mm": 2.226592041552067
+        },
+        "back": {
+          "t_end": 141,
+          "gap_mm": 29.949264526367188,
+          "held": 128,
+          "blk_mm": [
+            165.00526666641235,
+            -130.16055524349213,
+            61.860352754592896
+          ],
+          "arm_dev_mrad": 101.58069431781769,
+          "arm_dev_mrad_p90": 150.2169966697693,
+          "arm_dev_mean_mrad": 43.10678690671921,
+          "slip_mm": 1.9929935224354267
+        },
+        "spin": {
+          "t_end": 201,
+          "gap_mm": 29.949369430541992,
+          "held": 128,
+          "blk_mm": [
+            163.62355649471283,
+            -129.65288758277893,
+            61.39406934380531
+          ],
+          "arm_dev_mrad": 33.708080649375916,
+          "arm_dev_mrad_p90": 58.15960466861725,
+          "arm_dev_mean_mrad": 23.416558280587196,
+          "slip_mm": 2.001325134187937
+        },
+        "turn": {
+          "t_end": 358,
+          "gap_mm": 29.951107025146484,
+          "held": 128,
+          "blk_mm": [
+            167.75183379650116,
+            -0.0016540930118935648,
+            61.791613698005676
+          ],
+          "arm_dev_mrad": 144.8080837726593,
+          "arm_dev_mrad_p90": 194.63397562503815,
+          "arm_dev_mean_mrad": 47.553278505802155,
+          "slip_mm": 3.5041398368775845
+        },
+        "push": {
+          "t_end": 465,
+          "gap_mm": 29.95746612548828,
+          "held": 128,
+          "blk_mm": [
+            257.3707103729248,
+            0.0017844927242549602,
+            63.17730247974396
+          ],
+          "arm_dev_mrad": 74.57838952541351,
+          "arm_dev_mrad_p90": 79.62072640657425,
+          "arm_dev_mean_mrad": 42.835742235183716,
+          "slip_mm": 4.702710546553135
+        },
+        "release": {
+          "t_end": 510,
+          "gap_mm": 89.06500244140625,
+          "held": 0,
+          "blk_mm": [
+            256.706178188324,
+            -0.4575544153340161,
+            54.99996244907379
+          ],
+          "arm_dev_mrad": 5.035198293626308,
+          "arm_dev_mrad_p90": 5.138908512890339,
+          "arm_dev_mean_mrad": 1.5829226467758417,
+          "slip_mm": 6.849648430943489
+        },
+        "retreat": {
+          "t_end": 558,
+          "gap_mm": 89.06500244140625,
+          "held": 0,
+          "blk_mm": [
+            256.706178188324,
+            -0.45755604514852166,
+            54.99996244907379
+          ],
+          "arm_dev_mrad": 115.51392078399658,
+          "arm_dev_mrad_p90": 120.88886648416519,
+          "arm_dev_mean_mrad": 84.82213318347931,
+          "slip_mm": 80.54863661527634
+        },
+        "idle": {
+          "t_end": 599,
+          "gap_mm": 89.06500244140625,
+          "held": 0,
+          "blk_mm": [
+            256.706178188324,
+            -0.45756116742268205,
+            54.99996244907379
+          ],
+          "arm_dev_mrad": 57.86227807402611,
+          "arm_dev_mrad_p90": 58.69147926568985,
+          "arm_dev_mean_mrad": 9.222026914358139,
+          "slip_mm": 91.47235751152039
+        }
+      },
+      "depth_p10_mm": 45.80521211028099,
+      "lat_p90_mm": 1.0920761851593852,
+      "yaw_p90": 0.015687180683016777,
+      "grip_lost": 0
+    }
+  ],
+  "slip_max_mm_p50": 8.611249923706055,
+  "slip_max_mm_p90": 13.138291549682616,
+  "slip_censored_demos": 0,
+  "slip_censored_successful": 0,
+  "total_demos": 128,
+  "successful": 128,
+  "success_rate": 1.0,
+  "attempted": 128,
+  "seated_rate_of_attempted": 1.0,
+  "path": "/home/rei/Desktop/isaaclab/eva_bc/slot/data/v2/nominal_s3.hdf5"
+}

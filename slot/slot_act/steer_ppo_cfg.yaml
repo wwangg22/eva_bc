@@ -1,0 +1,87 @@
+# EXP07 x0-steering PPO (rl_games) — EXP06 residual_ppo_cfg.yaml lineage; deltas:
+#   * obs 50-D / actions 7-D z-space (spaces come from SteerRlGamesWrapper). 50, not the
+#     pick-place 56: see steer_core.py for the two features that do not exist here.
+#   * one rl_games step = one 15-env-step window -> horizon 24 = 360 env steps;
+#     slot episodes are exactly 40 windows (12 s native, window-aligned — pick-place
+#     had to force 30 s / 100 windows to get the same property)
+#   * sigma_init -1.2 (sigma ~ 0.30 in z-space) — pre-registered PENDING gate S0
+#     (EXP07 doc): z exploration is on-manifold (x0 = tanh(z) stays inside the
+#     trained noise distribution), unlike EXP06's action-space dither. If S0 shows
+#     sigma 0.3 costs > 10 pts success, drop to -1.9 (sigma ~ 0.15).
+#   * mu head zero-init (const 0, weight only; bias stays U(+/-0.125) — the
+#     bias-sized-z condition is measured in gate S0, not assumed harmless)
+params:
+  seed: 1
+  algo:
+    name: a2c_continuous
+  model:
+    name: continuous_a2c_logstd
+  network:
+    name: actor_critic
+    separate: False
+    space:
+      continuous:
+        mu_activation: None
+        sigma_activation: None
+        mu_init:
+          name: const_initializer
+          val: 0.0
+        sigma_init:
+          name: const_initializer
+          val: -1.2
+        fixed_sigma: True
+    mlp:
+      units: [256, 128, 64]
+      activation: elu
+      d2rl: False
+      initializer:
+        name: default
+      regularizer:
+        name: None
+  load_checkpoint: False
+  load_path: ''
+  config:
+    name: exp07_steer
+    env_name: rlgpu
+    device: cuda:0
+    device_name: cuda:0
+    multi_gpu: False
+    ppo: True
+    mixed_precision: False
+    normalize_input: True
+    normalize_value: True
+    value_bootstrap: True
+    num_actors: -1  # set from env at runtime
+    reward_shaper:
+      scale_value: 0.01
+    normalize_advantage: True
+    gamma: 0.99
+    tau: 0.95
+    learning_rate: 1.0e-4
+    lr_schedule: adaptive
+    schedule_type: legacy
+    kl_threshold: 0.01
+    score_to_win: 1000000
+    max_epochs: 200
+    save_best_after: 20
+    save_frequency: 50
+    print_stats: True
+    grad_norm: 1.0
+    entropy_coef: 0.001
+    truncate_grads: True
+    e_clip: 0.2
+    horizon_length: 24
+    minibatch_size: 12288  # recomputed at runtime: horizon * num_envs / 4
+    mini_epochs: 8
+    critic_coef: 4
+    clip_value: True
+    seq_length: 4
+    bounds_loss_coef: 0.0001
+  env:
+    clip_observations: 100.0
+    # MUST stay 1.0: rl_games preprocess_actions clamps samples to [-1,1] and then
+    # RESCALES them to the action-space bounds (a2c_common.py:1181-1184) — with any
+    # other value every z reaches the wrapper multiplied by it (EXP06 r1/r2 collapse,
+    # 2026-08-02). 1.0 makes the rescale the identity; effective x0 range is
+    # alpha_x0 * tanh(+/-1) ~ +/-0.76 per dim.
+    clip_actions: 1.0

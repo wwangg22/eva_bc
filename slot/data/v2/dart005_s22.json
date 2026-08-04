@@ -1,0 +1,221 @@
+{
+  "task": "Rebot-PrecisionSlot-v0",
+  "args": {
+    "task": "Rebot-PrecisionSlot-v0",
+    "num_envs": 128,
+    "rollouts": 1,
+    "noise_std": 0.05,
+    "noise_rho": 0.95,
+    "noise_phases": "reach,lift,back,spin,turn",
+    "hold_decay": 0.7,
+    "slip_tol_mm": 0.0,
+    "grasp_h": 0.031,
+    "carry_z": 0.095,
+    "stage_x": 0.165,
+    "insert_x": 0.2545,
+    "turn_per_wp": 3,
+    "seed": 22,
+    "out": "data/v2/dart005_s22.hdf5",
+    "dry_run": false,
+    "enable_cameras": false,
+    "xr": false,
+    "device": "cuda:0",
+    "visualizer": [],
+    "cpu": false,
+    "verbose": false,
+    "info": false,
+    "deterministic": false,
+    "rendering_mode": null,
+    "kit_args": "",
+    "anim_recording_enabled": false,
+    "anim_recording_start_time": 0,
+    "anim_recording_stop_time": 10,
+    "headless": true,
+    "hide_ui": true,
+    "create_new_stage": false,
+    "physics_gpu": 0,
+    "active_gpu": 0
+  },
+  "rollouts": [
+    {
+      "rollout": 0,
+      "T": 599,
+      "kept": 124,
+      "reset": 4,
+      "seated": 114,
+      "rate": 0.890625,
+      "plan_converged": 117,
+      "carry_dev_mrad": 152.1567851305008,
+      "phases": {
+        "warmup": {
+          "t_end": 5,
+          "gap_mm": 89.04989624023438,
+          "held": 0,
+          "blk_mm": [
+            219.9922800064087,
+            -128.94727289676666,
+            31.999927014112473
+          ],
+          "arm_dev_mrad": 1198.7431049346924,
+          "arm_dev_mrad_p90": 1477.6368141174316,
+          "arm_dev_mean_mrad": 882.8848600387573,
+          "slip_mm": 0.0
+        },
+        "reach": {
+          "t_end": 41,
+          "gap_mm": 89.0653076171875,
+          "held": 0,
+          "blk_mm": [
+            219.9922800064087,
+            -128.94725799560547,
+            31.999927014112473
+          ],
+          "arm_dev_mrad": 520.9137201309204,
+          "arm_dev_mrad_p90": 643.2703137397766,
+          "arm_dev_mean_mrad": 103.7379801273346,
+          "slip_mm": 0.0
+        },
+        "close": {
+          "t_end": 71,
+          "gap_mm": 29.988422393798828,
+          "held": 128,
+          "blk_mm": [
+            220.40288150310516,
+            -128.70514392852783,
+            32.891690731048584
+          ],
+          "arm_dev_mrad": 13.177373446524143,
+          "arm_dev_mrad_p90": 20.09224146604538,
+          "arm_dev_mean_mrad": 6.147117353975773,
+          "slip_mm": 0.0
+        },
+        "lift": {
+          "t_end": 99,
+          "gap_mm": 29.986051559448242,
+          "held": 128,
+          "blk_mm": [
+            223.05849194526672,
+            -129.53200936317444,
+            61.8596225976944
+          ],
+          "arm_dev_mrad": 45.92572897672653,
+          "arm_dev_mrad_p90": 58.17306786775589,
+          "arm_dev_mean_mrad": 26.476508006453514,
+          "slip_mm": 2.558367792516947
+        },
+        "back": {
+          "t_end": 141,
+          "gap_mm": 29.984867095947266,
+          "held": 128,
+          "blk_mm": [
+            164.68308866024017,
+            -129.39290702342987,
+            62.368832528591156
+          ],
+          "arm_dev_mrad": 105.31560331583023,
+          "arm_dev_mrad_p90": 163.26835751533508,
+          "arm_dev_mean_mrad": 50.058022141456604,
+          "slip_mm": 2.426024293527007
+        },
+        "spin": {
+          "t_end": 201,
+          "gap_mm": 29.98422622680664,
+          "held": 128,
+          "blk_mm": [
+            163.48570585250854,
+            -128.59193980693817,
+            61.940521001815796
+          ],
+          "arm_dev_mrad": 60.5672188103199,
+          "arm_dev_mrad_p90": 83.39671045541763,
+          "arm_dev_mean_mrad": 36.29448264837265,
+          "slip_mm": 2.331302035599947
+        },
+        "turn": {
+          "t_end": 358,
+          "gap_mm": 29.983226776123047,
+          "held": 128,
+          "blk_mm": [
+            167.67174005508423,
+            0.03562069468898699,
+            62.652572989463806
+          ],
+          "arm_dev_mrad": 152.1567851305008,
+          "arm_dev_mrad_p90": 211.73924207687378,
+          "arm_dev_mean_mrad": 57.46272951364517,
+          "slip_mm": 4.110317677259445
+        },
+        "push": {
+          "t_end": 465,
+          "gap_mm": 29.961605072021484,
+          "held": 128,
+          "blk_mm": [
+            255.63138723373413,
+            0.01070342659659218,
+            64.53589349985123
+          ],
+          "arm_dev_mrad": 72.1174106001854,
+          "arm_dev_mrad_p90": 79.63189482688904,
+          "arm_dev_mean_mrad": 41.96899011731148,
+          "slip_mm": 5.853570997714996
+        },
+        "release": {
+          "t_end": 510,
+          "gap_mm": 89.06500244140625,
+          "held": 0,
+          "blk_mm": [
+            254.68632578849792,
+            -4.233634565025568,
+            54.28121238946915
+          ],
+          "arm_dev_mrad": 36.98285296559334,
+          "arm_dev_mrad_p90": 5.141861736774445,
+          "arm_dev_mean_mrad": 6.2769451178610325,
+          "slip_mm": 11.948351748287678
+        },
+        "retreat": {
+          "t_end": 558,
+          "gap_mm": 89.06500244140625,
+          "held": 0,
+          "blk_mm": [
+            254.6863555908203,
+            -4.233639687299728,
+            54.28121238946915
+          ],
+          "arm_dev_mrad": 112.92257159948349,
+          "arm_dev_mrad_p90": 120.91158330440521,
+          "arm_dev_mean_mrad": 83.22954177856445,
+          "slip_mm": 81.62885159254074
+        },
+        "idle": {
+          "t_end": 599,
+          "gap_mm": 89.06500244140625,
+          "held": 0,
+          "blk_mm": [
+            254.6863555908203,
+            -4.233640152961016,
+            54.28121238946915
+          ],
+          "arm_dev_mrad": 57.495854794979095,
+          "arm_dev_mrad_p90": 58.68899077177048,
+          "arm_dev_mean_mrad": 9.173121303319931,
+          "slip_mm": 92.29588508605957
+        }
+      },
+      "depth_p10_mm": 39.59660232067108,
+      "lat_p90_mm": 1.2949942611157894,
+      "yaw_p90": 0.022044343873858452,
+      "grip_lost": 0
+    }
+  ],
+  "slip_max_mm_p50": 9.544129371643066,
+  "slip_max_mm_p90": 13.374298763275146,
+  "slip_censored_demos": 0,
+  "slip_censored_successful": 0,
+  "total_demos": 124,
+  "successful": 114,
+  "success_rate": 0.9193548387096774,
+  "attempted": 128,
+  "seated_rate_of_attempted": 0.890625,
+  "path": "/home/rei/Desktop/isaaclab/eva_bc/slot/data/v2/dart005_s22.hdf5"
+}

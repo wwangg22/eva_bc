@@ -1,0 +1,171 @@
+{
+  "task": "Rebot-PrecisionSlot-Loose-v0",
+  "n": 128,
+  "args": {
+    "task": "Rebot-PrecisionSlot-Loose-v0",
+    "num_envs": 128,
+    "cem_iters": 120,
+    "grasp_h": 0.031,
+    "carry_z": 0.095,
+    "stage_x": 0.165,
+    "insert_x": 0.2545,
+    "turn_per_wp": 3,
+    "trace": "",
+    "seed": 0,
+    "out_dir": null,
+    "enable_cameras": false,
+    "xr": false,
+    "device": "cuda:0",
+    "visualizer": [],
+    "cpu": false,
+    "verbose": false,
+    "info": false,
+    "deterministic": false,
+    "rendering_mode": null,
+    "kit_args": "",
+    "anim_recording_enabled": false,
+    "anim_recording_start_time": 0,
+    "anim_recording_stop_time": 10,
+    "headless": true,
+    "hide_ui": true,
+    "create_new_stage": false,
+    "physics_gpu": 0,
+    "active_gpu": 0
+  },
+  "jerk": {
+    "reach": {
+      "max_dq_rad": 0.029679417610168457,
+      "worst_joint": 2
+    },
+    "lift": {
+      "max_dq_rad": 0.024686336517333984,
+      "worst_joint": 2
+    },
+    "back": {
+      "max_dq_rad": 0.0866539478302002,
+      "worst_joint": 4
+    },
+    "spin": {
+      "max_dq_rad": 0.023869752883911133,
+      "worst_joint": 6
+    },
+    "turn": {
+      "max_dq_rad": 0.1563645601272583,
+      "worst_joint": 1
+    },
+    "push": {
+      "max_dq_rad": 0.028922773897647858,
+      "worst_joint": 2
+    }
+  },
+  "plan": {
+    "reach": {
+      "waypoints": 14,
+      "max_pos_err_mm": 0.18562648619990796,
+      "max_axis_err": 8.14199447631836e-05,
+      "converged": 128
+    },
+    "lift": {
+      "waypoints": 9,
+      "max_pos_err_mm": 0.0036371120586409234,
+      "max_axis_err": 1.1920928955078125e-07,
+      "converged": 128
+    },
+    "back": {
+      "waypoints": 16,
+      "max_pos_err_mm": 0.04402473132358864,
+      "max_axis_err": 1.621246337890625e-05,
+      "converged": 128
+    },
+    "spin": {
+      "waypoints": 24,
+      "max_pos_err_mm": 0.023156942916102707,
+      "max_axis_err": 1.7285346984863281e-06,
+      "converged": 128
+    },
+    "turn": {
+      "waypoints": 44,
+      "max_pos_err_mm": 0.7858232711441815,
+      "max_axis_err": 0.0015514492988586426,
+      "converged": 117
+    },
+    "push": {
+      "waypoints": 46,
+      "max_pos_err_mm": 0.41415326995775104,
+      "max_axis_err": 1.1920928955078125e-07,
+      "converged": 128
+    }
+  },
+  "stats": {
+    "grasp": {
+      "gap_mm_mean": 29.953292846679688,
+      "gap_mm_p10": 29.92767906188965,
+      "grasped": 128,
+      "dx_mm": 0.5251729162409902,
+      "dy_mm": 0.4492871812544763,
+      "dz_mm": 33.172428607940674,
+      "dyaw": 0.003924234304577112
+    },
+    "lift": {
+      "gap_mm": 29.95074462890625,
+      "still_held": 128,
+      "blk_x_mm": 222.559854388237,
+      "blk_y_mm": -129.72457706928253,
+      "blk_z_mm": 61.164818704128265,
+      "yaw_mean": 0.18300968408584595,
+      "lag_mm": -2.6403451338410378
+    },
+    "back": {
+      "gap_mm": 29.950544357299805,
+      "still_held": 128,
+      "blk_x_mm": 164.80861604213715,
+      "blk_y_mm": -129.52741980552673,
+      "blk_z_mm": 61.83053180575371,
+      "yaw_mean": 0.18357518315315247,
+      "lag_mm": 1.295846072025597
+    },
+    "spin": {
+      "gap_mm": 29.950454711914062,
+      "still_held": 128,
+      "blk_x_mm": 163.69035840034485,
+      "blk_y_mm": -128.95360589027405,
+      "blk_z_mm": 61.372049152851105,
+      "yaw_mean": 0.005926343146711588,
+      "lag_mm": 1.1834439355880022
+    },
+    "turn": {
+      "gap_mm": 29.950742721557617,
+      "still_held": 128,
+      "blk_x_mm": 167.877197265625,
+      "blk_y_mm": 0.0009978598427551333,
+      "blk_z_mm": 61.80012971162796,
+      "yaw_mean": 0.0049231816083192825,
+      "lag_mm": -2.974651288241148
+    },
+    "push": {
+      "gap_mm": 29.958518981933594,
+      "still_held": 128,
+      "blk_x_mm": 257.1699023246765,
+      "blk_y_mm": 0.003938571353501175,
+      "blk_z_mm": 63.508063554763794,
+      "yaw_mean": 0.0023661062587052584,
+      "lag_mm": -3.5719918087124825
+    },
+    "result": {
+      "seated": 128,
+      "rate": 1.0,
+      "raw": 128,
+      "depth_mm": 46.85992747545242,
+      "lat_mm": 0.6691066082566977,
+      "yaw": 0.007262376137077808,
+      "plan_converged": 117,
+      "resets": 0,
+      "fail_depth": 0,
+      "fail_yaw": 0,
+      "fail_seat": 0,
+      "fail_grip": 0,
+      "steps_used": 510,
+      "step_budget": 600
+    }
+  }
+}

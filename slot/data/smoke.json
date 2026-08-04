@@ -1,0 +1,177 @@
+{
+  "task": "Rebot-PrecisionSlot-v0",
+  "args": {
+    "task": "Rebot-PrecisionSlot-v0",
+    "num_envs": 8,
+    "rollouts": 1,
+    "noise_std": 0.0,
+    "noise_rho": 0.95,
+    "hold_decay": 0.7,
+    "grasp_h": 0.031,
+    "carry_z": 0.095,
+    "stage_x": 0.165,
+    "insert_x": 0.2545,
+    "turn_per_wp": 3,
+    "seed": 0,
+    "out": "data/smoke.hdf5",
+    "dry_run": false,
+    "enable_cameras": false,
+    "xr": false,
+    "device": "cuda:0",
+    "visualizer": [],
+    "cpu": false,
+    "verbose": false,
+    "info": false,
+    "deterministic": false,
+    "rendering_mode": null,
+    "kit_args": "",
+    "anim_recording_enabled": false,
+    "anim_recording_start_time": 0,
+    "anim_recording_stop_time": 10,
+    "headless": true,
+    "hide_ui": true,
+    "create_new_stage": false,
+    "physics_gpu": 0,
+    "active_gpu": 0
+  },
+  "rollouts": [
+    {
+      "rollout": 0,
+      "T": 599,
+      "kept": 8,
+      "reset": 0,
+      "seated": 8,
+      "rate": 1.0,
+      "plan_converged": 7,
+      "arm_dev_peak_rad_mean": 1.2622989416122437,
+      "arm_dev_peak_rad_p90": 1.4836686849594116,
+      "phases": {
+        "warmup": {
+          "t_end": 5,
+          "gap_mm": 89.050537109375,
+          "held": 0,
+          "blk_mm": [
+            214.3813967704773,
+            -125.97644329071045,
+            31.99990838766098
+          ],
+          "arm_dev_rad": 1.2622989416122437
+        },
+        "reach": {
+          "t_end": 41,
+          "gap_mm": 89.06510925292969,
+          "held": 0,
+          "blk_mm": [
+            214.3813967704773,
+            -125.97647309303284,
+            31.999893486499786
+          ],
+          "arm_dev_rad": 1.2622989416122437
+        },
+        "close": {
+          "t_end": 71,
+          "gap_mm": 29.95561408996582,
+          "held": 8,
+          "blk_mm": [
+            214.545339345932,
+            -125.30215084552765,
+            32.065730541944504
+          ],
+          "arm_dev_rad": 1.2622989416122437
+        },
+        "lift": {
+          "t_end": 99,
+          "gap_mm": 29.955333709716797,
+          "held": 8,
+          "blk_mm": [
+            217.28049218654633,
+            -126.53040885925293,
+            61.099790036678314
+          ],
+          "arm_dev_rad": 1.2622989416122437
+        },
+        "back": {
+          "t_end": 139,
+          "gap_mm": 29.955406188964844,
+          "held": 8,
+          "blk_mm": [
+            165.08983075618744,
+            -126.36014819145203,
+            61.721548438072205
+          ],
+          "arm_dev_rad": 1.2622989416122437
+        },
+        "spin": {
+          "t_end": 199,
+          "gap_mm": 29.955324172973633,
+          "held": 8,
+          "blk_mm": [
+            164.14767503738403,
+            -125.76451897621155,
+            61.267927289009094
+          ],
+          "arm_dev_rad": 1.2622989416122437
+        },
+        "turn": {
+          "t_end": 353,
+          "gap_mm": 29.955503463745117,
+          "held": 8,
+          "blk_mm": [
+            168.577641248703,
+            0.008489572792313993,
+            61.74353510141373
+          ],
+          "arm_dev_rad": 1.2622989416122437
+        },
+        "push": {
+          "t_end": 460,
+          "gap_mm": 29.953895568847656,
+          "held": 8,
+          "blk_mm": [
+            256.99126720428467,
+            0.00794975130702369,
+            63.345566391944885
+          ],
+          "arm_dev_rad": 1.2622989416122437
+        },
+        "release": {
+          "t_end": 505,
+          "gap_mm": 89.06500244140625,
+          "held": 0,
+          "blk_mm": [
+            256.96760416030884,
+            -0.44564215932041407,
+            54.999954998493195
+          ],
+          "arm_dev_rad": 1.2622989416122437
+        },
+        "retreat": {
+          "t_end": 553,
+          "gap_mm": 89.06500244140625,
+          "held": 0,
+          "blk_mm": [
+            256.9676637649536,
+            -0.44569652527570724,
+            54.99995872378349
+          ],
+          "arm_dev_rad": 1.2622989416122437
+        },
+        "idle": {
+          "t_end": 599,
+          "gap_mm": 89.06500244140625,
+          "held": 0,
+          "blk_mm": [
+            256.9676637649536,
+            -0.44563901610672474,
+            54.999954998493195
+          ],
+          "arm_dev_rad": 1.2622989416122437
+        }
+      }
+    }
+  ],
+  "total_demos": 8,
+  "successful": 8,
+  "success_rate": 1.0,
+  "path": "/home/rei/Desktop/isaaclab/eva_bc/slot/data/smoke.hdf5"
+}

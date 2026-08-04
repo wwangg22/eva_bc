@@ -1,0 +1,222 @@
+{
+  "task": "Rebot-PrecisionSlot-v0",
+  "n": 128,
+  "args": {
+    "task": "Rebot-PrecisionSlot-v0",
+    "num_envs": 128,
+    "cem_iters": 120,
+    "grasp_h": 0.031,
+    "carry_z": 0.095,
+    "stage_x": 0.165,
+    "insert_x": 0.2545,
+    "turn_per_wp": 3,
+    "no_retreat": false,
+    "trace": "",
+    "slot_dx": 0.02,
+    "seed": 777,
+    "out_dir": "logs/expert_dx/p020",
+    "seed_file": "logs/expert_dx/p020/seed_q.json",
+    "video": false,
+    "fps": 25,
+    "enable_cameras": false,
+    "xr": false,
+    "device": "cuda:0",
+    "visualizer": [],
+    "cpu": false,
+    "verbose": false,
+    "info": false,
+    "deterministic": false,
+    "rendering_mode": null,
+    "kit_args": "",
+    "anim_recording_enabled": false,
+    "anim_recording_start_time": 0,
+    "anim_recording_stop_time": 10,
+    "headless": true,
+    "hide_ui": true,
+    "create_new_stage": false,
+    "physics_gpu": 0,
+    "active_gpu": 0
+  },
+  "jerk": {
+    "reach": {
+      "max_dq_rad": 0.025139451026916504,
+      "worst_joint": 2
+    },
+    "lift": {
+      "max_dq_rad": 0.024036884307861328,
+      "worst_joint": 2
+    },
+    "back": {
+      "max_dq_rad": 0.0979987382888794,
+      "worst_joint": 4
+    },
+    "spin": {
+      "max_dq_rad": 0.026996612548828125,
+      "worst_joint": 6
+    },
+    "turn": {
+      "max_dq_rad": 0.34087878465652466,
+      "worst_joint": 1
+    },
+    "push": {
+      "max_dq_rad": 1.2250499725341797,
+      "worst_joint": 6
+    },
+    "retreat": {
+      "max_dq_rad": 0.05965879559516907,
+      "worst_joint": 4
+    }
+  },
+  "plan": {
+    "reach": {
+      "waypoints": 14,
+      "max_pos_err_mm": 0.14545027806889266,
+      "max_axis_err": 9.179115295410156e-05,
+      "converged": 128
+    },
+    "lift": {
+      "waypoints": 9,
+      "max_pos_err_mm": 0.003962420123571064,
+      "max_axis_err": 1.1920928955078125e-07,
+      "converged": 128
+    },
+    "back": {
+      "waypoints": 16,
+      "max_pos_err_mm": 0.07919399649836123,
+      "max_axis_err": 1.9669532775878906e-05,
+      "converged": 128
+    },
+    "spin": {
+      "waypoints": 24,
+      "max_pos_err_mm": 0.03645073593361303,
+      "max_axis_err": 2.1457672119140625e-06,
+      "converged": 128
+    },
+    "turn": {
+      "waypoints": 44,
+      "max_pos_err_mm": 11.660861782729626,
+      "max_axis_err": 0.011709034442901611,
+      "converged": 88
+    },
+    "push": {
+      "waypoints": 56,
+      "max_pos_err_mm": 25.344593450427055,
+      "max_axis_err": 0.05339246988296509,
+      "converged": 118
+    },
+    "retreat": {
+      "waypoints": 29,
+      "max_pos_err_mm": 0.010837088666448835,
+      "max_axis_err": 0.0,
+      "converged": 128
+    }
+  },
+  "stats": {
+    "reach": {
+      "gap_mm": 89.06512451171875,
+      "still_held": 0,
+      "blk_x_mm": 219.2472517490387,
+      "blk_y_mm": -130.8271586894989,
+      "blk_z_mm": 31.999919563531876,
+      "yaw_mean": 0.16952256858348846,
+      "lag_mm": -0.7785279303789139,
+      "seated": 0
+    },
+    "grasp": {
+      "gap_mm_mean": 29.94913673400879,
+      "gap_mm_p10": 29.926570892333984,
+      "grasped": 128,
+      "dx_mm": 0.5825827829539776,
+      "dy_mm": 0.4025595262646675,
+      "dz_mm": 33.15334394574165,
+      "dyaw": 0.003732271958142519
+    },
+    "lift": {
+      "gap_mm": 29.9533748626709,
+      "still_held": 128,
+      "blk_x_mm": 222.37150371074677,
+      "blk_y_mm": -131.48406147956848,
+      "blk_z_mm": 61.211127787828445,
+      "yaw_mean": 0.16859790682792664,
+      "lag_mm": -2.857596380636096,
+      "seated": 0
+    },
+    "back": {
+      "gap_mm": 29.952150344848633,
+      "still_held": 128,
+      "blk_x_mm": 165.8181995153427,
+      "blk_y_mm": -131.22069835662842,
+      "blk_z_mm": 61.8603378534317,
+      "yaw_mean": 0.1695428192615509,
+      "lag_mm": 0.2791221486404538,
+      "seated": 0
+    },
+    "spin": {
+      "gap_mm": 29.953468322753906,
+      "still_held": 128,
+      "blk_x_mm": 164.44352269172668,
+      "blk_y_mm": -130.6588351726532,
+      "blk_z_mm": 61.41889840364456,
+      "yaw_mean": 0.004536536522209644,
+      "lag_mm": 0.4713886883109808,
+      "seated": 0
+    },
+    "turn": {
+      "gap_mm": 29.952667236328125,
+      "still_held": 128,
+      "blk_x_mm": 167.32418537139893,
+      "blk_y_mm": -0.06929926894372329,
+      "blk_z_mm": 62.63480335474014,
+      "yaw_mean": 0.011018393561244011,
+      "lag_mm": -2.803236711770296,
+      "seated": 0
+    },
+    "push": {
+      "gap_mm": 29.96023941040039,
+      "still_held": 128,
+      "blk_x_mm": 276.9891023635864,
+      "blk_y_mm": 0.00918006662686821,
+      "blk_z_mm": 62.39329278469086,
+      "yaw_mean": 0.0022510201670229435,
+      "lag_mm": -3.6696416791528463,
+      "seated": 18
+    },
+    "raw_gripped": 128,
+    "release": {
+      "gap_mm": 89.06500244140625,
+      "still_held": 0,
+      "blk_x_mm": 276.9153118133545,
+      "blk_y_mm": -0.41595485527068377,
+      "blk_z_mm": 54.99996244907379,
+      "yaw_mean": 0.003500072518363595,
+      "lag_mm": -2.759179100394249,
+      "seated": 128
+    },
+    "retreat": {
+      "gap_mm": 89.06500244140625,
+      "still_held": 0,
+      "blk_x_mm": 276.9153118133545,
+      "blk_y_mm": -0.4159512172918767,
+      "blk_z_mm": 54.99996244907379,
+      "yaw_mean": 0.003500028047710657,
+      "lag_mm": -100.41093826293945,
+      "seated": 128
+    },
+    "result": {
+      "seated": 128,
+      "rate": 1.0,
+      "raw": 128,
+      "depth_mm": 46.91530764102936,
+      "lat_mm": 0.5931773339398205,
+      "yaw": 0.003500028047710657,
+      "plan_converged": 88,
+      "resets": 0,
+      "fail_depth": 0,
+      "fail_yaw": 0,
+      "fail_seat": 0,
+      "fail_grip": 0,
+      "steps_used": 588,
+      "step_budget": 600
+    }
+  }
+}
