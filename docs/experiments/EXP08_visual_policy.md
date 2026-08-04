@@ -221,6 +221,28 @@ DAgger → steering — with vision obs; agreed NO after this reasoning):
   fixed; absolute level may drop (student was trained on DLSS-look frames →
   AA-off frames are out-of-distribution) → then re-collect BC + DAgger with AA
   off and retrain on clean frames.
+- 2026-08-03: **Renderer investigation CLOSED — staying on DLSS + post-hoc
+  labeling.** AA-off floored the DLSS-trained student (0.0%/1.6% — total
+  train/test frame mismatch), and the non-temporal modes turn out unusable
+  anyway: static-scene per-pixel temporal std is 31–37 on >99.6% of pixels
+  (unbiased, drift <1), IDENTICAL for FXAA and Off to 2 decimals, and
+  `samples_per_pixel` 8/16 changes nothing — the shimmer is the RTX real-time
+  path's per-frame projection jitter (frame-index-deterministic), which only a
+  temporal filter integrates. So in this kit config the choice is: DLSS
+  (smooth frames, content GPU-load-dependent) or raw jitter shimmer (~14%
+  noise/pixel). Decision: DLSS, pinned explicitly in the env cfg, with the
+  RULE that policy-driving loops do NO optional GPU work between steps.
+  v1 student + Gate C (67.2%) remain valid; no re-collection needed.
+- 2026-08-03: **DAgger v2 collector** (`exp08_dagger_collect_v2.py`): rollout
+  loop byte-equivalent to eval (buffer reads + ~90 KB device clones per
+  boundary only); champion obs56/z/chunk labels computed POST-HOC after
+  rolling stops, from recorded raw state via `obs56_from_raw` (pure-tensor
+  mirror of task_features) — **validated exact, max abs diff 7.8e-08 vs live
+  build_obs**. Built-in audit: student driving success must be ~80% (clean
+  no-label baseline); the validation run's 18.8% was expected (validation mode
+  deliberately runs the perturbing live build for comparison). v1 in-loop
+  DAgger data (r1_seed42/123) EXCLUDED from training — collected under
+  degraded frames.
 - Gate D design (per §4): student DRIVES, champion labels student-visited
   states. Labels are full 50-step chunks computed champion-side (steering z
   from privileged obs56 → x0 = tanh(z) → frozen base flow), collected at the
