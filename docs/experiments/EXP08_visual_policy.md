@@ -337,6 +337,20 @@ DAgger → steering — with vision obs; agreed NO after this reasoning):
   kill #4 hit after the v2-555 eval; chain resumed (train v4 on 12 dirs →
   evals 42/123/555). v4's bar: beat 75.0 on 42/123 AND move 37.5 on 555
   meaningfully — the 555 number is the one that matters for the real rig.
+- 2026-08-04: **Gate D round 3 (v4): 78.9% pooled 42/123 — NEW BEST, +3.9 over
+  v2 — and held-out 555 jumped 37.5 → 65.6 (+28.1).** s42 84.4 (rounds
+  13,14,14,13 — the DLSS cold-round handicap is GONE on s42: cold-start pool
+  vindicated), s123 73.4 (7,13,14,13 — cold round unimproved here), 555 65.6
+  (10,13,11,8; stall1 14, never-placed 8 — halved from v2's 16). Dataset was
+  12 dirs / ~480 eps (BC + r1v2 + r2 + fresh-seed r3 777/888 + cold
+  777/888/999/1111), from scratch, 100k steps. Read: fresh-seed DAgger is THE
+  lever — it fixed most of the generalization disease in one round and still
+  improved the in-distribution ladder. v3's regression retrospectively looks
+  like same-seed r2 dilution + variance, now swamped by diverse data. **Stall
+  rule not triggered; rising → round 4**: collect from v4 (best student) on
+  NEW fresh seeds 1234/2345 (warm r4 64×2, guard 0.45 → expect ~0.65 driving)
+  + cold pools 1234/2345 (16×2, --keep-first); train v5 on 16 dirs (~640 eps);
+  eval 42/123/555 (555 stays never-collected, the pure held-out probe).
   states. Labels are full 50-step chunks computed champion-side (steering z
   from privileged obs56 → x0 = tanh(z) → frozen base flow), collected at the
   student's 15-step window boundaries ONLY — those are the exact states where
