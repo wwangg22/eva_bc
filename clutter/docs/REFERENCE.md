@@ -15,15 +15,18 @@ Nothing here depends on the success predicate. Everything that did is gone.
 ```
 Extract the target from a row of five 36 x 30 x 70 mm blocks and set it down in the goal
 zone, WITHOUT moving any of the four neighbours more than 2 mm from where it spawned.
+The row spawns at a random heading, and the target is any one of the five blocks.
 ```
 
 | | |
 |---|---|
-| row | distractors at y = ±42, ±84 mm; target y = 0; all at x = 250 mm |
+| row | five slots at 42 mm pitch; **the target occupies a uniformly drawn one of the five** |
+| row pose | centre at r ≈ 250 mm ±10 mm, **heading `U(−0.30, +0.30)` rad**, applied rigidly |
 | free gap between neighbours | **12 mm** (42 mm pitch, 30 mm blocks) |
-| goal | (185, −185) mm — **the carry passes over `distractor_0` and `distractor_1`** |
-| spawn jitter | target x ±12 mm and **yaw ±0.20 rad** (no y); distractors x ±10, y ±5 mm |
-| measured min free gap, pooled | 2.6–13.0 mm, median ~8 |
+| goal | (185, −185) mm, fixed — its bearing from the row now varies with the heading |
+| spawn jitter, in the ROW's frame | target x ±12 mm and **yaw ±0.20 rad** (no y); distractors x ±10, y ±5 mm |
+| measured free gap, pooled | **2.6–20.9 mm**, median ~8 |
+| max block radius the env can draw | **0.3087 m** — verified graspable (P41), envelope is 0.32 |
 | blocks settle at | z = **32 mm**, not 35 — this shifts every height gate |
 | masses | target 0.040 kg, distractors **0.025 kg** (deliberately lighter, so they tip) |
 | friction | block 0.9 / table 1.0 / effective **0.95** (PhysX averages, not 0.9) |
@@ -31,8 +34,17 @@ zone, WITHOUT moving any of the four neighbours more than 2 mm from where it spa
 | physics dt / decimation | 2.5 ms / 8 → **one legal action lasts 20 ms** |
 | episode | 14 s = 700 env steps |
 
-**Current baseline to beat: 16.4 %** (frozen `pose_p33` expert, 768 held-out episodes,
-seeds 88000–88005). **Mission target ≈70 %.**
+**Current baseline to beat: 3.0 %** (frozen `pose_p33` expert, 768 held-out episodes, seeds
+88000–88005, on the randomised row). The same expert scores **17.1 %** on `-Fixed-v0`, the
+frozen-row control. **Mission target ≈70 %.**
+
+⚠ **Report success PER SLOT.** The heading is an isometry and cannot change the clutter; the
+slot is not — an end slot has one adjacent neighbour instead of two. A pooled rate mixes
+configurations of materially different difficulty. See `17_ROW_RANDOMISATION.md`.
+
+**Variants.** `-v0` / `-Play-v0` are the task. `-Tight-v0` is the 6 mm-gap rung.
+**`-Fixed-v0`** (strict rule, frozen row) and **`-Lenient-v0`** (topple-only, frozen row) are
+diagnostic controls — nothing should be developed against them.
 
 ---
 
@@ -215,6 +227,15 @@ of this costs GPU-days.
 - **When nothing predicts the quantity, select on the quantity** — then verify the winner *and
   the loser* on episodes that had no vote.
 - **A registered prediction can be refuted by a smoke test.** Four minutes.
+- **A probe that *searches* needs a cell whose answer is already known.** P41's first run
+  reported 9 of 27 spawns ungraspable — including the nominal row the expert grasps at 16.4 %.
+  Without that control in the table the env would have been "fixed" for a problem it did not have.
+- **Derive tolerances from the noise they will see, don't pick them.** A 20 mrad check on a
+  quantity whose estimator has a 43 mrad sd fails on its own noise, twice.
+- **If a worst case has more than two interacting signs, enumerate it.** Four sign choices were
+  hand-derived and the resulting "worst corner" landed *inside* the ordinary grid.
+- **Write the decision rule before iterating on the measurement.** "A reachability wall is
+  contiguous" made five runs agree on the verdict while disagreeing on which cells failed.
 
 ### On believing things
 
@@ -248,10 +269,19 @@ cd /home/eva/Desktop/isaacLab/eva_bc
 ```
 
 ```bash
-# THE BASELINE -- the frozen expert on the strict task. 16.4 %.
+# THE BASELINE -- the frozen expert on the randomised task. 3.0 %.
 python -u clutter/act/collect_demos.py --num_envs 128 --arms appr --close 40 \
     --holds-scale 0.25 --seeds 88000,88001,88002,88003,88004,88005 --headless \
-    --json clutter/runs/strict2mm_expert.json
+    --json clutter/runs/p42_random_row.json
+
+# ...and on the frozen-row control. 17.1 %. Add --task for any variant.
+python -u clutter/act/collect_demos.py --task Rebot-ClutterExtract-Fixed-v0 --num_envs 128 \
+    --arms appr --close 40 --holds-scale 0.25 --seeds 88000,88001,88002,88003,88004,88005 \
+    --headless --json clutter/runs/p42_fixed_regression.json
+
+# P41 -- reachability gate for the randomised row, plus the per-slot close
+python -u clutter/probes/p41_row_reach.py --num_envs 128 --headless \
+    --json clutter/runs/p41_row_reach.json
 
 # threshold calibration -- null action, full episode. 1 um of drift, 0/768 disturbed.
 python -u clutter/probes/p35_disturb_calibration.py --num_envs 128 --steps 700 --headless \

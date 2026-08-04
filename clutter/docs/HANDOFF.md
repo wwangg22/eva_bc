@@ -19,20 +19,29 @@ Companion documents, in reading order:
 
 ## 1. STATUS
 
+> **2026-08-04 — READ §10 FIRST.** The environment changed again: the row now spawns at a random
+> heading and the target is any one of the five blocks. Every success number below §10 that is
+> not labelled `-Fixed-v0` describes the *frozen-row* task. Full account:
+> **`17_ROW_RANDOMISATION.md`**.
+
 ```
 TASK      Extract the target from a row of five blocks and set it down in the goal zone,
           WITHOUT moving any of the four neighbours more than 2 mm from where it spawned.
+          The row spawns at a random heading; the target is any one of the five blocks.
 TARGET    ~70 % on random spawns.
-NOW       16.4 %   (frozen pose_p33 expert, 768 held-out episodes, seeds 88000-88005)
-NEXT      P40 -- measure the drag step of the extract-then-grasp manoeuvre.
+NOW       3.0 %    (frozen pose_p33 expert, 768 held-out episodes, seeds 88000-88005)
+          17.1 %   the same expert on -Fixed-v0, the frozen-row control
+NEXT      Build the new expert. P40 (the drag gate) and task #26 (per-env pose solving)
+          are the two candidate manoeuvres and #26 should be measured first -- it is
+          cheaper and P41 part B suggests it may make P40 unnecessary.
 ```
 
-**53.6 points to find.** The whole of the deficit is one mechanism, and it is measured (§4).
+The current expert is a **baseline to beat, not a solution to extend**. Two of its design
+decisions now fail: it closes the jaw *in situ* between the neighbours (§4), and its whole
+manoeuvre is a fixed joint chain planned for one target pose that `refine` cannot move far
+enough (§10).
 
-The current expert is a **baseline to beat, not a solution to extend**. Its central design
-decision — close the jaw *in situ*, between the neighbours — is precisely the thing that fails.
-
-Both repos are committed and pushed: `eva_bc@4e7dd8b`, `eva_rl@d0e0781`.
+Both repos are committed and pushed: `eva_bc@9f9d6bb`, `eva_rl@d329ff3`.
 
 ---
 
@@ -445,6 +454,12 @@ rather than a slice.
 
 ### 6.2 Ordered steps
 
+**Reordered 2026-08-04.** Step 0 is new and comes before P40: **task #26, per-env pose solving.**
+P41 part B measured an in-situ close at a *well-solved* pose disturbing neighbours by only
+0.8–1.6 mm median, against the frozen expert's 4.8 mm. If that survives spawn jitter, the whole
+extract-then-grasp plan below is solving a problem that a better pose already solves. It is
+cheaper than P40 and it can retire it. Re-run P41 part B on jittered spawns first.
+
 ```
 1  P40  GATE.  Measure step 2 alone.  Reach in with the jaw open, drag the target -x by
         30-40 mm, watch the neighbours.  Report the disturbance rate, and separately how
@@ -504,16 +519,63 @@ Fallbacks, in order:
 
 ### 6.5 Deferred, deliberately
 
-* **Row orientation randomisation.** Big Will asked for it and `challenge/` is now editable, so
-  it is a legitimate edit to `clutter_env_cfg.py` — a rigid rotate/translate of the whole row,
-  applied *after* the per-block jitter and *before* `record_spawn`. **Deferred until an expert
-  exists**: rotating the row before there is a manoeuvre to rotate would measure nothing. Note
-  the row's own 12 mm gap does not rotate with it, so expect a heading at which any fixed grasp
-  stops working, and expect that to be the finding rather than a bug.
-* **A diverse, multi-mode expert.** The same piece of work: mode-mixing hurts BC only when the
-  mode is *unobservable*, so randomising the heading is what supplies the observable that makes
-  multiple grasp modes learnable rather than merely ambiguous.
+* ~~**Row orientation randomisation.**~~ **DONE 2026-08-04 — §10.** The deferral argument
+  ("rotating the row before there is a manoeuvre to rotate would measure nothing") was wrong:
+  the expert is being rebuilt anyway, so doing it *first* costs a day and doing it *after* costs
+  the expert. Also note the old worry — "the row's 12 mm gap does not rotate with it" — was
+  simply mistaken: a rigid transform rotates the blocks too, so the gap rotates with it and the
+  clutter geometry is invariant.
+* **A diverse, multi-mode expert** (#20). Now unblocked and more clearly motivated: mode-mixing
+  hurts BC only when the mode is *unobservable*, and §10.1 says a single pose family cannot
+  cover the slot × heading space — so multiple modes are not optional, and `clutter_obs` already
+  supplies the observable that makes them learnable rather than merely ambiguous.
 * **`-Tight-v0`** (6 mm gap) has never been measured, under either predicate.
+
+---
+
+## 10. 2026-08-04 — THE ROW MOVES NOW
+
+Full account and every number: **`17_ROW_RANDOMISATION.md`**. The short version:
+
+Big Will: *"I think its smarter to fix the env completely (make row randomize, and also can you
+alternate the block of interest (right now it is always the middle one)"* — both were deferred
+items #20/#21, and the redirection is right: the expert is being rebuilt from scratch anyway, so
+building it against a row that never moves would bake in the assumptions the randomisation
+exists to forbid, and it would have to be rebuilt a second time.
+
+`mdp.reset_clutter_row` replaces the five per-asset reset terms and draws a rigid whole-row
+heading `U(−0.30, +0.30)` rad, a ±10 mm rigid centre offset, **and which of the five slots holds
+the target**. New `-Fixed-v0` (strict rule, frozen row) is the ablation control; `-Lenient-v0`
+was pinned to the frozen row too, because "the old task" is the predicate *and* the spawn
+distribution.
+
+**The two changes are different in kind.** The row's pose is an *isometry* — gaps, faces and
+bearings unchanged, so it constrains the arm, not the clutter. The slot is not: an end slot has
+one adjacent neighbour instead of two. **Report success per slot from now on.**
+
+```
+frozen expert, 768 eps    -Fixed-v0  17.1 %   (vs 16.4 % pre-refactor: distributional
+                          -v0         3.0 %    regression check, inside the +/-2.6 CI)
+taxonomy on -v0           distractor_disturbed 97.0 %, time_out 0.0 %
+P41 reachability          25/27 cells; BOTH worst corners at r = 0.3087 m solve with
+                          pos_err 0.00 mm, o_align 1.000 -> NO WALL, ships as configured
+P41 part B (close/slot)   end slots 0/9 disturbed, interior 3/14 -- suggestive, tiny n
+smoke test                V8 added, V1 rewritten; passes
+```
+
+Three things this opened up, all in `17_` §4:
+
+1. **The row centre's pose family does not continue to slot 0 at positive yaw.** Continuation
+   misses there on *position* by 1.5–5.9 mm while a global search finds `pos_err 0.82 mm`,
+   `o_align 1.000`. This is the two-IK-branches trap as a search boundary: **a single pose family
+   will not cover the slot × heading space**, and the hole will not announce itself.
+2. **Accepted poses live in a narrow wrist band, 17.2–23.8 mm.** Every pose that cleared the
+   geometric gates and then shoved the row had `wrist_z ≥ 28 mm`. Cheap new gate, and it
+   separates families `o_align` cannot.
+3. **Closing in situ at a *well-solved* pose moved neighbours only 0.8–1.6 mm median** against
+   the frozen expert's 4.8 mm / 44 mm p90. If that survives spawn jitter — and P41 had none,
+   which flatters it exactly where the expert fails — then the deficit is **the pose, not the
+   manoeuvre**, and P40 may be unnecessary. Task #26; settle it before building anything.
 
 ---
 
