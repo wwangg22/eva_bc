@@ -134,6 +134,11 @@ def main() -> None:
                         help="privileged discontinuity flush (DIAGNOSTIC ONLY; default off "
                              "for the student -- see module docstring)")
     parser.add_argument("--episode-length-s", type=float, default=30.0)
+    parser.add_argument("--burst-every", type=int, default=0,
+                        help="EXP09 S2 DIAGNOSTIC: every N env steps run a dummy GPU burst "
+                             "(PPO-update signature) to measure DLSS frame perturbation. 0 = off")
+    parser.add_argument("--burst-iters", type=int, default=200,
+                        help="matmul iterations per burst (200 x 2048^2 ~ 1-2 s, one PPO update)")
     parser.add_argument("--out", required=True, help="results JSON path")
     AppLauncher.add_app_launcher_args(parser)
     args = parser.parse_args()
@@ -195,6 +200,11 @@ def main() -> None:
         actions = controller.act(obs_dict["student"]).to(u.device)
         obs_dict, _, terminated, truncated, _ = env.step(actions)
         ep_len += 1
+        if args.burst_every and int(ep_len.sum()) // n % args.burst_every == 0:
+            m = torch.randn(2048, 2048, device=device)
+            for _ in range(args.burst_iters):
+                m = m @ m * 1e-3
+            torch.cuda.synchronize()
 
         done = (terminated | truncated).view(-1).cpu().nonzero(as_tuple=False).squeeze(-1)
         if done.numel():

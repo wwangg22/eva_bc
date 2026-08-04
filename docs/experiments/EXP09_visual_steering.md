@@ -157,6 +157,19 @@ of x0-steering — both bigger conversations with Big Will.
   tokens→z, iterate. The perception head (S3v2 ckpt) is shelved for now —
   useful later for diagnostics/real-rig cross-checks, not in the deploy path.
 
+- 2026-08-04: **S2 FAILED — PPO-style bursts corrupt frames.** v4 seed-42 eval
+  with a ~0.5 s matmul burst every 64 steps: **70.3%** (7,11,15,12) vs clean
+  84.4% (13,14,14,13); −14.1 pts, far outside the ±3 bar; the burst even
+  destroys the cold-pool round-1 gain (13→7). Live PPO in the vision env (R2')
+  is DEAD. **Route locked: R3' offline AWR.** Collector = eval loop + per-15-
+  step-boundary z ~ N(0,1)^7, x0 = tanh(z) expanded, passed via the x0 arg
+  (replaces the internal randn — same loop compute, C2-safe); record images/
+  proprio/z + per-window placed-delta and reward sum + episode outcome.
+  Post-hoc: recompute frozen v4 tokens from recorded images → fit steering
+  head by advantage-weighted regression (window placed-delta primary, reward
+  shaping secondary); iterate collections with head-mean + exploration noise.
+  Eval = deterministic head mean, integrated forward.
+
 ## 5. Phases (after smoke tests, subject to change)
 
 P0 = S1–S3 (~half a day, mostly reusing existing shards + eval loop).
