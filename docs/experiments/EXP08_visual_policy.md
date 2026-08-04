@@ -351,6 +351,23 @@ DAgger → steering — with vision obs; agreed NO after this reasoning):
   NEW fresh seeds 1234/2345 (warm r4 64×2, guard 0.45 → expect ~0.65 driving)
   + cold pools 1234/2345 (16×2, --keep-first); train v5 on 16 dirs (~640 eps);
   eval 42/123/555 (555 stays never-collected, the pure held-out probe).
+- 2026-08-04: **Gate D round 4 (v5): 69.5 pooled / 56.2 held-out — REGRESSION
+  on both axes; STALL RULE TRIGGERED.** s42 70.3 (11,13,10,11), s123 68.8
+  (9,12,12,11), 555 56.2 (12,7,10,7). Dataset 16 dirs / ~640 eps (r4 audits
+  were healthy 0.64–0.69). Full ladder: 67.2 → 75.0 → 68.0 → 78.9 → 69.5
+  pooled; held-out 37.5 → 65.6 → 56.2. Read: from-scratch retrains oscillate
+  ±5–9 pts (v3 and v5 both regressed after ADDING data with clean audits) —
+  DAgger has plateaued in the ~70–79 band, well short of 90, and more rounds
+  are now noise-chasing. **DAgger phase CLOSED for now. v4
+  (`runs/exp08_bc/v4_dagger3/ckpt_final.pt`, 78.9 pooled / 65.6 held-out) is
+  the champion vision base.** Next per the stall rule AND Big Will's explicit
+  directive ("I really want to get the steering working with visual DATA"):
+  **EXP09 visual x0-steering** (design doc pushed eb5431b), starting with
+  smoke test S1 — does the distilled vision base respond to x0 at all?
+  Untested levers left on the table for any future DAgger revival, logged for
+  honesty: seed-averaged checkpoints / best-of-N retrains (variance is ±5–9!),
+  fine-tune-from-v4 instead of from-scratch, lower LR final phase, and
+  weighting fresh-seed dirs above same-seed dirs.
   states. Labels are full 50-step chunks computed champion-side (steering z
   from privileged obs56 → x0 = tanh(z) → frozen base flow), collected at the
   student's 15-step window boundaries ONLY — those are the exact states where
