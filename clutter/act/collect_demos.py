@@ -12,7 +12,7 @@ Every number in Stages 0 and 1 -- 25 %, 57.7 %, 72.1 % -- was measured with
 `ClutterExpert.run_physics`, which sets joint drive targets and calls `sim.step()` directly.
 It does that on purpose: `env.step` runs the whole MDP, and the `distractor_toppled`
 termination resets the scene and re-spawns the blocks upright, so a topple erases the evidence
-of itself (`07_STAGE0_RESULTS.md` §7.5, and P09's first run, where distractors appeared to
+of itself (`REFERENCE.md` §5, and P09's first run, where distractors appeared to
 move *toward* a push directed away from them).
 
 Demonstrations cannot be collected that way. A demo has to be a sequence of legal 7-D actions
@@ -401,7 +401,7 @@ class Recorder:
         /data/demo_<i>.attrs["success"]  bool
 
     `train_mask` is written all-ones. It is the mechanism for censoring the ambiguous tail of
-    the 70-step `close` hold (`09_STAGE2_BC_PLAN.md` N2) and the censor rides the same
+    the 70-step `close` hold (the N2 chunk-ambiguity risk, `REFERENCE.md` §6) and the censor rides the same
     `action_is_pad` channel as end-of-episode padding, so a censored step contributes no
     gradient. Whether to use it is P27's call; the segment boundaries are stored per episode
     so the decision can be made without regenerating anything.

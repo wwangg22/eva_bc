@@ -107,7 +107,7 @@ O_ALIGN_MIN = 0.99
 #: More candidates score *better on the screening batch* and *worse on held-out ones*: the
 #: optimism gap goes from +9.9 to +19.3 points. With one 128-env batch as the sample, eight
 #: candidates is enough for the winner to be one that got lucky. The fix is not fewer
-#: candidates but more screening spawns -- see `08_STAGE1_RESULTS.md` 6f.
+#: candidates but more screening spawns -- see the Stage-1 screening sweep (doc retired 2026-08-03).
 SCREEN = 4
 
 #: Hold durations, in **physics** steps. One env step = `decimation` 8 physics steps, so the
@@ -120,7 +120,8 @@ SCREEN = 4
 #: step, because the next motion begins at a fixed offset from the hold's *start*. A memoryless
 #: chunk policy cannot recover phase from a constant observation; it can only learn the
 #: distribution over "how many steps until the move", and at inference it draws one sample from
-#: it. See `09_STAGE2_BC_PLAN.md` N2, and `p27_hold_duration.py` for the measurement.
+#: it. See `REFERENCE.md` §6 for the N2 chunk-ambiguity risk (the P27 measurement was retired
+#: with the 2026-08-03 reset: it was scored on the topple-only predicate).
 HOLDS = {"settle": 80, "predwell": 160, "close": 560, "dwell": 160,
          "release": 240, "final": 240}
 

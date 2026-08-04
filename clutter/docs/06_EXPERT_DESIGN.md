@@ -1,5 +1,31 @@
 # 06 — The scripted expert: why not cuRobo, why not differential IK, and what instead
 
+> ## ⚠ KEPT DELIBERATELY THROUGH THE 2026-08-03 RESET — read §3 before designing anything
+>
+> The expert this document describes is being **started over**: it scores **16.4 %** under the
+> 2 mm rule (`15_STRICT_METRIC.md`) and its central decision — close the jaw *in situ*, between
+> the neighbours — is the thing that fails. Twelve stage-result documents were deleted with it.
+>
+> **This one was kept because §3 is still the governing constraint and is metric-independent:
+> the gripper action is BINARY**, so the 90 mm opening is a property of the environment that no
+> policy can choose around. P39 later measured what that costs — 17 points — and Big Will's
+> decision was to keep it. Any new expert has to live with it.
+>
+> What in here is now known wrong:
+>
+> * §4's candidate strategies were ranked against a topple-only criterion. The winner
+>   (orthogonal grasp, close in situ) is the 16.4 % expert.
+> * The blade geometry quoted throughout ("~47 mm along the opening axis, ±19.2 mm
+>   perpendicular") is **retracted** — P38 measured the actual fouling reach at 33–39 mm.
+>   The *conclusion* it supported (straddle fore-and-aft, never enter a 12 mm row gap) still
+>   holds on other evidence.
+> * §8's achievability gate was written against the old predicate.
+>
+> What survives and matters most: **§3, and the observation in §3's "And pushing is also
+> constrained" that the constraint set is asymmetric.** `DISTURB_TOL` binds the four
+> distractors and says nothing about the target — which is the basis of the current plan
+> (`16_DISTURBANCE_ANATOMY.md` §5).
+
 *This document contains the single most important geometric finding of the scan, and it
 **corrects** an assumption I recorded earlier in `00_ENVIRONMENT.md`.*
 
@@ -83,7 +109,7 @@ Lab's own `isaaclab_mimic/motion_planners/curobo/` uses the *old* API
 
 ## 3. THE DECISIVE GEOMETRIC FACT — the gripper action is **binary**
 
-This is what I got wrong in `01_TASK_ANALYSIS.md §3.3`, where I reasoned about "opening to
+This is what I got wrong in the pre-measurement task analysis (deleted 2026-08-03), where I reasoned about "opening to
 q ≈ 0.017 to admit a 30 mm block". **There is no such command.**
 
 `BinaryJointPositionActionCfg` offers exactly two apertures:
@@ -124,7 +150,7 @@ That is by design — `clutter_env_cfg.py:12-15`: *"The gripper's fingers have t
 gap, or the policy has to push a neighbour aside first. That makes the correct first action
 frequently not a grasp."*
 
-> **Supersedes** `01_TASK_ANALYSIS.md §3.3`. The feasibility question is not "is the finger
+> **Supersedes** the pre-measurement task analysis (deleted 2026-08-03). The feasibility question is not "is the finger
 > thin enough to thread a 12 mm gap" — the fingers are 44.53 mm out and cannot be brought in.
 > `p01_gripper_geometry.py` is still worth running (finger thickness bounds the two ≈6.94 mm
 > windows and tells us how much of each gap a finger actually occupies), but its verdict

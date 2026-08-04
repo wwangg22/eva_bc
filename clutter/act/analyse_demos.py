@@ -5,7 +5,7 @@ No simulator. Everything here is arithmetic on the recorded tape, which is the p
 biggest registered threat to Stage 2 is a property of the *dataset*, and it can be measured
 before a single training step is spent.
 
-The N2 risk, as registered (`09_STAGE2_BC_PLAN.md` N2, `HANDOFF.md` §10.1 item 1)
+The N2 risk, as registered (the N2 chunk-ambiguity risk; `REFERENCE.md` §6)
 ---------------------------------------------------------------------------------
     "47 % of the 382-step demo is a held pose -- 70 env steps of `close` alone, during which
      the 42-D observation is constant to numerical noise while the correct action chunk

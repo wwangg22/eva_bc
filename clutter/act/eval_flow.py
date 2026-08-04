@@ -18,7 +18,7 @@ Two things this reports, and the second is not optional
 
 The buckets are the env's own predicates, latched per env before its first termination,
 because `env.step` auto-resets a terminated env and a toppled scene re-spawns upright -- the
-same evidence-erasing trap `run_physics` exists to avoid (`07_STAGE0_RESULTS.md` §7.5):
+same evidence-erasing trap `run_physics` exists to avoid (`REFERENCE.md` §5):
 
     success        `mdp.target_at_goal` ever true            <- the headline
     toppled        terminated by `distractor_toppled`

@@ -6,11 +6,46 @@
 > free to edit the environment in ReBOT_RL. Just ensure to update the corresponding docs, and
 > make sure you only touch the environment YOU ARE WORKING on."
 
-Two decisions, and they resolve the two open questions left at the end of
-`14_FEEDBACK_AND_NEXT.md`. The threshold is **2 mm**, the tightest of the three that were
-measured. And the standing "do not modify `challenge/`" constraint is lifted **for the clutter
-env only** — so this is no longer a private re-scoring bolted onto the evaluator, it is the
-task's own definition of success.
+Two decisions. The threshold is **2 mm**, the tightest of the three that were measured. And the
+standing "do not modify `challenge/`" constraint is lifted **for the clutter env only** — so
+this is no longer a private re-scoring bolted onto the evaluator, it is the task's own
+definition of success.
+
+## 0. Where this came from — and why ~5 000 scored episodes missed it
+
+Big Will watched sixteen videos of the trained policy and said:
+
+> "in many of the success episodes, the robot actually grabs another box as well as the one of
+> interest. It just so happened when the robot placed it down, the box didn't topple over. So
+> clearly this should be considered a failure, if the boxes that aren't the one of interest get
+> moved around."
+
+He was right, and it was verifiable without running anything. `mdp.target_at_goal` ended in
+`& ~any_distractor_toppled(env)`, and `any_distractor_toppled` is `up_z < TOPPLE_DOT` with
+`TOPPLE_DOT = 0.75` — about **41 degrees of tilt**. A neighbour dragged the length of the table
+and set down upright satisfied it completely.
+
+**The mistake was not failing to look.** The project's own standing rule since Stage 0 was
+*"score with the env's own predicates, read at the end rather than enforced"*, and it was
+followed exactly. That rule is right — inventing a private success criterion is how a project
+ends up optimising something the benchmark does not reward. But it was applied without ever
+asking the prior question: **does the benchmark's predicate actually encode the task?** Here it
+did not. The environment's own docstring says "extract it and set it down in the goal zone
+*without toppling any neighbour*", and the predicate is a faithful encoding of that sentence.
+It is the sentence that was too weak, and no amount of care reading the code would have caught
+it.
+
+**The evidence was in the record the whole time.** The environment computed
+`distractors_disturbed` — the summed planar displacement of all four neighbours — on every
+single step, and wired it to a shaping reward and nothing else. And every hazard table from P17
+onward reported a `close`-phase disturbance rate of **71–76 %**, measured, published in the
+docs, and never allowed to reach the metric, because the predicate had already decided that
+only toppling counted.
+
+Two rules came out of it, both in `REFERENCE.md` §7: **ask whether the predicate encodes the
+task**, and **a taxonomy only constrains what it enumerates** — the failure analysis at the
+time called the policy's failure mode singular, and it was singular *among the buckets being
+counted*.
 
 ---
 
@@ -34,7 +69,7 @@ is worthless.
 
 | path | what it is | result |
 |---|---|---|
-| offline re-scoring (`14_` §1.1) | the **lenient** env, `eval_flow.py` latching neighbour displacement itself and applying the 2 mm cut in Python afterwards | **16.3 %** |
+| offline re-scoring | the **lenient** env, `eval_flow.py` latching neighbour displacement itself and applying the 2 mm cut in Python afterwards | **16.3 %** |
 | env-native (this doc) | the **strict** env, `target_at_goal` gated on `~any_distractor_disturbed`, plus a `distractor_disturbed` termination | **16.4 %** |
 
 Different environments, different termination structure, different place the predicate is
@@ -101,9 +136,9 @@ have become the highest-value action available at the start of every episode. It
 `topple_penalty` at the same −40.
 
 `RebotClutterExtractLenientEnvCfg` / `Rebot-ClutterExtract-Lenient-v0` restores the old rule
-(`tol = inf`, both new terms off). It exists for exactly one purpose: every number in
-`07_`–`13_` was measured under the old predicate, and **a baseline that cannot be re-run is a
-baseline that cannot be checked.** Nothing new should be measured there.
+(`tol = inf`, both new terms off). It exists for exactly one purpose: the pre-2026-08-03
+baselines were all measured under the old predicate, and **a baseline that cannot be re-run is
+a baseline that cannot be checked.** Nothing new should be measured there.
 
 ---
 
@@ -178,10 +213,10 @@ cliff, which means **the exact threshold does not matter to the result** — 2 m
 10 mm select the same 16.4 % of episodes. Big Will's choice of the strictest option costs
 nothing in discrimination.
 
-This is a genuinely useful finding. It means the 42-point gap between 2 mm and 10 mm reported
-in `14_` §1.1 was an artefact of the *lenient env's* long tail (episodes that shove and then
-carry on to the goal anyway), not evidence that displacement is a continuum to be traded off.
-With the termination in place, the continuum does not exist.
+This is a genuinely useful finding. It means the 42-point gap between 2 mm and 10 mm seen in
+the offline re-scoring was an artefact of the *lenient env's* long tail (episodes that shove
+and then carry on to the goal anyway), not evidence that displacement is a continuum to be
+traded off. With the termination in place, the continuum does not exist.
 
 ---
 
@@ -239,23 +274,32 @@ now simply the env's own `target_at_goal`.
 
 ---
 
-## 7. What this does to the earlier documents
+## 7. What this retired
 
-Beyond the retractions already recorded in `14_` §5:
+Twelve stage-result documents were deleted on 2026-08-03 when the expert was restarted. They
+were all written against the topple-only predicate, so every success number in them — 25 %,
+57.7 %, 72.1 %, 73.3 % for the expert and 68.1 % / 71.8 % for flow BC — describes a task that
+no longer exists. `REFERENCE.md` is what was worth keeping out of them.
 
-* **`14_` §1.1's own table is superseded for the 5 mm and 10 mm columns.** They were measured
-  on the lenient env, where a shoved episode plays on; under the strict env those thresholds
-  collapse onto 2 mm. The 2 mm column (16.3 %) stands and is confirmed.
-* **`13_` §6.2's "one failure mode" is *restored*, for a different reason** than it was
-  written. It was withdrawn in `14_` for enumerating an incomplete taxonomy. It is now true:
-  every bucket except `distractor_disturbed` is empirically 0.0 %.
-* **P27's "shortening the holds gains +3.9 points" was measured on the lenient predicate** and
-  has not been re-checked strictly. It is the configuration currently shipping (`--close 40
-  --holds-scale 0.25`) and the 16.4 % baseline uses it, but the *comparison* that justified it
-  is unverified under the new metric.
+Specific claims that are known wrong, recorded here so they are not rediscovered:
+
+* **The apparent 42-point gap between a 2 mm and a 10 mm threshold was an artefact.** It was
+  measured on the *lenient* env, where a shoved episode plays on to the goal. With the
+  termination in place, 2 / 5 / 10 mm select the identical 16.4 %.
+* **"The policy has one failure mode" was true for the wrong reason, and is now true for the
+  right one.** It enumerated an incomplete taxonomy; every bucket except `distractor_disturbed`
+  is now empirically 0.0 %.
+* **"Shortening the holds gains the expert +3.9 points" (P27) was measured leniently and has
+  never been re-checked.** It is the configuration currently shipping (`--close 40
+  --holds-scale 0.25`) and the 16.4 % baseline uses it, but the comparison that justified it is
+  unverified under the new metric.
+* **The Stage-1 claim that the orthogonal grasp "stops the row's y-pitch being the binding
+  constraint" is conditional on the row's heading**, which has never varied. It is not a
+  general property of the task.
+* **`pose_p33.json` and the single-pose recipe are specific to one row geometry** and to a
+  metric that counted only topples. The pose is retained as the 16.4 % baseline to beat, not as
+  a design to build on.
 * **The `-Tight-v0` variant has never been measured at all**, under either predicate.
-
----
 
 ## 8. Files
 

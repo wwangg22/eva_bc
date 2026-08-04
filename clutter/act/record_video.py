@@ -23,7 +23,7 @@ Choices, and why
   scene and the film would quietly lie about what happened.
 * **The filename carries the outcome**, decided from the termination manager at the step the
   env actually died — not from the end-of-episode scene, which has already been re-spawned
-  (`13_STAGE2_BC_RESULTS.md` R23).
+  (`REFERENCE.md` §5: env.step auto-resets from inside the step call).
 
 Usage
 -----
