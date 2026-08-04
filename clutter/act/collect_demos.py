@@ -125,6 +125,26 @@ parser.add_argument("--holds-scale", type=float, default=None,
                          "to 13.4 %%.")
 parser.add_argument("--screen", type=int, default=4,
                     help="candidate poses screened in-sim per re-solve (--multimodal only)")
+parser.add_argument("--grip-open", type=float, default=None,
+                    help="override the gripper's OPEN command, per finger [m]. Default 0.045, "
+                         "i.e. 90 mm of separation to grasp a 36 mm block -- 27 mm of excess "
+                         "travel per finger, every millimetre of which sweeps the blade "
+                         "through the row. P38 measured the fouling reach at 33-39 mm from "
+                         "the target centre against neighbour faces at 27 mm, and showed the "
+                         "arm alone disturbs NOTHING (0.0 %): it is entirely the finger "
+                         "closing motion.")
+parser.add_argument("--yaw-gain", type=float, default=1.0,
+                    help="how far to rotate the jaw toward the target's own yaw. 1.0 meets "
+                         "the 36 mm faces squarely and is what every number before P37 used; "
+                         "0.0 keeps the jaw on the nominal axis. P36 found the disturbance is "
+                         "a FORE-AFT drag (|dx| 9.2x |dy|) starting at the first close step, "
+                         "which is the signature of a yaw-swung blade corner intruding into "
+                         "the neighbour's footprint and then travelling along the opening "
+                         "axis -- 47*sin(11.4 deg) = 9.3 mm against 7.8 mm of margin")
+parser.add_argument("--no-match-yaw", dest="match_yaw", action="store_false",
+                    help="drop the orientation constraint entirely, rather than pinning it to "
+                         "the nominal axis as --yaw-gain 0 does. Different thing: `refine` "
+                         "then has no o_des at all and is free to pick any wrist roll")
 parser.add_argument("--json", type=str, default=f"{_ROOT}/runs/gate2.json")
 AppLauncher.add_app_launcher_args(parser)
 args_cli = parser.parse_args()
@@ -328,7 +348,7 @@ def run_arm(env, ex, arm, seed, spec, recorder):
 
     # `adapt()` teleports the arm through `refine`'s finite-difference FK, so it must run
     # before recording and the arm must then be put back where the arm's protocol says.
-    chain = ex.adapt()
+    chain = ex.adapt(match_yaw=args_cli.match_yaw, yaw_gain=args_cli.yaw_gain)
     steps = expand(ex, chain)
     fp, gaps = fingerprint(e), free_gaps(e).clone()
 
@@ -450,6 +470,11 @@ def main() -> None:
         "run one arm at a time")
 
     env_cfg = parse_env_cfg(args_cli.task, device=args_cli.device, num_envs=args_cli.num_envs)
+    if args_cli.grip_open is not None:
+        env_cfg.actions.gripper_action.open_command_expr = {
+            "joint_left": args_cli.grip_open, "joint_right": args_cli.grip_open}
+        print(f"   GRIPPER OPEN OVERRIDE: {args_cli.grip_open:.3f} per finger "
+              f"({args_cli.grip_open * 2000:.0f} mm separation, default 90 mm)")
     env = gym.make(args_cli.task, cfg=env_cfg)
     e = env.unwrapped
     env.reset()
@@ -494,7 +519,7 @@ def main() -> None:
               f"env steps, seam {ap['measured']['seam_rad']:.4f} rad "
               f"({ap['measured']['c80_success']:.1%} vs {ap['measured']['teleport_baseline']:.1%} "
               f"teleport, P29)")
-    est = ex.env_steps(ex.adapt())
+    est = ex.env_steps(ex.adapt(match_yaw=args_cli.match_yaw, yaw_gain=args_cli.yaw_gain))
     print(f"   schedule: {est['TOTAL']} env steps, {est['STATIC']} of them a held pose "
           f"({est['STATIC'] / est['TOTAL']:.1%})")
     print("   " + "  ".join(f"{k}={v}" for k, v in est.items() if k not in ("TOTAL", "STATIC")))

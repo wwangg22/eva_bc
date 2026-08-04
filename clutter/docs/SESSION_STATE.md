@@ -100,6 +100,54 @@ Full detail, including the constraint tension on item 3, is `14_FEEDBACK_AND_NEX
 the mode is *unobservable*. Randomising the row heading supplies the observable variable that
 makes a multi-mode expert learnable.
 
+## Where the 56.9 points are — P36/P37/P38/P39, `16_DISTURBANCE_ANATOMY.md`
+
+The mechanism is now measured rather than assumed, and one measurement dominates:
+
+> **Ablation B (P38): the same arm trajectory with the gripper forced open disturbs the row
+> 0.0 % of the time** — 384 episodes, p90 0.311 mm, against 67.2 % when it closes normally.
+
+So the arm can go anywhere in the row safely. **The only unsafe act is closing the jaw inside
+the row.** Supporting facts:
+
+- **When:** the 2 mm crossing is at the **first step of `close`** (p01 = 160, p99 = 174, and
+  step 160 *is* that first step). It is a jump, not a creep — already 4.05 mm when it first
+  exceeds 2. Kills "a slower close" and "shorten the close hold".
+- **Which:** the inner pair, **100.0 %**, and **d1 : d2 = 2.50 : 1 (z = 10.8)** — an
+  unexplained chiral bias worth exploiting.
+- **Which way:** fore-aft. **|dx| is 9.2× |dy|.** The neighbour is *hooked and carried*, not
+  shoved aside — `close` starts it (81 % of first crossings), `carry` accumulates it (79 % of
+  total motion). Exactly Big Will's "grabs another box as well".
+- **How far it reaches:** widening the row makes it vanish between 48 and 54 mm of pitch, so
+  the fouling reaches **33–39 mm** from the target centre against faces at 27 mm — about
+  **1.8× the blade geometry quoted in the docstrings since Stage 1**.
+
+**Two fixes, one of which is Big Will's call:**
+
+| | gain | note |
+|---|---|---|
+| jaw yaw-matching (`--yaw-gain 0`) | **+2.9 pts** | 16.4 → 19.3 %. Real, minor, keep it |
+| **narrower gripper opening** | **+16.9 pts** | 16.4 → 33.3 %. ⚠ **an ENV change** — see below |
+| **extract, then grasp** | untried | **first-ranked**, and needs no env change |
+
+⚠ **The gripper opens to 90 mm to grasp a 36 mm block** (`_GRIPPER_OPEN = 0.045` per finger),
+so each finger sweeps **24 mm of pure excess travel** through the row on every grasp — and
+because `BinaryJointPositionAction` has exactly two states, **no policy can avoid it.** At
+46 mm of separation (still 2.4 mm of clearance over the widest a yawed target presents) strict
+success is **33.3 %** and enclosure *improves* from 17.2 % to 31.2 %. It costs 17 of the 57
+points and it is imposed by the env, not chosen by the solution. **Changing it makes the task
+easier, so it is Big Will's decision, not mine** (`16_` §2c.1).
+
+**The fix that needs no env change (`16_` §5):** ablation B says the open jaw is safe anywhere
+in the row, and **the target's own displacement is unconstrained** — `DISTURB_TOL` covers only
+the four distractors. So: reach in with the jaw open, **pull the target clear of the row**,
+close on it outside, carry. That is the extrinsic-dexterity solution the env's own docstring
+describes (*"the correct first action is often not a grasp"*) and **no expert in this project
+has ever tried it** — every one from P01 to `pose_p33` closes in situ. **P40 measures step 2
+alone:** drag the target −x by 30–40 mm with the jaw open and watch the neighbours. Near 0 %
+and the manoeuvre is viable; if dragging rakes the row it is dead and the opening is the only
+lever left.
+
 ### Order (updated 2026-08-03 after the threshold decision)
 
 ```
