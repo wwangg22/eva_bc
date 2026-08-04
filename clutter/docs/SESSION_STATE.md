@@ -7,7 +7,7 @@
 Two changes landed. **2026-08-03:** success requires every neighbour to stay within **2 mm** of
 its spawn, enforced by the environment itself. **2026-08-04:** the row spawns at a **random
 heading** and the target is **any one of the five blocks**, not always the middle
-(`eva_rl@d329ff3`). The frozen `pose_p33` expert scores **3.0 %** on the new task and **17.1 %**
+(`eva_rl@a0c89b9`). The frozen `pose_p33` expert scores **3.0 %** on the new task and **17.1 %**
 on `-Fixed-v0`, the frozen-row control. Both env changes are validated — smoke test passes, P41
 found no reachability wall, and `-Fixed-v0` reproduces the pre-refactor baseline within the
 binomial CI. **The environment work is done. Everything from here is the expert.**

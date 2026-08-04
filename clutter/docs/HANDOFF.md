@@ -41,7 +41,7 @@ decisions now fail: it closes the jaw *in situ* between the neighbours (§4), an
 manoeuvre is a fixed joint chain planned for one target pose that `refine` cannot move far
 enough (§10).
 
-Both repos are committed and pushed: `eva_bc@9f9d6bb`, `eva_rl@d329ff3`.
+Both repos are committed and pushed: `eva_bc@bd65c92`, `eva_rl@a0c89b9`.
 
 ---
 
