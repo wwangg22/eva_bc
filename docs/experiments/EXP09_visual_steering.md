@@ -119,6 +119,21 @@ of x0-steering — both bigger conversations with Big Will.
   seeds; a small fresh-seed collection with obs41 saved is the true held-out
   check later).
 
+- 2026-08-04: **S3 v1 — below the sanity bar; one architecture iteration
+  before verdict** (`experiments/exp09_s3_perception.py`,
+  `runs/exp09/s3_perception/s3_result.json`; 45.8k train / 47.5k cross-seed
+  val, 20k steps): target-pos vec err 5.5 cm mean / 11.8 cm p95 (bar ~2 cm),
+  basket 4.8 / 9.8 cm (bar ~3), quats RMSE ~0.38–0.40, placed_flags RMSE 0.27
+  (bad for a binary). Read: the info is in the pixels (v4 ACTS on them at
+  78.9%) but the v1 head is weak — a global-avg-pooled fresh resnet18 discards
+  exactly the spatial precision coordinate regression needs, and MSE on flags
+  underfits. **S3v2:** predict from the FROZEN v4 student's own encoder tokens
+  (31 spatial tokens, already task-trained) + small head — doubles as the
+  end-to-end validation of the integrated-forward deploy design; BCE on
+  flags, per-group loss weights. Fallback reading if v2 also misses: R1 can
+  still proceed with MEASURED noise injected — PPO-under-noise then tells us
+  directly whether steering tolerates ~5 cm sensing error.
+
 ## 5. Phases (after smoke tests, subject to change)
 
 P0 = S1–S3 (~half a day, mostly reusing existing shards + eval loop).
