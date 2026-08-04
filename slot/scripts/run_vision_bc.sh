@@ -37,7 +37,12 @@ evaluate () {  # name, seed, extra flags...
   [ -f "$out" ] && { echo "SKIP eval $out"; return 0; }
   echo "=== eval $name seed $seed  $(date -Is) ==="
   python scripts/eval_vision.py --ckpt "$RUNS/$name/ckpt_final.pt" --episodes 128 \
-    --num-envs 16 --seed "$seed" --out "$out" "$@" 2>&1 | grep -E "eval_vision|render contract"
+    --num-envs 16 --seed "$seed" --out "$out" "$@" 2>&1 \
+    | grep -E "eval_vision|render contract|Traceback|Error|error|assert" || true
+  # NOT a bare grep on the happy-path pattern: the first blind eval died on an ImportError and the
+  # filter swallowed every line of the traceback, so the script marched on to the next stage and
+  # the failure looked like an 11-second run. Failure signatures are in the filter now.
+  [ -f "$out" ] || echo "!!! EVAL PRODUCED NO OUTPUT: $out"
 }
 
 # --- G3: the control. Same net, no information. ---

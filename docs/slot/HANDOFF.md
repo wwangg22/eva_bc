@@ -1593,7 +1593,36 @@ almost every effect measured. Session 5 showed the learning curve plateaus at 30
 x0-steering investigation (§S7) and the start of the visual policy (§S8). Read §S8-STATE first
 if you are picking this up cold.*
 
-## S8-STATE. ⏳ WHAT IS RUNNING RIGHT NOW
+## S8-RESULT. ✅ THE VISUAL POLICY MEETS THE BAR (2026-08-04 03:36)
+
+| arm | s777 | s888 | **pooled** | Wilson 95 % |
+|---|---|---|---|---|
+| blind (23-D proprio, images zeroed) | 0.223 | 0.286 | **0.254** | [0.202, 0.315] |
+| **vision** (wrist + workspace + proprio) | 0.786 | 0.821 | **0.804** | [0.747, 0.850] |
+
+* vision - blind **+54.9 pts**, z = +11.64, **p = 2.5e-31**
+* champion in the vision env (G2) **0.949**; privileged-state champion 0.979
+* trained on seeds 101/202, evaluated on 777/888 — **no spawn overlap**
+
+**Honest reading:** 0.804 clears the 0.80 bar on the pooled POINT ESTIMATE, by 0.4 of a point,
+and the Wilson interval contains values below 0.80. Both seeds straddle. The *comparison* to the
+control is not in doubt; the *bar* would want more episodes or DAgger to be clear.
+
+**Vision is doing the perceiving.** Median |lateral| of failures: blind **31.63 mm**, vision
+**0.52 mm** (clearance 1.5 mm). `gross_miss` 35 -> 1, `never_lifted` 18 -> 0. Perception failure
+became precision failure — pre-registered as belief 4.
+
+Full detail + belief scorecard: `docs/slot/VISION_PLAN.md` section 12.
+Checkpoints: `slot/runs/vision_bc/{blind,v1}/ckpt_final.pt`.
+
+**Next, cheapest first (VISION_PLAN 12d):** more eval episodes to tighten the interval (no
+training); 100k steps instead of 60k; **higher policy resolution** (160x90 is EXP08's basket-drop
+pick and a 1.5 mm clearance may want more pixels — the change I would bet on); then DAgger
+(`S8c`), which is now for moving clear of the bar rather than reaching it.
+
+---
+
+## S8-STATE. ⏳ WHAT WAS RUNNING (all COMPLETE as of 03:36)
 
 ```
 bash -c 'for S in 101 202; do python scripts/collect_vision.py --episodes 128 \

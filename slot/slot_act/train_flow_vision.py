@@ -55,8 +55,13 @@ def make_config(args: argparse.Namespace) -> ACTConfig:
 
 
 def save_checkpoint(
-    path: Path, policy: FlowMatchingVisionPolicy, normalizer: MeanStdNormalizer, config: ACTConfig, step: int
+    path: Path, policy: FlowMatchingVisionPolicy, normalizer: MeanStdNormalizer, config: ACTConfig,
+    step: int, extra: dict | None = None,
 ):
+    # `extra` carries the DATASET's identity -- the render config the shards were collected
+    # under, and whether this is the blind arm. It is passed in rather than read from a
+    # global: this function is module-level and `args` is local to main() (that exact
+    # NameError killed the first blind run at its first checkpoint, 10k steps in).
     torch.save(
         {
             "step": step,
@@ -69,8 +74,7 @@ def save_checkpoint(
                 "num_inference_steps": config.num_inference_steps,
                 "state_dim": STUDENT_STATE_DIM,
                 "image_keys": list(IMAGE_KEYS),
-                "render": getattr(args, "_render", None),
-                "blind": bool(getattr(args, "blind", False)),
+                **(extra or {}),
                 "cam_shape": list(CAM_SHAPE),
                 "action_dim": ACTION_DIM,
             },
@@ -117,7 +121,7 @@ def main() -> None:
     stats = compute_stats_vision(dataset)
     normalizer = MeanStdNormalizer(stats).to(device)
 
-    args._render = dataset.render
+    extra = {"render": dataset.render, "blind": bool(args.blind)}
     print(f"[train] render contract: {dataset.render}   blind={args.blind}")
     config = make_config(args)
     policy = FlowMatchingVisionPolicy(config).to(device)
@@ -155,11 +159,12 @@ def main() -> None:
                     log_f.write(json.dumps(rec) + "\n")
                     log_f.flush()
                 if step % args.save_every == 0:
-                    save_checkpoint(out_dir / f"ckpt_{step:07d}.pt", policy, normalizer, config, step)
+                    save_checkpoint(out_dir / f"ckpt_{step:07d}.pt", policy, normalizer,
+                                    config, step, extra)
                 if step >= args.steps:
                     break
 
-    save_checkpoint(out_dir / "ckpt_final.pt", policy, normalizer, config, step)
+    save_checkpoint(out_dir / "ckpt_final.pt", policy, normalizer, config, step, extra)
     print(f"done: {step} steps -> {out_dir / 'ckpt_final.pt'}")
 
 

@@ -352,3 +352,75 @@ Cost is not the obstacle: 150 steps took 30 s at 4× and 32 s at 16×, one env. 
 One thing we still inherit and cannot dodge: **8× does not reach zero** (4.68). If the vision
 student underperforms and the failures look like perception rather than precision, residual
 shimmer is a live suspect and 16× is one constant away.
+
+---
+
+## 12. RESULTS — vision flow-BC, G2/G3/G4 (2026-08-04 03:36)
+
+Champion teacher, 256 episodes collected at seeds **101/202**, evaluated at seeds **777/888**
+which appear nowhere in the training data. Later cohort, n = 112 per cell.
+
+| arm | s777 | s888 | **pooled** | Wilson 95 % |
+|---|---|---|---|---|
+| **blind** (23-D proprio, images zeroed) | 0.223 | 0.286 | **0.254** | [0.202, 0.315] |
+| **vision** (wrist + workspace + proprio) | 0.786 | 0.821 | **0.804** | [0.747, 0.850] |
+
+* **vision − blind = +54.9 points**, z = +11.64, **p = 2.5 × 10⁻³¹**
+* references: champion **in the vision env** 0.949 (G2); privileged-state champion 0.979
+
+### 12a. The bar, stated honestly
+
+The pooled point estimate is **0.804 against a 0.80 bar** — it clears, but by 0.4 of a point, and
+the Wilson interval **[0.747, 0.850] contains values below 0.80**. So the correct statement is:
+
+> **Vision flow-BC meets the 80 % bar on the pooled point estimate of 224 episodes, and the
+> measurement is not precise enough to establish that the true rate exceeds 0.80.**
+
+Both seeds land either side (0.786 / 0.821), which is what a true rate near 0.80 looks like. More
+episodes would tighten this; DAgger would move it properly clear. What is *not* in doubt is the
+comparison against the control: +54.9 points at p ≈ 10⁻³¹.
+
+### 12b. Vision is doing the perceiving — the failure signature proves it
+
+| | median \|lateral\| of failures | dominant buckets |
+|---|---|---|
+| blind | **31.63 mm** | `gross_miss` 35, `never_lifted` 18, `stalled` 20, `never_entered` 14 |
+| vision | **0.52 mm** | `never_entered` 25, `stalled_in_mouth` 17, `gross_miss` **1**, `never_lifted` **0** |
+
+Blind fails 31 mm from the slot — it never found the block, and executes a competent insertion
+into empty space. Vision fails **half a millimetre off-axis against a 1.5 mm clearance**.
+`gross_miss` falls 35 → 1 and `never_lifted` 18 → 0.
+
+That is the transition **from a perception failure to a precision failure**, and it was
+pre-registered as belief 4 before any of this ran. The remaining 20 points are not "it cannot see
+the block" — they are "it sees it, arrives on axis, and loses the last millimetre."
+
+### 12c. Beliefs scored
+
+| # | belief | outcome |
+|---|---|---|
+| 1 | blind lands 0.10–0.35 | **HELD** — 0.254 pooled, both seeds inside |
+| 2 | vision flow-BC lands 0.55–0.75 | **FALSIFIED (good direction)** — 0.804 |
+| 4 | residual failures are `never_entered`/`stalled`, not `never_lifted` | **HELD** — 42 vs 0 |
+| 6 | a visual policy matching 0.979 means a leak | n/a — 0.804 is 17.5 pts below the champion, no leak signature |
+
+**Belief 2 is the interesting miss.** It was calibrated on EXP08's pick-place ladder
+(teacher 93.75 % → BC 67.2 %, a **−26.5** point drop). Ours is **−14.5** from a 0.949 teacher.
+The plausible reason is scene complexity: pick-place randomises two cans *and* a basket, whereas
+the slot is welded and only the block spawn moves. Less to perceive, less to lose.
+
+### 12d. What this means for the plan
+
+DAgger was budgeted because vision-BC alone was expected to land ~0.71. It landed at 0.804, so
+DAgger is no longer needed to *reach* the bar — it is now the tool to move the result **clear** of
+it and shrink the interval. And it is aimed at the right deficit: the residual failures are
+`stalled_in_mouth` / `never_entered` at 0.52 mm lateral, i.e. states where the champion knows the
+recovery and the student is marginally short. That is the textbook DAgger case.
+
+Cheaper things to try first, now that the failure is precision rather than perception:
+1. **More episodes on the current model** to tighten the interval (no training needed).
+2. **Longer training** — 60k steps was chosen for wall-clock; EXP08 used 100k.
+3. **Higher policy resolution** — 160×90 is EXP08's pick for a basket drop; a 1.5 mm clearance
+   may simply want more pixels on the slot. This is the change I would bet on.
+4. **Supersample 8** — residual temporal shimmer is 9.06 at 4×, 4.68 at 8×. Note this invalidates
+   the shards and costs a full re-collection.

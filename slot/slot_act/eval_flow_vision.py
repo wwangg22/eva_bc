@@ -34,7 +34,16 @@ import torch
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from slot_act.dataset_vision import ACTION_DIM, STUDENT_STATE_DIM
-from slot_act.eval_act import FLUSH_POS_JUMP, FLUSH_Z_ABOVE, FLUSH_Z_DROP
+from slot_act.eval_act import FLUSH_POS_JUMP
+
+# The slot port kept only FLUSH_POS_JUMP: pick-place's z-drop flush detected a can falling out of
+# the gripper, and this task's block is pushed horizontally into a channel, so the detector has no
+# analogue here (slot_act/eval_act.py:51 is the whole flush surface). These two exist so this
+# module still imports; +inf disables the z-drop branch of main() rather than silently arming it
+# with a pick-place threshold. NOTE main() below is the UNPORTED pick-place runner -- the slot
+# runner is scripts/eval_vision.py. Only VisionController and load_vision_checkpoint are used.
+FLUSH_Z_DROP = float("inf")
+FLUSH_Z_ABOVE = float("inf")
 from slot_act.normalize import MeanStdNormalizer
 
 
