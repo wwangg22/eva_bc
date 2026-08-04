@@ -305,6 +305,28 @@ DAgger → steering — with vision obs; agreed NO after this reasoning):
   BC(2) + r1v2(2) + r2(2) + r3(2) + cold(4) from scratch, then eval 42/123.
   **Stall rule armed: if v4 ≤ 75.0 pooled, that is round 3 stalled → Gate E
   scoping conversation with Big Will before any further training.**
+- 2026-08-04: **MAJOR FINDING — spawn-stream overfitting; hypothesis (iii)
+  confirmed in its strong form.** The round-3 chain's audit guard (≥0.6)
+  tripped on the first FRESH-seed warm collection: v2 driving on seed 777 =
+  **0.562** (per-round 10,6,11,9 /16 — uniform across warm rounds, not a cold
+  artifact) vs **0.83–0.86** on seeds 42/123 with byte-identical collector
+  code in the previous chain. Cold pools landed 0.50–0.56 (expected). Frames
+  are NOT corrupted — the only changed variable is the env seed. ⇒ The student
+  substantially overfits the seed-42/123 spawn-draw streams, which are ALSO
+  the eval streams (collection rounds 2–5 and eval rounds 1–4 sample the same
+  per-env draw sequences). **Every Gate C/D number so far is partly
+  in-distribution; v2's honest held-out warm success is ~56%.** The privileged
+  champion is immune (PPO saw millions of draws — its 93.75% stands); this is
+  a small-data BC/DAgger disease. Consequences applied to the running chain
+  (`runs/exp08_vision/v4_chain.sh`): (a) fresh-seed collections guard at 0.45
+  (distribution shift ≠ corruption; corruption sits far lower); (b) r3_seed777
+  shards KEPT — student failures on fresh spawns + champion labels are the
+  highest-value DAgger data we own; (c) NEW held-out eval protocol: v2 baseline
+  eval on seed 555 (never collected) before v4 trains, and v4 evals on 42/123
+  (ladder continuity) + 555 (honest generalization). The >90% target should be
+  judged on held-out seeds going forward — Gate criterion amendment to discuss
+  with Big Will. Fresh-seed DAgger (r3 + cold, seeds 777/888/999/1111) is now
+  also the treatment for the disease itself, not just cold frames.
   states. Labels are full 50-step chunks computed champion-side (steering z
   from privileged obs56 → x0 = tanh(z) → frozen base flow), collected at the
   student's 15-step window boundaries ONLY — those are the exact states where
