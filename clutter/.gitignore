@@ -1,0 +1,13 @@
+# The root .gitignore's bare `runs/` matches at any depth, so it swallows this whole tree --
+# which is 6.0 GB, almost all of it model checkpoints.
+#
+# The evidence is worth committing and the artifacts are not: every number in docs/ is
+# traceable to a JSON or a log (10 MB together), while the checkpoints (5.9 GB), demo HDF5s
+# (158 MB) and videos (34 MB) are all regenerable from the scripts and the recorded seeds.
+#
+# `runs/*` re-excludes the contents, including the subdirectories, so git never descends into
+# them; the two negations then pull back the flat evidence files.
+!runs/
+runs/*
+!runs/*.json
+!runs/*.log

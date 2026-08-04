@@ -1,0 +1,82 @@
+
+====================================================================================================
+CLUTTER DEMO AUDIT
+====================================================================================================
+   776 demos kept, 248 rejected, 273152 samples
+   episode length 352-352 env steps (mean 352.0)
+
+   ACTION RANGE   a = 2 * (q_desired - q_default); the env applies no clip
+      joint       min      max    |a|max
+      j1        -1.803   -0.039    1.803   <-- outside [-1,1]
+      j2        -1.244   -0.043    1.244   <-- outside [-1,1]
+      j3        -2.309   -0.175    2.309   <-- outside [-1,1]
+      j4        +0.272   +4.632    4.632   <-- outside [-1,1]
+      j5        -1.456   -0.079    1.456   <-- outside [-1,1]
+      j6        +0.234   +3.048    3.048   <-- outside [-1,1]
+      gripper  unique values [-1.  1.]   BINARY, as required
+
+   NEAR-DEGENERATE OBSERVATION CHANNELS   (std < 1e-3 over the kept pool)
+      env_state[ 9] d0_up     std 1.31e-05  -> normalization multiplies its residual by 76436
+      env_state[18] d3_up     std 8.17e-05  -> normalization multiplies its residual by 12237
+      These are distractor up-axes. Successful demos never topple, so the
+      channel is ~1.0 throughout and normalization rescales its remaining
+      micro-variation (real nudge signal) to unit variance. Recorded, not
+      changed: it is the first thing to test if the policy underperforms.
+
+   PHASE SEGMENTS (identical across demos -- one frozen schedule)
+      approach  [   0,  78)    78 env steps  22.2%
+      settle    [  78,  83)     5 env steps   1.4%
+      descend   [  83, 158)    75 env steps  21.3%
+      predwell  [ 158, 168)    10 env steps   2.8%
+      close     [ 168, 173)     5 env steps   1.4%
+      carry     [ 173, 287)   114 env steps  32.4%
+      dwell     [ 287, 297)    10 env steps   2.8%
+      release   [ 297, 312)    15 env steps   4.3%
+      withdraw  [ 312, 337)    25 env steps   7.1%
+      final     [ 337, 352)    15 env steps   4.3%
+      TOTAL 352 env steps, 60 of them a held pose (17.0%)
+
+   N2 -- IS THE CORRECT CHUNK DETERMINED BY THE OBSERVATION?
+      4000 queries against 30000 reference frames, k = 16, normalized space
+
+      phase       nn_chunk_rmse  uncond_rmse   ratio   nn_dt  floor(hi)     floor
+      approach           0.0500       0.4737   0.106     4.0     0.0479    0.0400
+      settle             0.0527       0.2907   0.181     6.0     0.0492    0.0130
+      descend            0.2025       0.5391   0.376     7.0     0.1597    0.1207
+      predwell           0.2921       0.2812   1.039     7.0     0.2089    0.1481
+      close              0.1782       0.1375   1.296     5.0     0.1601    0.1595
+      carry              0.0935       0.9789   0.095     1.0     0.0909    0.0822
+      dwell              0.1094       0.1813   0.603     2.0     0.0404    0.0198
+      release            0.0491       0.0339   1.447     4.0     0.0291    0.0065
+      withdraw           0.0226       0.0376   0.602     4.0     0.0173    0.0011
+      final              0.0192       0.0000 4027.175     4.0     0.0145    0.0000
+
+      ratio      = fraction of the chunk's variation surviving conditioning on obs
+      floor(hi)  = (pi/2)*mean_cell(sigma_cell) straight from the k neighbours --
+                   an UPPER bound: a neighbour is not at zero observation distance,
+                   so real obs-driven variation leaks into the estimate
+      floor      = the same quantity extrapolated to zero obs distance.
+                   Still an UPPER bound on the flow objective (see the docstring):
+                   it prices each of the 350 chunk cells independently, while the
+                   flow head sees x_tau for ALL of them and this ambiguity is one
+                   scalar -- `when does the lift start` -- so it aggregates 350
+                   noisy readings of a single latent. Expect the training mse to
+                   land BELOW this and above zero.
+      worst phase: close, flow floor 0.1595 over 5 steps
+
+      holds       flow floor 0.0440  over 60 steps
+      moves       flow floor 0.0738  over 292 steps
+      WHOLE DEMO  flow floor 0.0688  (upper bound; see the note above)
+      contribution to the floor, by phase:
+         carry       38.7%   (114 steps, 32.4% of the demo)
+         descend     37.4%   ( 75 steps, 21.3% of the demo)
+         approach    12.9%   ( 78 steps, 22.2% of the demo)
+         predwell     6.1%   ( 10 steps,  2.8% of the demo)
+         close        3.3%   (  5 steps,  1.4% of the demo)
+         dwell        0.8%   ( 10 steps,  2.8% of the demo)
+         release      0.4%   ( 15 steps,  4.3% of the demo)
+         settle       0.3%   (  5 steps,  1.4% of the demo)
+         withdraw     0.1%   ( 25 steps,  7.1% of the demo)
+         final        0.0%   ( 15 steps,  4.3% of the demo)
+
+   wrote clutter/runs/demos_v2_audit.json

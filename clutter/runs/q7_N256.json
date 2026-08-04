@@ -1,0 +1,14 @@
+[
+  {
+    "task": "Rebot-ClutterExtract-v0",
+    "num_envs": 256,
+    "steps": 200,
+    "sec": 8.766,
+    "iters_per_s": 22.82,
+    "env_steps_per_s": 5841.0,
+    "sec_per_eval_episode": 30.2,
+    "peak_alloc_MiB": 0.4,
+    "peak_reserved_MiB": 2.0,
+    "smi_used_MiB": 1629.0
+  }
+]

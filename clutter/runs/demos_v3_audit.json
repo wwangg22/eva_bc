@@ -1,0 +1,215 @@
+{
+  "args": {
+    "data": [
+      "clutter/runs/demos_v3.hdf5"
+    ],
+    "chunk_size": 50,
+    "queries": 4000,
+    "refs": 30000,
+    "k": 16,
+    "seed": 0,
+    "device": "cuda",
+    "out": "clutter/runs/demos_v3_audit.json"
+  },
+  "n_demos": 774,
+  "n_rejected": 250,
+  "n_samples": 251550,
+  "episode_len": [
+    325,
+    325
+  ],
+  "action_abs_max": [
+    1.8033738136291504,
+    1.2443819046020508,
+    2.3087048530578613,
+    4.6315531730651855,
+    1.4563120603561401,
+    3.0475635528564453,
+    1.0
+  ],
+  "gripper_values": [
+    -1.0,
+    1.0
+  ],
+  "degenerate_channels": [
+    {
+      "i": 9,
+      "name": "d0_up",
+      "std": 2.553160629759077e-05
+    },
+    {
+      "i": 18,
+      "name": "d3_up",
+      "std": 0.00011780126806115732
+    }
+  ],
+  "segments": [
+    [
+      "approach",
+      0,
+      78
+    ],
+    [
+      "settle",
+      78,
+      80
+    ],
+    [
+      "descend",
+      80,
+      155
+    ],
+    [
+      "predwell",
+      155,
+      160
+    ],
+    [
+      "close",
+      160,
+      165
+    ],
+    [
+      "carry",
+      165,
+      279
+    ],
+    [
+      "dwell",
+      279,
+      284
+    ],
+    [
+      "release",
+      284,
+      292
+    ],
+    [
+      "withdraw",
+      292,
+      317
+    ],
+    [
+      "final",
+      317,
+      325
+    ]
+  ],
+  "n2": {
+    "approach": {
+      "nn_chunk_rmse": 0.049708377569913864,
+      "uncond_rmse": 0.4782717823982239,
+      "ratio": 0.10393332703145998,
+      "flow_floor": 0.042328531061792886,
+      "flow_floor_hi": 0.04784256481200282,
+      "nn_dt_same_demo": 4.0,
+      "n_queries": 4000,
+      "len": 78,
+      "is_hold": false
+    },
+    "settle": {
+      "nn_chunk_rmse": 0.051837258040905,
+      "uncond_rmse": 0.2778988778591156,
+      "ratio": 0.18653280804964084,
+      "flow_floor": 0.014935675296540779,
+      "flow_floor_hi": 0.04893628040393301,
+      "nn_dt_same_demo": 5.0,
+      "n_queries": 1548,
+      "len": 2,
+      "is_hold": true
+    },
+    "descend": {
+      "nn_chunk_rmse": 0.22083725035190582,
+      "uncond_rmse": 0.5808001756668091,
+      "ratio": 0.3802293105341531,
+      "flow_floor": 0.1420947310673324,
+      "flow_floor_hi": 0.17800370549453823,
+      "nn_dt_same_demo": 7.0,
+      "n_queries": 4000,
+      "len": 75,
+      "is_hold": false
+    },
+    "predwell": {
+      "nn_chunk_rmse": 0.29647934436798096,
+      "uncond_rmse": 0.21369941532611847,
+      "ratio": 1.3873661933774373,
+      "flow_floor": 0.1484867702128484,
+      "flow_floor_hi": 0.2088460445560441,
+      "nn_dt_same_demo": 7.0,
+      "n_queries": 3870,
+      "len": 5,
+      "is_hold": true
+    },
+    "close": {
+      "nn_chunk_rmse": 0.16811487078666687,
+      "uncond_rmse": 0.14039403200149536,
+      "ratio": 1.1974502647297447,
+      "flow_floor": 0.1351031295762095,
+      "flow_floor_hi": 0.14371130235830112,
+      "nn_dt_same_demo": 4.0,
+      "n_queries": 3870,
+      "len": 5,
+      "is_hold": true
+    },
+    "carry": {
+      "nn_chunk_rmse": 0.09347337484359741,
+      "uncond_rmse": 1.0089337825775146,
+      "ratio": 0.09264569831808166,
+      "flow_floor": 0.036322371669717475,
+      "flow_floor_hi": 0.08737097411748514,
+      "nn_dt_same_demo": 1.0,
+      "n_queries": 4000,
+      "len": 114,
+      "is_hold": false
+    },
+    "dwell": {
+      "nn_chunk_rmse": 0.09109675884246826,
+      "uncond_rmse": 0.12087862938642502,
+      "ratio": 0.7536217055477191,
+      "flow_floor": 0.011771616095060517,
+      "flow_floor_hi": 0.052458919844576686,
+      "nn_dt_same_demo": 1.0,
+      "n_queries": 3870,
+      "len": 5,
+      "is_hold": true
+    },
+    "release": {
+      "nn_chunk_rmse": 0.059013258665800095,
+      "uncond_rmse": 0.018986547365784645,
+      "ratio": 3.1081616646187578,
+      "flow_floor": 0.0020277255143353427,
+      "flow_floor_hi": 0.05126386791729566,
+      "nn_dt_same_demo": 2.0,
+      "n_queries": 4000,
+      "len": 8,
+      "is_hold": true
+    },
+    "withdraw": {
+      "nn_chunk_rmse": 0.04676215350627899,
+      "uncond_rmse": 0.03843017667531967,
+      "ratio": 1.2168081843951088,
+      "flow_floor": 0.0035726646558232543,
+      "flow_floor_hi": 0.04277435242061339,
+      "nn_dt_same_demo": 4.0,
+      "n_queries": 4000,
+      "len": 25,
+      "is_hold": false
+    },
+    "final": {
+      "nn_chunk_rmse": 0.04269104078412056,
+      "uncond_rmse": 4.806603101314977e-06,
+      "ratio": 8881.74868701792,
+      "flow_floor": 0.00236810796691647,
+      "flow_floor_hi": 0.03988441919758045,
+      "nn_dt_same_demo": 3.0,
+      "n_queries": 4000,
+      "len": 8,
+      "is_hold": true
+    }
+  },
+  "flow_floor": {
+    "holds": 0.04672259387465722,
+    "moves": 0.06229040150552448,
+    "all": 0.060709670269159494
+  }
+}

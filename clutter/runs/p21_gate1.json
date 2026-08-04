@@ -1,0 +1,191 @@
+{
+  "grip_z": 0.055,
+  "lift_dz": 0.15,
+  "pose_reps": 3,
+  "reps": 2,
+  "results": [
+    {
+      "task": "Rebot-ClutterExtract-Play-v0",
+      "label": "NOMINAL (12 mm pitch)",
+      "n": 768,
+      "encl": 1.0,
+      "at_goal": 0.89453125,
+      "topple": 0.3528645932674408,
+      "success": 0.5768229365348816,
+      "cells": [
+        {
+          "pose_rep": 0,
+          "spawn_rep": 0,
+          "o_align": 0.9903839826583862,
+          "pen_mm": 0.0,
+          "encl": 1.0,
+          "at_goal": 0.921875,
+          "topple": 0.5546875,
+          "success": 0.3828125,
+          "hazard": {
+            "settle": 0.0,
+            "descend": 0.0,
+            "predwell": 0.0078125,
+            "close": 0.7874015748031497,
+            "carry": 0.8888888888888888,
+            "dwell": 0.0,
+            "release": 0.0,
+            "withdraw": 0.0,
+            "final": 0.0
+          }
+        },
+        {
+          "pose_rep": 0,
+          "spawn_rep": 1,
+          "o_align": 0.9903839826583862,
+          "pen_mm": 0.0,
+          "encl": 1.0,
+          "at_goal": 0.8359375,
+          "topple": 0.4375,
+          "success": 0.453125,
+          "hazard": {
+            "settle": 0.0,
+            "descend": 0.0,
+            "predwell": 0.0,
+            "close": 0.8125,
+            "carry": 0.8333333333333334,
+            "dwell": 0.0,
+            "release": 0.0,
+            "withdraw": 0.0,
+            "final": 0.0
+          }
+        },
+        {
+          "pose_rep": 1,
+          "spawn_rep": 0,
+          "o_align": 0.9999968409538269,
+          "pen_mm": 0.0,
+          "encl": 1.0,
+          "at_goal": 0.84375,
+          "topple": 0.296875,
+          "success": 0.6328125,
+          "hazard": {
+            "settle": 0.0,
+            "descend": 0.0,
+            "predwell": 0.0,
+            "close": 0.640625,
+            "carry": 0.6304347826086957,
+            "dwell": 0.0,
+            "release": 0.0,
+            "withdraw": 0.0,
+            "final": 0.0
+          }
+        },
+        {
+          "pose_rep": 1,
+          "spawn_rep": 1,
+          "o_align": 0.9999968409538269,
+          "pen_mm": 0.0,
+          "encl": 1.0,
+          "at_goal": 0.921875,
+          "topple": 0.21875,
+          "success": 0.7265625,
+          "hazard": {
+            "settle": 0.0,
+            "descend": 0.0,
+            "predwell": 0.0,
+            "close": 0.6796875,
+            "carry": 0.7317073170731707,
+            "dwell": 0.0,
+            "release": 0.0,
+            "withdraw": 0.0,
+            "final": 0.0
+          }
+        },
+        {
+          "pose_rep": 2,
+          "spawn_rep": 0,
+          "o_align": 0.9972016215324402,
+          "pen_mm": 0.0,
+          "encl": 1.0,
+          "at_goal": 0.90625,
+          "topple": 0.3359375,
+          "success": 0.5703125,
+          "hazard": {
+            "settle": 0.0,
+            "descend": 0.0,
+            "predwell": 0.0,
+            "close": 0.765625,
+            "carry": 0.5333333333333333,
+            "dwell": 0.0,
+            "release": 0.0,
+            "withdraw": 0.0,
+            "final": 0.0
+          }
+        },
+        {
+          "pose_rep": 2,
+          "spawn_rep": 1,
+          "o_align": 0.9972016215324402,
+          "pen_mm": 0.0,
+          "encl": 1.0,
+          "at_goal": 0.9375,
+          "topple": 0.2734375,
+          "success": 0.6953125,
+          "hazard": {
+            "settle": 0.0,
+            "descend": 0.0,
+            "predwell": 0.0,
+            "close": 0.703125,
+            "carry": 0.5,
+            "dwell": 0.0,
+            "release": 0.0,
+            "withdraw": 0.0,
+            "final": 0.0
+          }
+        }
+      ],
+      "by_gap": [
+        {
+          "lo": 0,
+          "hi": 4,
+          "n": 17,
+          "topple": 0.1764705926179886,
+          "success": 0.8235294222831726
+        },
+        {
+          "lo": 4,
+          "hi": 6,
+          "n": 88,
+          "topple": 0.1818181872367859,
+          "success": 0.7727273106575012
+        },
+        {
+          "lo": 6,
+          "hi": 8,
+          "n": 248,
+          "topple": 0.3709677457809448,
+          "success": 0.5362902879714966
+        },
+        {
+          "lo": 8,
+          "hi": 10,
+          "n": 309,
+          "topple": 0.3980582654476166,
+          "success": 0.5210356116294861
+        },
+        {
+          "lo": 10,
+          "hi": 12,
+          "n": 92,
+          "topple": 0.33695653080940247,
+          "success": 0.6413043737411499
+        },
+        {
+          "lo": 12,
+          "hi": 100,
+          "n": 14,
+          "topple": 0.4285714626312256,
+          "success": 0.5714285969734192
+        }
+      ],
+      "cell_min": 0.3828125,
+      "cell_max": 0.7265625
+    }
+  ]
+}

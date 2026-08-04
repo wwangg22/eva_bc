@@ -1,0 +1,711 @@
+Loading user config located at: '/home/eva/miniconda3/envs/env_isaaclab6/lib/python3.12/site-packages/isaacsim/kit/data/Kit/IsaacLab/3.0/user.config.json'
+2026-08-03T16:28:56Z [0ms] [Warning] [omni.ext.plugin] [ext: isaaclab_visualizers] Extensions config 'extension.toml' doesn't exist '/home/eva/Desktop/isaacLab/IsaacLab/source/isaaclab_visualizers' or '/home/eva/Desktop/isaacLab/IsaacLab/source/isaaclab_visualizers/config'
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+E0000 00:00:1785774536.997377   26537 descriptor_database.cc:633] File already exists in database: grpc/health/v1/health.proto
+W0000 00:00:1785774536.997410   26537 message.cc:301] Protobuf GeneratedMessageFactory: File is already registered: grpc/health/v1/health.proto
+2026-08-03T16:28:57Z [373ms] [Warning] [omni.usd_config.extension] Enable omni.materialx.libs extension to use MaterialX
+2026-08-03T16:28:57Z [416ms] [Warning] [omni.platforminfo.plugin] failed to open the default display.  Can't verify X Server version.
+[ISAACLAB] AppLauncher initialization complete
+[INFO]: Parsing configuration from: reBot_RL.tasks.manager_based.challenge.clutter_env_cfg:RebotClutterExtractEnvCfg_PLAY
+2026-08-03T16:29:00Z [3,745ms] [Warning] [isaaclab.envs.manager_based_env] Seed not set for the environment. The environment creation may not be deterministic.
+2026-08-03T16:29:00Z [3,780ms] [Warning] [isaaclab_physx.physics.physx_manager] TGS solver with enable_external_forces_every_iteration=False may cause noisy velocities.
+[INFO]: Base environment:
+	Environment device    : cuda:0
+	Environment seed      : None
+	Physics step-size     : 0.0025
+	Rendering step-size   : 0.02
+	Environment step-size : 0.02
+[INFO]: Registered backend 'physx' for factory Articulation.
+[INFO]: Registered backend 'physx' for factory RigidObject.
+[INFO]: Registered backend 'physx' for factory FrameView.
+[INFO]: Registered backend 'physx' for factory FrameTransformer.
+[INFO]: Physics scene prim path: /physicsScene
+[INFO]: Time taken for scene creation Last: 1.224510 s, Mean: 1.224510 s, Std: 0.000000 s, N: 1
+[INFO]: Scene manager:  <class InteractiveScene>
+	Number of environments: 128
+	Environment spacing   : 2.0
+	Source prim name      : /World/envs/env_0
+	Global prim paths     : []
+	Replicate physics     : True
+2026-08-03T16:29:02Z [5,383ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_1/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,383ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_2/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,383ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_3/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,383ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_4/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,384ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_5/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,384ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_6/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,384ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_7/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,385ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_8/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,385ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_9/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,385ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_10/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,385ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_11/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,386ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_12/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,386ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_13/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,386ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_14/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,386ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_15/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,387ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_16/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,387ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_17/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,387ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_18/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,387ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_19/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,388ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_20/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,388ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_21/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,388ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_22/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,388ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_23/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,389ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_24/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,389ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_25/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,389ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_26/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,389ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_27/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,390ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_28/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,390ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_29/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,390ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_30/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,390ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_31/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,391ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_32/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,391ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_33/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,391ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_34/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,391ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_35/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,392ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_36/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,392ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_37/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,392ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_38/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,392ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_39/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,393ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_40/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,393ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_41/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,393ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_42/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,393ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_43/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,394ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_44/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,394ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_45/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,394ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_46/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,394ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_47/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,395ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_48/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,395ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_49/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,395ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_50/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,395ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_51/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,396ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_52/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,396ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_53/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,396ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_54/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,396ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_55/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,397ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_56/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,397ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_57/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,397ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_58/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,397ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_59/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,398ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_60/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,398ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_61/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,398ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_62/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,398ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_63/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,399ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_64/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,399ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_65/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,399ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_66/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,400ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_67/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,400ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_68/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,400ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_69/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,400ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_70/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,401ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_71/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,401ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_72/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,401ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_73/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,401ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_74/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,402ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_75/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,402ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_76/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,402ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_77/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,403ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_78/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,403ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_79/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,403ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_80/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,403ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_81/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,404ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_82/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,404ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_83/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,404ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_84/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,404ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_85/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,405ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_86/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,405ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_87/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,405ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_88/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,405ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_89/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,406ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_90/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,406ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_91/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,406ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_92/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,406ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_93/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,407ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_94/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,407ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_95/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,407ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_96/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,408ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_97/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,408ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_98/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,408ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_99/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,408ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_100/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,409ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_101/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,409ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_102/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,409ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_103/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,410ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_104/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,410ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_105/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,410ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_106/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,410ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_107/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,411ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_108/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,411ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_109/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,411ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_110/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,411ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_111/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,412ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_112/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,412ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_113/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,412ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_114/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,412ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_115/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,413ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_116/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,413ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_117/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,413ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_118/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,413ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_119/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,414ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_120/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,414ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_121/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,414ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_122/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,415ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_123/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,415ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_124/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,415ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_125/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,415ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_126/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:02Z [5,416ms] [Warning] [omni.physx.plugin] Cloning joints /World/envs/env_127/Robot/Physics/root_joint without a body rel may cause issues, since the localPose wont be updated.
+2026-08-03T16:29:03Z [6,154ms] [Warning] [usdrt.population.plugin] Last global time was not created. Did you call setEnableUsdNoticeHandling?
+2026-08-03T16:29:03Z [6,295ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_0/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,295ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_1/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,295ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_2/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,296ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_3/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,296ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_4/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,296ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_5/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,296ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_6/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,296ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_7/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,296ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_8/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,296ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_9/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,296ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_10/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,296ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_11/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,296ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_12/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,296ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_13/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,296ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_14/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,296ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_15/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,296ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_16/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,296ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_17/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,296ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_18/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,296ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_19/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,296ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_20/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,296ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_21/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,296ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_22/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,296ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_23/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,296ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_24/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,296ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_25/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,296ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_26/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,296ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_27/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,296ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_28/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,296ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_29/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,296ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_30/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,296ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_31/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,296ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_32/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,296ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_33/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,296ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_34/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,296ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_35/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,296ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_36/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,296ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_37/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,296ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_38/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,296ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_39/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,296ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_40/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,297ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_41/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,297ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_42/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,297ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_43/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,297ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_44/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,297ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_45/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,297ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_46/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,297ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_47/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,297ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_48/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,297ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_49/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,297ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_50/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,297ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_51/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,297ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_52/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,297ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_53/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,297ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_54/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,297ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_55/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,297ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_56/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,297ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_57/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,297ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_58/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,297ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_59/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,297ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_60/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,297ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_61/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,297ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_62/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,297ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_63/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,297ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_64/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,297ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_65/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,297ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_66/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,297ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_67/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,297ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_68/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,297ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_69/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,297ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_70/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,297ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_71/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,297ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_72/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,297ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_73/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,297ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_74/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,297ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_75/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,297ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_76/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,297ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_77/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,297ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_78/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,297ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_79/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,297ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_80/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,298ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_81/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,298ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_82/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,298ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_83/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,298ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_84/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,298ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_85/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,298ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_86/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,298ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_87/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,298ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_88/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,298ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_89/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,298ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_90/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,298ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_91/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,298ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_92/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,298ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_93/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,298ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_94/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,298ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_95/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,298ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_96/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,298ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_97/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,298ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_98/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,298ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_99/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,298ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_100/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,298ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_101/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,298ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_102/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,298ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_103/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,298ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_104/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,298ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_105/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,298ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_106/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,298ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_107/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,298ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_108/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,298ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_109/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,298ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_110/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,298ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_111/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,298ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_112/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,298ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_113/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,298ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_114/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,298ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_115/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,298ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_116/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,298ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_117/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,298ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_118/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,298ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_119/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,298ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_120/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,298ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_121/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,299ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_122/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,299ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_123/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,299ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_124/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,299ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_125/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,299ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_126/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,299ms] [Warning] [omni.physx.tensors.plugin] Failed to find articulation at '/World/envs/env_127/Robot/Geometry/base_link/base_link'
+[INFO]: Simulation parameters for joints in /World/envs/env_.*/Robot:
++------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+|                                                Simulation Joint Information (Prim path: /World/envs/env_.*/Robot)                                                |
++-------+-------------+-----------+---------+----------+-----------------+------------------+------------------+-----------------+-----------------+---------------+
+| Index | Name        | Stiffness | Damping | Armature | Static Friction | Dynamic Friction | Viscous Friction | Position Limits | Velocity Limits | Effort Limits |
++-------+-------------+-----------+---------+----------+-----------------+------------------+------------------+-----------------+-----------------+---------------+
+|   0   | joint1      |  2.9e+04  | 3.4e+03 |  0.000   |      0.000      |      0.000       |      0.000       | [-2.800, 2.800] |      50.000     |     36.000    |
+|   1   | joint2      |  8.6e+04  | 5.5e+03 |  0.000   |      0.000      |      0.000       |      0.000       | [-3.140, 0.000] |      50.000     |     36.000    |
+|   2   | joint3      |  5.7e+04  | 4.4e+03 |  0.000   |      0.000      |      0.000       |      0.000       | [-3.140, 0.000] |      50.000     |     36.000    |
+|   3   | joint4      |  8.6e+03  | 1.0e+03 |  0.000   |      0.000      |      0.000       |      0.000       | [-1.790, 1.690] |      40.000     |     14.000    |
+|   4   | joint5      |  4.6e+03  | 572.958 |  0.000   |      0.000      |      0.000       |      0.000       | [-1.570, 1.570] |      40.000     |     14.000    |
+|   5   | joint6      |  2.9e+03  | 401.070 |  0.000   |      0.000      |      0.000       |      0.000       | [-3.140, 3.140] |      40.000     |     14.000    |
+|   6   | joint_left  |  2.0e+03  |  40.000 |  0.000   |      0.000      |      0.000       |      0.000       |  [0.000, 0.050] |      10.000     |    500.000    |
+|   7   | joint_right |  2.0e+03  |  40.000 |  0.000   |      0.000      |      0.000       |      0.000       |  [0.000, 0.072] |      10.000     |    500.000    |
++-------+-------------+-----------+---------+----------+-----------------+------------------+------------------+-----------------+-----------------+---------------+
+[INFO]: Offsets application needed from '/World/envs/env_.*/Robot/Geometry/base_link' to the following target frames: ['end_effector']
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_0/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_1/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_2/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_3/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_4/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_5/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_6/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_7/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_8/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_9/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_10/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_11/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_12/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_13/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_14/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_15/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_16/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_17/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_18/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_19/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_20/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_21/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_22/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_23/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_24/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_25/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_26/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_27/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_28/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_29/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_30/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_31/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_32/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_33/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_34/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_35/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_36/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_37/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_38/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_39/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_40/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_41/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_42/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_43/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_44/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_45/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_46/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_47/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_48/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_49/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_50/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_51/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_52/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_53/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_54/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_55/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_56/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_57/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_58/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_59/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_60/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_61/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_62/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_63/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_64/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_65/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_66/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_67/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_68/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_69/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_70/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_71/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_72/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_73/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_74/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_75/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_76/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_77/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_78/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_79/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_80/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_81/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_82/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_83/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_84/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_85/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_86/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_87/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_88/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_89/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_90/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_91/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_92/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_93/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_94/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_95/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_96/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_97/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_98/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_99/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_100/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_101/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_102/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_103/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_104/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_105/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_106/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_107/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_108/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_109/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_110/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_111/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_112/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_113/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_114/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_115/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_116/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_117/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_118/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_119/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,464ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_120/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,465ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_121/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,465ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_122/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,465ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_123/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,465ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_124/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,465ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_125/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,465ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_126/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,465ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_127/Robot/Geometry/base_link/base_link'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_0/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_1/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_2/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_3/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_4/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_5/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_6/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_7/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_8/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_9/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_10/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_11/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_12/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_13/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_14/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_15/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_16/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_17/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_18/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_19/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_20/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_21/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_22/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_23/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_24/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_25/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_26/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_27/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_28/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_29/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_30/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_31/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_32/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_33/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_34/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_35/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_36/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_37/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_38/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_39/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_40/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_41/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_42/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_43/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_44/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_45/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_46/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_47/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_48/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_49/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_50/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_51/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_52/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_53/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_54/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_55/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_56/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_57/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_58/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_59/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_60/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_61/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_62/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_63/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_64/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_65/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_66/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_67/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_68/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_69/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_70/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_71/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_72/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_73/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_74/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_75/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_76/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_77/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_78/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_79/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_80/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_81/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_82/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_83/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_84/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_85/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_86/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_87/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_88/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_89/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_90/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_91/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_92/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_93/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_94/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_95/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_96/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,470ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_97/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,471ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_98/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,471ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_99/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,471ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_100/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,471ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_101/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,471ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_102/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,471ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_103/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,471ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_104/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,471ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_105/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,471ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_106/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,471ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_107/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,471ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_108/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,471ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_109/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,471ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_110/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,471ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_111/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,471ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_112/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,471ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_113/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,471ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_114/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,471ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_115/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,471ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_116/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,471ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_117/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,471ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_118/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,471ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_119/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,471ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_120/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,471ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_121/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,471ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_122/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,471ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_123/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,471ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_124/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,471ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_125/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,471ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_126/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+2026-08-03T16:29:03Z [6,471ms] [Warning] [omni.physx.tensors.plugin] Failed to find rigid body at '/World/envs/env_127/Robot/Geometry/base_link/link1/link2/link3/link4/link5/link6/gripper_end/gripper_end'
+[INFO]: Time taken for simulation start Last: 1.501272 s, Mean: 1.501272 s, Std: 0.000000 s, N: 1
+[INFO] Command Manager:  <CommandManager> contains 0 active terms.
++------------------------+
+|  Active Command Terms  |
++--------+-------+-------+
+| Index  | Name  |  Type |
++--------+-------+-------+
++--------+-------+-------+
+
+[INFO] Event Manager:  <EventManager> contains 1 active terms.
++-----------------------------------+
+| Active Event Terms in Mode: 'reset' |
++-----------+-----------------------+
+|   Index   | Name                  |
++-----------+-----------------------+
+|     0     | reset_all             |
+|     1     | reset_target          |
+|     2     | reset_d0              |
+|     3     | reset_d1              |
+|     4     | reset_d2              |
+|     5     | reset_d3              |
+|     6     | record_spawn          |
++-----------+-----------------------+
+
+[INFO] Recorder Manager:  <RecorderManager> contains 0 active terms.
++---------------------+
+| Active Recorder Terms |
++-----------+---------+
+|   Index   | Name    |
++-----------+---------+
++-----------+---------+
+
+[INFO]: Resolved joint names for the action term JointPositionAction: ['joint1', 'joint2', 'joint3', 'joint4', 'joint5', 'joint6'] [[0, 1, 2, 3, 4, 5]]
+[INFO]: Resolved joint names for the action term BinaryJointPositionAction: ['joint_left', 'joint_right'] [[6, 7]]
+[INFO] Action Manager:  <ActionManager> contains 2 active terms.
++------------------------------------+
+|   Active Action Terms (shape: 7)   |
++-------+----------------+-----------+
+| Index | Name           | Dimension |
++-------+----------------+-----------+
+|   0   | arm_action     |         6 |
+|   1   | gripper_action |         1 |
++-------+----------------+-----------+
+
+[INFO] Observation Manager: <ObservationManager> contains 1 groups.
++------------------------------------------------------+
+| Active Observation Terms in Group: 'policy' (shape: (42,)) |
++-------------+--------------------------+-------------+
+|    Index    | Name                     |    Shape    |
++-------------+--------------------------+-------------+
+|      0      | joint_pos                |     (8,)    |
+|      1      | joint_vel                |     (8,)    |
+|      2      | target_pose              |     (7,)    |
+|      3      | clutter                  |    (12,)    |
+|      4      | actions                  |     (7,)    |
++-------------+--------------------------+-------------+
+
+[INFO] Termination Manager:  <TerminationManager> contains 3 active terms.
++---------------------------------------+
+|        Active Termination Terms       |
++-------+--------------------+----------+
+| Index | Name               | Time Out |
++-------+--------------------+----------+
+|   0   | time_out           |   True   |
+|   1   | target_dropped     |  False   |
+|   2   | distractor_toppled |  False   |
++-------+--------------------+----------+
+
+[INFO] Reward Manager:  <RewardManager> contains 9 active terms.
++---------------------------------+
+|       Active Reward Terms       |
++-------+----------------+--------+
+| Index | Name           | Weight |
++-------+----------------+--------+
+|   0   | reaching       |    2.0 |
+|   1   | lifting        |    8.0 |
+|   2   | extracted      |   15.0 |
+|   3   | carrying       |   12.0 |
+|   4   | success        |   60.0 |
+|   5   | disturbance    |   -3.0 |
+|   6   | topple_penalty |  -40.0 |
+|   7   | action_rate    |  -0.02 |
+|   8   | joint_vel      | -0.005 |
++-------+----------------+--------+
+
+[INFO] Curriculum Manager:  <CurriculumManager> contains 0 active terms.
++----------------------+
+| Active Curriculum Terms |
++-----------+----------+
+|   Index   | Name     |
++-----------+----------+
++-----------+----------+
+
+[INFO]: Completed setting up the environment...
+
+====================================================================================================
+STAGE 2 -- env.step PORT GATE / DEMO COLLECTOR
+====================================================================================================
+   task Rebot-ClutterExtract-Play-v0   num_envs 128   episode_length 700 env steps
+   pose p33-winner  (P33 pose tournament, 2026-08-03, runs/p33_tournament.json candidate 5)
+   arms ['phys', 'tele', 'tele0', 'appr']   seeds [77000, 77001, 77002, 77003]
+   action manager: no clip on any term  (checked, not assumed)
+   [expert] chain LOADED: 23 waypoints, grasp at index 3 (no CEM ran)
+   approach: 6 frozen waypoints over 80 env steps, seam 0.0000 rad (73.0% vs 74.2% teleport, P29)
+   schedule: 394 env steps, 180 of them a held pose (45.7%)
+   settle=10  descend=75  predwell=20  close=70  carry=114  dwell=20  release=30  withdraw=25  final=30
+
+   --- arm phys ----------------------------------------------------------------------
+      seed 77000: encl 100.0% | goal  93.0% | topple  16.4% | SUCCESS  77.3%
+      seed 77001: encl 100.0% | goal  89.1% | topple  21.1% | SUCCESS  70.3%
+      seed 77002: encl 100.0% | goal  91.4% | topple  21.1% | SUCCESS  72.7%
+      seed 77003: encl 100.0% | goal  92.2% | topple  22.7% | SUCCESS  70.3%
+      phys MEAN 72.7% over 512 episodes
+
+   --- arm tele ----------------------------------------------------------------------
+      seed 77000: encl  83.6% | goal  75.8% | topple  16.4% | SUCCESS  75.8% | max|a| 4.632 | early-term 16.4%
+      seed 77001: encl  81.2% | goal  70.3% | topple  18.8% | SUCCESS  70.3% | max|a| 4.632 | early-term 18.8%
+      seed 77002: encl  78.1% | goal  74.2% | topple  21.9% | SUCCESS  74.2% | max|a| 4.632 | early-term 21.9%
+      seed 77003: encl  73.4% | goal  69.5% | topple  26.6% | SUCCESS  69.5% | max|a| 4.632 | early-term 26.6%
+      tele MEAN 72.5% over 512 episodes
+      termination taxonomy: time_out 0.0%, target_dropped 0.0%, distractor_toppled 20.9%
+
+   --- arm tele0 ----------------------------------------------------------------------
+      seed 77000: encl  84.4% | goal  77.3% | topple  15.6% | SUCCESS  77.3% | max|a| 4.632 | early-term 15.6%
+      seed 77001: encl  80.5% | goal  73.4% | topple  19.5% | SUCCESS  73.4% | max|a| 4.632 | early-term 19.5%
+      seed 77002: encl  76.6% | goal  69.5% | topple  23.4% | SUCCESS  69.5% | max|a| 4.632 | early-term 23.4%
+      seed 77003: encl  77.3% | goal  71.9% | topple  22.7% | SUCCESS  71.9% | max|a| 4.632 | early-term 22.7%
+      tele0 MEAN 73.0% over 512 episodes
+      termination taxonomy: time_out 0.0%, target_dropped 0.0%, distractor_toppled 20.3%
+
+   --- arm appr ----------------------------------------------------------------------
+      seed 77000: encl  83.6% | goal  77.3% | topple  16.4% | SUCCESS  77.3% | max|a| 4.632 | early-term 16.4% | appr pen 0.0 mm low_z 86 mm
+      seed 77001: encl  79.7% | goal  71.9% | topple  20.3% | SUCCESS  71.9% | max|a| 4.632 | early-term 20.3% | appr pen 0.0 mm low_z 86 mm
+      seed 77002: encl  78.9% | goal  74.2% | topple  21.1% | SUCCESS  74.2% | max|a| 4.632 | early-term 21.1% | appr pen 0.0 mm low_z 86 mm
+      seed 77003: encl  78.1% | goal  71.1% | topple  21.9% | SUCCESS  71.1% | max|a| 4.632 | early-term 21.9% | appr pen 0.0 mm low_z 86 mm
+      appr MEAN 73.6% over 512 episodes
+      termination taxonomy: time_out 0.0%, target_dropped 0.0%, distractor_toppled 19.9%
+
+   pairing check (identical scene fingerprints across arms):
+      seed 77000: OK  {'phys': 1601623.0, 'tele': 1601623.0, 'tele0': 1601623.0, 'appr': 1601623.0}
+      seed 77001: OK  {'phys': 1599456.0, 'tele': 1599456.0, 'tele0': 1599456.0, 'appr': 1599456.0}
+      seed 77002: *** MISMATCH ***  {'phys': 1601041.0, 'tele': 1601041.0, 'tele0': 1601040.0, 'appr': 1601040.0}
+      seed 77003: OK  {'phys': 1601046.0, 'tele': 1601046.0, 'tele0': 1601046.0, 'appr': 1601046.0}
+
+====================================================================================================
+VERDICT
+====================================================================================================
+   2a  MDP vs physics-only: phys  72.7% -> tele  72.5%  delta -0.20 pts  PASS   episode flips 49/512 (9.6%, noise floor ~8 %)
+       the 30-step free settle: tele  72.5% -> tele0  73.0%  delta +0.59 pts  PASS   episode flips 43/512 (8.4%, noise floor ~8 %)
+   2b  action-driven approach: tele0  73.0% -> appr  73.6%  delta +0.59 pts  PASS   episode flips 47/512 (9.2%, noise floor ~8 %)
+
+   phys arm 72.7% vs P34's quoted 72.1% (delta +0.56 pts) -- the reference check
+   wrote /home/eva/Desktop/isaacLab/eva_bc/clutter/runs/gate2.json
+[INFO]: SimulationContext cleared

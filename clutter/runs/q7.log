@@ -1,0 +1,48 @@
+=== N=16 ===
+   env-steps/s              469.4
+   one 690-step episode      23.5 s  (=16 episodes in parallel)
+   torch peak alloc           0.1 MiB
+   torch peak reserved        2.0 MiB
+   nvidia-smi used         1563.0 MiB  of 10240
+=== N=64 ===
+   env-steps/s             1833.4
+   one 690-step episode      24.1 s  (=64 episodes in parallel)
+   torch peak alloc           0.1 MiB
+   torch peak reserved        2.0 MiB
+   nvidia-smi used         1563.0 MiB  of 10240
+=== N=128 ===
+   env-steps/s             3462.0
+   one 690-step episode      25.5 s  (=128 episodes in parallel)
+   torch peak alloc           0.2 MiB
+   torch peak reserved        2.0 MiB
+   nvidia-smi used         1563.0 MiB  of 10240
+=== N=256 ===
+   env-steps/s             5841.0
+   one 690-step episode      30.2 s  (=256 episodes in parallel)
+   torch peak alloc           0.4 MiB
+   torch peak reserved        2.0 MiB
+   nvidia-smi used         1629.0 MiB  of 10240
+=== N=512 ===
+   env-steps/s            10528.3
+   one 690-step episode      33.6 s  (=512 episodes in parallel)
+   torch peak alloc           0.7 MiB
+   torch peak reserved        2.0 MiB
+   nvidia-smi used         1759.0 MiB  of 10240
+=== N=1024 ===
+   env-steps/s            20342.5
+   one 690-step episode      34.7 s  (=1024 episodes in parallel)
+   torch peak alloc           1.4 MiB
+   torch peak reserved        2.0 MiB
+   nvidia-smi used         1955.0 MiB  of 10240
+=== N=2048 ===
+   env-steps/s            34457.9
+   one 690-step episode      41.0 s  (=2048 episodes in parallel)
+   torch peak alloc           2.8 MiB
+   torch peak reserved        4.0 MiB
+   nvidia-smi used         2407.0 MiB  of 10240
+=== N=4096 ===
+   env-steps/s            49230.6
+   one 690-step episode      57.4 s  (=4096 episodes in parallel)
+   torch peak alloc           5.5 MiB
+   torch peak reserved        8.0 MiB
+   nvidia-smi used         3229.0 MiB  of 10240
