@@ -70,6 +70,15 @@ def main() -> None:
                              "eval-vs-dagger success discrepancy, see EXP08 log)")
     parser.add_argument("--load-only", action="store_true",
                         help="DIAGNOSTIC: load champion machinery but never call it")
+    parser.add_argument("--dummy-load", action="store_true",
+                        help="DIAGNOSTIC: no labeling, but burn comparable GPU time in pure "
+                             "matmuls at each boundary (isolates renderer contention)")
+    parser.add_argument("--features-only", action="store_true",
+                        help="DIAGNOSTIC: call build_obs + steering head at boundaries but "
+                             "NOT the flow forward (isolates sensor-access side effects)")
+    parser.add_argument("--aa-mode", default=None, choices=["Off", "FXAA", "DLSS", "TAA", "DLAA"],
+                        help="override renderer antialiasing (DLSS default is TEMPORAL -> "
+                             "frame content depends on GPU load; see EXP08 log)")
     AppLauncher.add_app_launcher_args(parser)
     args = parser.parse_args()
     args.headless = True
@@ -98,7 +107,7 @@ def main() -> None:
         core = SteerCore(c_controller, mdp, Path(__file__).parent / "exp06_grasp_bit.pt", alpha_x0=1.0, flush=False)
         steer_act = load_residual_policy(Path(args.steer_ckpt), Path(args.steer_cfg), device,
                                          obs_dim=STEER_OBS_DIM, act_dim=STEER_ACTION_DIM)
-        if args.load_only:
+        if args.load_only or args.features_only:
             labeling = False
 
     @torch.no_grad()
@@ -122,6 +131,8 @@ def main() -> None:
     env_cfg.rewards.dropping_penalty = None
     env_cfg.episode_length_s = args.episode_length_s
     env_cfg.seed = args.seed
+    if args.aa_mode is not None:
+        env_cfg.sim.render.antialiasing_mode = args.aa_mode
     env = gym.make(args.task, cfg=env_cfg)
     u = env.unwrapped
     n = args.num_envs
@@ -147,6 +158,12 @@ def main() -> None:
         stu = obs_dict["student"]
         obs41 = obs_dict["policy"]
 
+        if args.dummy_load and step_i % window == 0:  # DIAGNOSTIC: contention without semantics
+            m = torch.randn(2048, 2048, device=device)
+            for _ in range(12):
+                m = m @ m / m.norm()
+        if args.features_only and step_i % window == 0:  # DIAGNOSTIC: sensor access, no flow
+            steer_act(core.build_obs(obs41, u))
         if labeling and step_i % window == 0:  # student chunk-commit boundary: label + record
             labels = champion_chunk(obs41, u).cpu()
             pro = torch.cat([stu["joint_pos"], stu["joint_vel"], stu["actions"]], dim=1).cpu()

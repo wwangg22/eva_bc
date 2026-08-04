@@ -203,6 +203,24 @@ DAgger → steering — with vision obs; agreed NO after this reasoning):
     my loop's student path differs structurally from the eval loop.
   - Gate D training is HELD until resolved — training on data from a perturbed
     student distribution would bake the anomaly in.
+- 2026-08-03: **Bisection verdicts.** no-label 79.7%, load-only 81.2% (both =
+  the eval's warm-renderer level; loading is innocent) — but dummy GPU load
+  (pure matmuls, champion never loaded) **35.9%** and features-only 46.9%.
+  **Mechanism: the rendered frames are GPU-load-dependent.** Any extra GPU work
+  at the boundary step degrades the pixels the student sees. Sim-only artifact
+  (real cameras are independent hardware).
+- **Prime suspect: DLSS.** Isaac Lab's default `antialiasing_mode` is DLSS — a
+  TEMPORAL upscaler (reconstructs frames from prior-frame history + motion
+  feedback ⇒ content legitimately depends on frame timing / GPU load), and it
+  was running BELOW its minimum input resolution at our 160×90 (logged warning:
+  "DLSS increasing input dimensions... below minimal input resolution of 300").
+  Also explains the reproducible round-1 depression (cold DLSS history buffer =
+  render warmup) and the earlier ~5 mean-abs-pixel run-to-run non-determinism.
+  Discriminator running: no-label vs labeling-on, both with
+  `sim.render.antialiasing_mode="Off"` — if they agree, load-dependence is
+  fixed; absolute level may drop (student was trained on DLSS-look frames →
+  AA-off frames are out-of-distribution) → then re-collect BC + DAgger with AA
+  off and retrain on clean frames.
 - Gate D design (per §4): student DRIVES, champion labels student-visited
   states. Labels are full 50-step chunks computed champion-side (steering z
   from privileged obs56 → x0 = tanh(z) → frozen base flow), collected at the
