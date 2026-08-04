@@ -243,7 +243,18 @@ DAgger → steering — with vision obs; agreed NO after this reasoning):
   deliberately runs the perturbing live build for comparison). v1 in-loop
   DAgger data (r1_seed42/123) EXCLUDED from training — collected under
   degraded frames.
-- Gate D design (per §4): student DRIVES, champion labels student-visited
+- 2026-08-03: **DAgger v2 production collections CLEAN — audits PASSED**:
+  seed 42 student-driving success 82.8%, seed 123 79.7% (= the ~80% no-label
+  baseline; the post-hoc loop provably does not perturb frames). 128 episodes,
+  ~12.8k chunk-labeled boundary states, ~1.05 GB. Measurement note: Gate C's
+  official 67.2% includes the DLSS-cold-start round 1 (6/16, a sim warmup
+  artifact); the v1 student's warm-renderer level is ~78–83% (eval rounds 2–4
+  + both audits). Official gate numbers keep the full protocol — Gate D
+  inherits the same round-1 handicap, so deltas are honest.
+- 2026-08-03: **Gate D training v2 launched**: BC pool (120 eps) + DAgger v2
+  (128 eps, all outcomes) = 248 episodes / 94.1k samples, from scratch, same
+  recipe, 100k steps → `runs/exp08_bc/v2_dagger/`. Then Gate D eval, seeds
+  42/123 × 64 eps, target ≥90% pooled.
   states. Labels are full 50-step chunks computed champion-side (steering z
   from privileged obs56 → x0 = tanh(z) → frozen base flow), collected at the
   student's 15-step window boundaries ONLY — those are the exact states where
