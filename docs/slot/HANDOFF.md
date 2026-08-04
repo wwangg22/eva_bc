@@ -217,6 +217,38 @@ claim. This session retracted two single-seed claims already (§9d, EXP_DEPTH §
 
 ---
 
+## 1a-s7. SESSION 7 STATE (2026-08-03 18:40) — read this before §1a
+
+**Pushed.** Commit `b1540a8` is on `origin/main` (`git@github.com:wwangg22/eva_bc.git`), 122
+files / 1.3 MB: `slot/` source + scripts + analysis + `docs/slot/`. The push was **not** a
+fast-forward — two `clutter/` commits had landed on the remote in the meantime; verified disjoint
+from `slot/`, rebased, pushed. Git identity was unset on this machine and is now set
+**repo-locally** to `william <whw2112@columbia.edu>`, matching the repo's prior commits.
+
+**Not tracked, deliberately:** `.gitignore` excludes `runs/`, `*.pt`, `*.mp4`, `*.hdf5`, so **the
+eval JSONs every result in these docs cites are not in the repo** (116 files, 7.9 MB). Offered to
+Big Will; awaiting a decision. Until then the numbers are reproducible from the scripts but not
+verifiable from a clone.
+
+**Running / queued:**
+
+```
+bash scripts/make_single_env_videos.sh   # 1-env clips, running at 18:40
+bash scripts/run_x0_norm.sh              # STOPPED mid-run by request; idempotent, ~30 min
+bash scripts/run_x0_holdout.sh 4         # NOT RUN -- 0.823 is still unvalidated out of sample
+bash scripts/run_x0_bcast_ladder.sh      # NOT RUN -- the path PPO would have walked
+bash scripts/run_obs_shift.sh            # NOT RUN -- EXP_STEER §8d + the causal cell
+```
+
+**The one thing that must not be quoted yet:** the 0.823 is the maximum of nine latents scored on
+the *same* 96 episodes. `run_x0_holdout.sh` has not run. Between-latent spread is 20× the
+within-cell SE so the *ranking* is sound, but whether that latent suits *these spawns* is exactly
+what has not been tested.
+
+`eva_rl`: **0 changes**, as throughout.
+
+---
+
 ## 1a. ✅ NOTHING IS RUNNING — session 6 (EXP_ROBUSTNESS + EXP_DEPTH) is COMPLETE
 
 45 perturbed evaluations + 4 expert runs, all finished 09:00–12:10 on 2026-08-03. GPU is free.

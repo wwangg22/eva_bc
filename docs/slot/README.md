@@ -109,6 +109,22 @@ slot/
 docs/slot/           this file and everything in the table above
 ```
 
+### Clips worth watching (single workstation, one env, one episode)
+
+`slot/runs/bc_armB_seed0/videos/`, produced by `scripts/make_single_env_videos.sh`. Each retried
+across spawn seeds until the episode genuinely had the outcome its filename claims.
+
+| clip | outcome | final block (x, y, z) | depth |
+|---|---|---|---|
+| `single_success_clean.mp4` | success | (0.257, 0.000, 0.055) | **+47.4 mm** |
+| `single_failure_act002.mp4` | failure, 2 % actuation noise | (0.162, 0.000, 0.061) | **−47.8 mm** |
+| `single_success_act002_s4.mp4` | success, **same noise**, `--fixed-x0 4` | (0.257, 0.001, 0.055) | **+47.3 mm** |
+
+The middle clip is the one to watch. The block ends at x = 0.162 — the staging waypoint — at
+carry height, on-axis to 0.42 mm, ~48 mm short of the mouth and touching nothing. The policy
+grasps, carries, lines up, and then simply holds for the remaining ~400 steps. The third clip is
+the identical condition with the flow's latent held fixed, and it seats the block.
+
 Two rules that are not negotiable, both learned the hard way:
 
 * **`eva_rl` is a shared asset repo — never edit it.** Everything task-side is worked around it.
