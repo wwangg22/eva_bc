@@ -170,6 +170,18 @@ of x0-steering — both bigger conversations with Big Will.
   shaping secondary); iterate collections with head-mean + exploration noise.
   Eval = deterministic head mean, integrated forward.
 
+- 2026-08-04: **AWR iteration 0 pre-registration.** Collector
+  `experiments/exp09_awr_collect.py` (one encode + manual Euler mirroring
+  predict_action_chunk — SAME loop compute for random-z and head-driven
+  iterations, C2-safe). Iteration 0: z~N(0,1)^7 shared per chunk, fresh seeds
+  3001/3002, 64 eps each. **Guess: driving success 65–85%** (the base already
+  runs from random per-element x0; chunk-shared tanh(z) is mildly
+  out-of-distribution). If BELOW 60: chunk-shared tanh-x0 hurts the base —
+  reconsider steering parametrization (e.g. z added to random x0, or
+  first-k-steps-only) BEFORE fitting any head. Success signal for AWR later:
+  per-window placed-delta windows are rare (~2/ep) — the reward-sum shaping
+  carries most gradient; z-collapse watch = head output variance.
+
 ## 5. Phases (after smoke tests, subject to change)
 
 P0 = S1–S3 (~half a day, mostly reusing existing shards + eval loop).
