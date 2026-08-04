@@ -182,6 +182,23 @@ of x0-steering — both bigger conversations with Big Will.
   per-window placed-delta windows are rare (~2/ep) — the reward-sum shaping
   carries most gradient; z-collapse watch = head output variance.
 
+- 2026-08-04: **it0 α=1 BELOW floor (0.406/0.391 vs 0.60)** → per
+  pre-registration, parametrization fixed before fitting. **α-sweep (32 eps,
+  seed 3001): α=0.5 → 0.562, α=0.25 → 0.625** (base band 0.64–0.69).
+  **DECISION: α=0.25** — near-transparent to the base, steering authority to
+  be proven by AWR (if the fitted head moves nothing at 0.25, retry 0.5).
+  it0b collection at α=0.25 (64 eps × seeds 3001/3002) launched
+  (`runs/exp09/it0b_chain.sh`, data → `data/exp09_awr/it0b_a025_seed*`).
+  α=1 data kept (off-distribution exploration; don't mix naively).
+  **NEXT ACT: build `experiments/exp09_awr_train.py`** — SteerHead(tokens 31,
+  512 → MLP → 7-D z, must match the collector's import), precompute frozen v4
+  tokens from recorded images, advantage = normalized (placed_delta primary +
+  win_reward shaping) per window, weights = exp(A/β) clipped, weighted MSE
+  tokens→z/α... note z recorded is PRE-tanh; head should regress z where
+  advantage-weighted. Then eval: collector path with --head-ckpt
+  --explore-std 0 IS the deterministic eval loop (same compute); compare vs
+  v4 78.9 pooled / 65.6 held-out on seeds 42/123/555.
+
 ## 5. Phases (after smoke tests, subject to change)
 
 P0 = S1–S3 (~half a day, mostly reusing existing shards + eval loop).
