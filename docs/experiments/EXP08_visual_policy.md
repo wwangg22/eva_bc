@@ -327,6 +327,16 @@ DAgger → steering — with vision obs; agreed NO after this reasoning):
   judged on held-out seeds going forward — Gate criterion amendment to discuss
   with Big Will. Fresh-seed DAgger (r3 + cold, seeds 777/888/999/1111) is now
   also the treatment for the disease itself, not just cold frames.
+- 2026-08-04: **v2 held-out baseline (seed 555, full protocol): 37.5%**
+  (rounds 7,6,5,6 — FLAT, no cold-round shape; stall-after-can-1 24/64,
+  never-placed 16/64 = 25% vs ~11% on seeds 42/123). Worse than the 0.56–0.58
+  warm driving on 777/888 — either 555 draws harder geometry or the warm
+  audits flatter (no cold round in them; both plausible, n is small). Honest
+  summary of the ladder so far: **in-distribution (42/123) v2 = 75.0; held-out
+  v2 = 37.5–56.** r3 s888 collected clean (audit 0.578, 64 shards). External
+  kill #4 hit after the v2-555 eval; chain resumed (train v4 on 12 dirs →
+  evals 42/123/555). v4's bar: beat 75.0 on 42/123 AND move 37.5 on 555
+  meaningfully — the 555 number is the one that matters for the real rig.
   states. Labels are full 50-step chunks computed champion-side (steering z
   from privileged obs56 → x0 = tanh(z) → frozen base flow), collected at the
   student's 15-step window boundaries ONLY — those are the exact states where
