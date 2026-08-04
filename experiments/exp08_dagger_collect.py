@@ -64,6 +64,12 @@ def main() -> None:
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--episode-length-s", type=float, default=30.0)
     parser.add_argument("--out-dir", required=True)
+    parser.add_argument("--no-label", action="store_true",
+                        help="DIAGNOSTIC: skip champion loading + labeling entirely; run the "
+                             "student rollout alone and report success (bisecting the "
+                             "eval-vs-dagger success discrepancy, see EXP08 log)")
+    parser.add_argument("--load-only", action="store_true",
+                        help="DIAGNOSTIC: load champion machinery but never call it")
     AppLauncher.add_app_launcher_args(parser)
     args = parser.parse_args()
     args.headless = True
@@ -84,12 +90,16 @@ def main() -> None:
     window = s_cfg["n_action_steps"]
 
     # --- champion labeler (teacher-side, privileged; NO controller queue) ---
-    c_policy, c_stats, c_cfg = load_checkpoint(Path(args.ckpt), device)
-    chunk_size = c_cfg["chunk_size"]
-    c_controller = BatchedACTController(c_policy, c_stats, c_cfg["n_action_steps"], chunk_size, device)
-    core = SteerCore(c_controller, mdp, Path(__file__).parent / "exp06_grasp_bit.pt", alpha_x0=1.0, flush=False)
-    steer_act = load_residual_policy(Path(args.steer_ckpt), Path(args.steer_cfg), device,
-                                     obs_dim=STEER_OBS_DIM, act_dim=STEER_ACTION_DIM)
+    labeling = not args.no_label
+    if labeling:
+        c_policy, c_stats, c_cfg = load_checkpoint(Path(args.ckpt), device)
+        chunk_size = c_cfg["chunk_size"]
+        c_controller = BatchedACTController(c_policy, c_stats, c_cfg["n_action_steps"], chunk_size, device)
+        core = SteerCore(c_controller, mdp, Path(__file__).parent / "exp06_grasp_bit.pt", alpha_x0=1.0, flush=False)
+        steer_act = load_residual_policy(Path(args.steer_ckpt), Path(args.steer_cfg), device,
+                                         obs_dim=STEER_OBS_DIM, act_dim=STEER_ACTION_DIM)
+        if args.load_only:
+            labeling = False
 
     @torch.no_grad()
     def champion_chunk(obs41: torch.Tensor, u) -> torch.Tensor:
@@ -137,7 +147,7 @@ def main() -> None:
         stu = obs_dict["student"]
         obs41 = obs_dict["policy"]
 
-        if step_i % window == 0:  # student chunk-commit boundary: label + record
+        if labeling and step_i % window == 0:  # student chunk-commit boundary: label + record
             labels = champion_chunk(obs41, u).cpu()
             pro = torch.cat([stu["joint_pos"], stu["joint_vel"], stu["actions"]], dim=1).cpu()
             assert torch.allclose(
@@ -157,6 +167,15 @@ def main() -> None:
         done = (terminated | truncated).view(-1).cpu().nonzero(as_tuple=False).squeeze(-1)
         if done.numel():
             for i in done.tolist():
+                if not labeling:  # diagnostic mode: count outcomes only, no shards
+                    if ep_count[i] > 0 and saved < args.episodes:
+                        success_count += int(placed_all[i])
+                        saved += 1
+                        if saved % 16 == 0:
+                            print(f"[dagger-diag] {saved}/{args.episodes}, student success "
+                                  f"{success_count}/{saved}", flush=True)
+                    ep_count[i] += 1
+                    continue
                 if ep_count[i] > 0 and saved < args.episodes:
                     ep = {k: torch.stack(v) for k, v in bufs[i].items()}
                     ep["wrist_rgb"] = ep["wrist_rgb"].to(torch.uint8)

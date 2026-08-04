@@ -182,6 +182,27 @@ DAgger → steering — with vision obs; agreed NO after this reasoning):
   placed 0 = 13 (10%); no episode placed 2 then lost one. Classic compounding
   BC drift → exactly DAgger's target. Results:
   `runs/exp08_bc/v1/eval_seed{42,123}.json`.
+- 2026-08-03: **ANOMALY — student success collapses inside the DAgger driver.**
+  DAgger r1 collection ran clean (128 eps, 1.1 GB) but the student scored
+  42.2%/39.1% (s42/s123) while driving — vs 68.8%/65.6% in its own Gate C eval,
+  same checkpoint/seeds/protocol (gap z≈6, systematic). Forensics so far:
+  - Eval rerun (same script, fresh process): **67.2% again, per-round
+    (6,14,11,12) vs original (6,15,12,11) — the run is near-deterministic.**
+    Gate C stands; the DAgger driver is what's off.
+  - Per-round breakdown kills two hypotheses: eval round 1 is warmup-depressed
+    in both runs (6/16 — renderer warmup, real + repeatable) with rounds 2–4
+    at ~77%; the DAgger runs are ~40% in EVERY round including the same
+    sim-age windows. Not episode order, not sim age, not sampling luck (two
+    seeds agree within each script).
+  - Only functional difference found by code diff: the DAgger script loads the
+    champion machinery (rl_games import chain incl.) and calls it between
+    student steps. Bisection running: `--no-label` (champion never loaded) and
+    `--load-only` (loaded, never called) rollouts, seed 42. Outcomes map:
+    both ≈77% → the call perturbs; no-label ≈77% + load-only ≈40% → loading
+    pollutes global torch state (cudnn/TF32 flags suspected); both ≈40% →
+    my loop's student path differs structurally from the eval loop.
+  - Gate D training is HELD until resolved — training on data from a perturbed
+    student distribution would bake the anomaly in.
 - Gate D design (per §4): student DRIVES, champion labels student-visited
   states. Labels are full 50-step chunks computed champion-side (steering z
   from privileged obs56 → x0 = tanh(z) → frozen base flow), collected at the
