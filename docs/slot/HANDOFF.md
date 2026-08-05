@@ -1615,6 +1615,34 @@ became precision failure — pre-registered as belief 4.
 Full detail + belief scorecard: `docs/slot/VISION_PLAN.md` section 12.
 Checkpoints: `slot/runs/vision_bc/{blind,v1}/ckpt_final.pt`.
 
+### S8-RESULT-b. The DAgger round REGRESSED — v1 is still the deliverable
+
+| arm | pooled | Wilson 95 % |
+|---|---|---|
+| blind | 0.254 | [0.202, 0.315] |
+| **v1 — BC only** | **0.804** | [0.747, 0.850] |
+| v2 — BC + DAgger | **0.491** | [0.426, 0.556] |
+
+**−31.3 pts, z = −6.92, p = 4.5e-12**, both seeds. The collection was CLEAN — audit 0.801 vs a
+0.804 baseline (p = 0.939), labels distributionally identical to BC actions. The damage is in
+*which states were labelled*: `gross_miss` **1 → 41**, median |lateral| of failures
+**0.52 mm → 32.07 mm** (the blind control's signature). **DAgger broke perception, not precision.**
+
+**Cause:** DAgger assumes the teacher can recover from any state the learner visits. Our champion
+is a **BC clone of a scripted open-loop expert** — it has never seen a dropped block. ~20 % of
+DAgger episodes are student failures whose late boundaries are exactly those states; the champion
+emits plausible-looking actions there and they were trained on as ground truth. EXP08's clause
+*"ALL kept — labels are champion-quality regardless of the student's outcome"* was taken verbatim
+without checking that its premise holds for a cloned teacher. It does not.
+
+**Second design error:** BC targets are the stitched EXECUTED stream (re-planned every 15 steps);
+DAgger targets are a single open-loop 50-step plan. Different conditional distributions past the
+first window, mixed 93:7.
+
+**Fix needs NO re-collection** (obs34 is stored per boundary) — see `VISION_PLAN.md` §13d:
+truncate labels where the block leaves the champion's manifold, or success-only DAgger.
+**AWAITING BIG WILL'S CALL** between that and spending the time on resolution instead.
+
 **Next, cheapest first (VISION_PLAN 12d):** more eval episodes to tighten the interval (no
 training); 100k steps instead of 60k; **higher policy resolution** (160x90 is EXP08's basket-drop
 pick and a 1.5 mm clearance may want more pixels — the change I would bet on); then DAgger
