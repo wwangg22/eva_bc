@@ -245,6 +245,23 @@ of x0-steering — both bigger conversations with Big Will.
   (collect σ=0.7 around it1 head, seeds 3003/3004 → refit on it0b+it1x →
   eval; `runs/exp09/it2_chain.sh`, ~2 h).
 
+- 2026-08-05: **it2 VERDICT — FAILED, it1 remains champion.** Ladder
+  (base → it1 → it2): s42 0.875 → 0.891 → 0.844; s123 0.766 → 0.828 → 0.781;
+  held-out 555 0.547 → 0.609 → **0.516**. Pooled 0.820 → 0.859 → 0.813.
+  Beliefs missed: it1x σ=0.7 collections drove 0.703/0.625 (below the
+  ≥0.81 belief); "more data near the good region" reversed the gain. Head
+  diagnostics healthy (ESS 13303/25344, z_std 0.931) → not a degenerate fit.
+  Hypotheses: **H1 mixture conflict** (it0b random-z elites vs it1x
+  head-centered z pull the weighted regression to a compromise; pooled
+  reward-normalization across datasets with different baselines mislabels
+  advantages), **H2 σ=0.7 too hot** (exploration data itself degraded).
+  **it3a pre-registered (cheapest decisive test, NO new collection): refit
+  on it1x_std07_seed{3003,3004} ONLY → eval 42/123/555.** If it3a ≥ it1:
+  H1 confirmed → iterate with fit-on-latest-only + σ=0.35. If it3a ≈ it2 or
+  worse: H2/data-quality → recollect at σ=0.35 around it1 head before any
+  refit. Guess: it3a lands between it2 and it1 (mixture is real but σ=0.7
+  data alone is also weaker than it0b's random-z elites).
+
 ## 5. Phases (after smoke tests, subject to change)
 
 P0 = S1–S3 (~half a day, mostly reusing existing shards + eval loop).
