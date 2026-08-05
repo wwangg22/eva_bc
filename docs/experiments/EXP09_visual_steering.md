@@ -232,6 +232,19 @@ of x0-steering — both bigger conversations with Big Will.
   good region); watch ESS — head-centered data narrows z spread, advantage
   weights may concentrate.**
 
+- 2026-08-05: **it1 VERDICT — GATE PASSED, first visual-steering gain is
+  real.** Same-harness (collector, warm-only), 64 eps/seed:
+  s42 0.875→**0.891** (+1.6), s123 0.766→**0.828** (+6.3), held-out 555
+  0.547→**0.609** (+6.3). Pooled 42/123: 0.820→**0.859** (+3.9 ≥ +2 gate;
+  555 +6.3 ≥ −3 gate). Beat the pre-registered guess band (−1..+3). The
+  held-out improvement matters most: the head generalizes to unseen spawn
+  streams — genuine steering, not spawn memorization (contrast EXP08's
+  spawn-overfitting trap). One round of purely random z at α=0.25 was enough
+  to find signal despite val_mse ≈ z-variance (elite memorization + smooth
+  interpolation seems to suffice). **it2 LAUNCHED per pre-registration**
+  (collect σ=0.7 around it1 head, seeds 3003/3004 → refit on it0b+it1x →
+  eval; `runs/exp09/it2_chain.sh`, ~2 h).
+
 ## 5. Phases (after smoke tests, subject to change)
 
 P0 = S1–S3 (~half a day, mostly reusing existing shards + eval loop).
