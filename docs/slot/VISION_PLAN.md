@@ -424,3 +424,80 @@ Cheaper things to try first, now that the failure is precision rather than perce
    may simply want more pixels on the slot. This is the change I would bet on.
 4. **Supersample 8** — residual temporal shimmer is 9.06 at 4×, 4.68 at 8×. Note this invalidates
    the shards and costs a full re-collection.
+
+---
+
+## 13. RESULTS — the DAgger round REGRESSED, and the reason is a bad assumption of mine
+
+| arm | s777 | s888 | **pooled** | Wilson 95 % |
+|---|---|---|---|---|
+| blind | 0.223 | 0.286 | **0.254** | [0.202, 0.315] |
+| **v1 — BC only** | 0.786 | 0.821 | **0.804** | [0.747, 0.850] |
+| v2 — BC + DAgger | 0.473 | 0.509 | **0.491** | [0.426, 0.556] |
+
+**DAgger effect: −31.3 points, z = −6.92, p = 4.5 × 10⁻¹².** Both seeds agree. **v1 remains the
+deliverable.**
+
+### 13a. The collection was clean — the failure is downstream of it
+
+Everything that could have been wrong with the mechanics was checked and was fine:
+
+* **Audit passed**: student-driving success 205/256 = **0.801** against a 0.804 no-label baseline
+  (−0.3 pts, p = 0.939). The post-hoc design provably does not perturb the rollout — the exact
+  failure that cost EXP08 40 points did **not** happen here.
+* **Labels are distributionally indistinguishable from BC actions**: means within 0.1 per channel,
+  matching stds, identical ranges ([−2.53, 3.81] vs [−2.59, 3.81]), comparable temporal smoothness
+  (0.0090 vs 0.0102).
+
+So the labels are champion actions and the loop is clean. The damage is in **which states got
+labelled.**
+
+### 13b. The taxonomy says DAgger broke PERCEPTION, not precision
+
+| bucket (s777 failures) | v1 | v2 |
+|---|---|---|
+| `gross_miss` | **1** | **41** |
+| `stalled_in_mouth` | 12 | 11 |
+| `never_entered` | 11 | 6 |
+| median \|lateral\| | **0.52 mm** | **32.07 mm** |
+
+The precision failures barely moved. **Every lost point went into `gross_miss`**, and the median
+lateral error jumped to 32.07 mm — which is the *blind control's* signature (31.63 mm). v2
+partially regressed toward not finding the block at all.
+
+### 13c. The bad assumption, stated plainly
+
+**DAgger assumes the expert can recover from any state the learner visits. Our teacher is a BC
+clone, not an expert.** The champion was cloned from a scripted open-loop expert that never drops
+the block, never fumbles a grasp, never ends up 30 mm off axis. Roughly 20 % of DAgger episodes
+are ones the student failed, and the late boundaries of those episodes are states the champion has
+**never seen**. It emits *something* there — smooth, in-distribution-looking actions, which is why
+the label statistics look fine — and I trained on it as ground truth. The student learned to
+reproduce that behaviour and now reaches it from states it previously handled.
+
+I took this clause from EXP08 verbatim:
+
+> *"ALL kept — the labels are champion-quality regardless of the student's outcome, and failed
+> episodes are exactly where DAgger helps"*
+
+and did not check its premise. It is sound when the teacher genuinely has recovery behaviour. It
+is **false when the teacher is itself a cloned policy**, which is our case and arguably theirs.
+
+A second design error, which I should have caught before running: the two targets **disagree
+beyond step 15**. A BC sample's 50-step target is the *stitched executed stream* (re-planned every
+15 steps on fresh observations); a DAgger sample's is a *single open-loop 50-step plan*. Past the
+first window those are different conditional distributions, and I mixed them at a 93:7 ratio.
+
+### 13d. The fix — no re-collection needed
+
+`obs34` is stored at every boundary, so the shards can be re-filtered offline:
+
+1. **Truncate each episode's labels at the point the block leaves the champion's manifold** —
+   block below carry height, or lateral beyond one block half-width. Keeps the useful early
+   boundaries from failed episodes, drops the extrapolated ones. *Preferred.*
+2. **Success-only DAgger** — the blunt version, and still informative: student-visited states from
+   successful episodes are genuinely different from champion-visited ones.
+3. **Fix the target mismatch** — label BC samples with champion chunk *predictions* rather than
+   executed streams, making both sources the same conditional distribution. More invasive.
+
+Do 1 and 2 first; they cost one retrain each and no GPU collection.
