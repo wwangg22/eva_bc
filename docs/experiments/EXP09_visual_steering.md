@@ -215,6 +215,23 @@ of x0-steering — both bigger conversations with Big Will.
   compound. If it1 regresses > 3: check weight concentration (report
   effective sample size = (Σw)²/Σw²) before blaming the route.
 
+- 2026-08-04: **it1 interim + it2 pre-registration.** Same-harness collector
+  baselines (v4, --baseline randn x0, warm-only): s42 0.875 / s123 0.766 /
+  s555 0.547 (pooled 42/123 = 0.820; NOTE higher than eval_flow_vision's
+  0.789 — different episode accounting, first-ep-per-env discarded; compare
+  within-harness only). it1 steered: s42 0.891; s123 28/32 = 0.875 at half;
+  555 pending. Head diagnostics: no z-collapse (output std 0.89), ESS
+  6687/12672, val_mse 1.77 (head memorizes train z — expected for elite
+  selection; generalization judged by driving eval only). **it2 gate
+  (pre-registered): launch iteration 2 iff pooled steered ≥ pooled base
+  + 2 pts AND 555 steered ≥ 555 base − 3 pts.** it2 recipe: collect 64 eps ×
+  fresh seeds 3003/3004 with --head-ckpt it1 --explore-std 0.7 --x0-scale
+  0.25 (data → it1x_std07_seed*); refit on it0b + it1x (all α=0.25 data);
+  eval seeds 42/123/555 as it1. **Beliefs: it1x driving ≥ it1 steered − 5
+  (noise σ=0.7 costs a little); it2 eval ≥ it1 eval (more data near the
+  good region); watch ESS — head-centered data narrows z spread, advantage
+  weights may concentrate.**
+
 ## 5. Phases (after smoke tests, subject to change)
 
 P0 = S1–S3 (~half a day, mostly reusing existing shards + eval loop).
