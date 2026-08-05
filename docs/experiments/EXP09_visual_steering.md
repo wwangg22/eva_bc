@@ -199,6 +199,22 @@ of x0-steering — both bigger conversations with Big Will.
   --explore-std 0 IS the deterministic eval loop (same compute); compare vs
   v4 78.9 pooled / 65.6 held-out on seeds 42/123/555.
 
+- 2026-08-04: **AWR it1 fit + eval pre-registration** (before building the
+  trainer). Data: it0b_a025_seed{3001,3002} (128 eps, ~12k windows, α=0.25,
+  driving 0.656/0.672). Fit: frozen v4 tokens (31×512) → SteerHead MLP → 7-D
+  z; advantage A = 1.0·(placed_after−placed_before) + 0.3·znorm(win_reward);
+  weights = exp(A/β) clipped [0.1,10], β = std(A); weighted MSE to recorded
+  PRE-tanh z; 20k steps AdamW 3e-4; 5% val split. **Gates:** (a) z-collapse
+  watch — head output std across val windows must be > 0.1 (else it learned
+  a constant and the eval is meaningless); (b) steered eval (collector
+  --head-ckpt --explore-std 0 --x0-scale 0.25, seeds 42/123 64 eps each +
+  555) must NOT regress > 3 pts vs v4's 78.9 pooled / 65.6 held-out.
+  **Belief (guess): iteration-1 gains are small, −1 to +3 pooled** — one
+  round of purely random exploration at near-transparent α rarely finds much;
+  the iteration loop (collect around head mean → refit) is where gains
+  compound. If it1 regresses > 3: check weight concentration (report
+  effective sample size = (Σw)²/Σw²) before blaming the route.
+
 ## 5. Phases (after smoke tests, subject to change)
 
 P0 = S1–S3 (~half a day, mostly reusing existing shards + eval loop).

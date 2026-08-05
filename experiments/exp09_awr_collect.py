@@ -34,6 +34,10 @@ def main() -> None:
                         help="alpha: x0 = alpha*tanh(z). Iteration-0 at alpha=1 drove 0.39-0.41 "
                              "vs the base's 0.64-0.69 -- chunk-shared full-magnitude x0 is "
                              "out-of-distribution for the vision base")
+    parser.add_argument("--baseline", action="store_true",
+                        help="transparent v4 baseline: x0 = per-element randn (what "
+                             "predict_action_chunk draws internally), z recorded as zeros. "
+                             "Same loop compute; for same-harness comparison runs only")
     parser.add_argument("--episodes", type=int, default=64)
     parser.add_argument("--num-envs", type=int, default=16)
     parser.add_argument("--task", default="Rebot-PickPlace-Vision-Play-v1")
@@ -86,11 +90,15 @@ def main() -> None:
     def steered_chunk(stu):
         batch = ctrl.normalizer.normalize({k: v.to(device) for k, v in ctrl.build_batch(stu).items()})
         enc_out, enc_pos = policy.model.encode(policy._stack_images(batch))
-        if head is not None:
-            z = head(enc_out.permute(1, 0, 2)) + args.explore_std * torch.randn(n, 7, device=device)
+        if args.baseline:
+            z = torch.zeros(n, 7, device=device)
+            x = torch.randn(n, chunk_size, 7, device=device)
         else:
-            z = torch.randn(n, 7, device=device)
-        x = args.x0_scale * torch.tanh(z).unsqueeze(1).expand(-1, chunk_size, -1).clone()
+            if head is not None:
+                z = head(enc_out.permute(1, 0, 2)) + args.explore_std * torch.randn(n, 7, device=device)
+            else:
+                z = torch.randn(n, 7, device=device)
+            x = args.x0_scale * torch.tanh(z).unsqueeze(1).expand(-1, chunk_size, -1).clone()
         dt = 1.0 / n_steps_int
         for i in range(n_steps_int):
             tau = torch.full((n,), i * dt, device=device)
@@ -166,7 +174,8 @@ def main() -> None:
 
     rate = success_count / saved
     meta = {"vision_ckpt": args.vision_ckpt, "head_ckpt": args.head_ckpt,
-            "explore_std": args.explore_std, "seed": args.seed, "episodes": saved,
+            "explore_std": args.explore_std, "baseline": args.baseline,
+            "x0_scale": args.x0_scale, "seed": args.seed, "episodes": saved,
             "driving_success_rate": rate, "num_envs": n, "window": window}
     (out_dir / "meta.json").write_text(json.dumps(meta, indent=2))
     print(f"[awr] DONE {out_dir} driving={rate:.3f}", flush=True)
