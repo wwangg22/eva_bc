@@ -277,6 +277,35 @@ of x0-steering — both bigger conversations with Big Will.
   it1 as champion, bring escalation options to Big Will (per-phase z,
   CEM elite reuse, value-baseline advantage, x0-diversity base retrain).**
 
+- 2026-08-05: **it4 VERDICT — STOP RULE TRIGGERED. AWR iteration loop
+  closed after 4 cycles.** it4: s42 0.828 / s123 **0.844** / 555 **0.625**,
+  pooled 0.836 < it1's 0.859 → per pre-registration, stop iterating.
+  Full ladder (42 / 123 / 555 / pooled):
+  base 0.875/0.766/0.547/0.820 · it1 0.891/0.828/0.609/**0.859** ·
+  it2 0.844/0.781/0.516/0.813 · it3a 0.828/0.813/0.563/0.820 ·
+  it4 0.828/0.844/**0.625**/0.836.
+  **Champion by pre-registered metric (pooled): it1 head
+  (`runs/exp09/awr_it1/head.pt`).** Ambiguity flagged for Big Will: it4
+  beat it1 on 2/3 seeds incl. best-ever held-out (+7.8 over base) — if
+  held-out is the metric that matters, it4 is arguably the better artifact.
+  **Key surprise: it4x σ=0.35 collections drove 0.547/0.594 — WORSE than
+  pure random z (0.656/0.672).** Noise centered on the head's mean hurts
+  more than noise centered on zero: the head's chosen z sits in a
+  sharper/brittler region of x0-space than the origin, and/or fresh-seed
+  variance (3005/3006 unaudited as baselines). Belief scorecard for the
+  loop: it1 gain guess (−1..+3) UNDERSHOT (+3.9); it2 compounding belief
+  WRONG; it3a between-guess RIGHT; it4x driving belief (0.75–0.85) badly
+  WRONG (0.55–0.59); it4≥it1 belief WRONG on pooled, right on 2/3 seeds.
+  **Net EXP09 result so far: visual steering WORKS (+3.9 pooled / +6.2
+  held-out from one random-exploration round + AWR fit) but does NOT
+  compound under the simple loop.** Escalation options (need Big Will):
+  (a) per-phase/per-can z (steering refreshed each chunk already, but one
+  7-D z may be too coarse for 613-step episodes), (b) CEM elite reuse
+  (fit on pooled top-K windows across ALL α=0.25 data rather than
+  exp-weighted everything), (c) value-baseline advantage (offline V(s)
+  head on tokens, A = R − V(s), fixes myopia/no-baseline), (d) x0-diversity
+  base retrain (bigger conversation). GPU idle; awaiting direction.
+
 ## 5. Phases (after smoke tests, subject to change)
 
 P0 = S1–S3 (~half a day, mostly reusing existing shards + eval loop).
