@@ -262,6 +262,21 @@ of x0-steering — both bigger conversations with Big Will.
   refit. Guess: it3a lands between it2 and it1 (mixture is real but σ=0.7
   data alone is also weaker than it0b's random-z elites).
 
+- 2026-08-05: **it3a VERDICT — landed between it2 and it1 (as guessed):
+  s42 0.828 / s123 0.813 / 555 0.563, pooled 0.820 (= baseline).** Reading:
+  H1 (mixture) real but partial — dropping it0b recovered held-out vs it2
+  (0.516→0.563) and s123 (0.781→0.813); H2 also real — σ=0.7 it1x data alone
+  still ≤ it1's it0b-random fit (its 0.703/0.625 driving polluted the elite
+  pool). Champion unchanged: **it1** (0.891/0.828/0.609, pooled 0.859).
+  **it4 pre-registered (both remedies jointly): collect 64 eps × seeds
+  3005/3006 with --head-ckpt it1 --explore-std 0.35 --x0-scale 0.25 →
+  fit on that data ONLY → eval 42/123/555.** Beliefs: it4x driving
+  0.75–0.85 (σ=0.35 gentle, centered on a good head); it4 eval ≥ it1 if
+  the loop can compound at all. **STOP RULE: if it4 pooled < it1's 0.859,
+  the simple AWR loop is declared non-compounding — stop iterating, keep
+  it1 as champion, bring escalation options to Big Will (per-phase z,
+  CEM elite reuse, value-baseline advantage, x0-diversity base retrain).**
+
 ## 5. Phases (after smoke tests, subject to change)
 
 P0 = S1–S3 (~half a day, mostly reusing existing shards + eval loop).
