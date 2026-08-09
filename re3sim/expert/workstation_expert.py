@@ -374,7 +374,7 @@ def grasp_choices() -> list[tuple[float, int]]:
 
 
 def plan_episode(kin: ArmKin, cube_xy, cube_yaw, box_xy, clutter, verbose=False,
-                 choices=None) -> dict | None:
+                 choices=None, q_start=None) -> dict | None:
     """Solve the WHOLE trajectory before anything closes. Returns None if a gate fails.
 
     Returns a dict of joint-space segments:
@@ -390,6 +390,10 @@ def plan_episode(kin: ArmKin, cube_xy, cube_yaw, box_xy, clutter, verbose=False,
     """
     dev = kin.dev
     avoid = clutter_avoid_boxes(clutter, dev)
+    # Where this env's arm ACTUALLY is, which is only `kin.q_arm0` while the start pose is
+    # un-randomised. The transit is solved from here, so a jittered start produces a plan that
+    # begins where the arm begins rather than one that assumes it away.
+    q0 = kin.q_arm0 if q_start is None else q_start
 
     # --- the grasp pose: search over BOTH opening axes, then both grip heights -------------
     # Order matters. The measured optimum (z = 25 mm) is exhausted on both axes before the
@@ -475,7 +479,7 @@ def plan_episode(kin: ArmKin, cube_xy, cube_yaw, box_xy, clutter, verbose=False,
     # exactly what a followable free-space move needs. It gives no clearance guarantee, so
     # that is audited rather than assumed.
     tcp_pre = kin.fk(seg_pre.unsqueeze(0).repeat(kin.n, 1))["tcp"][0].clone()
-    tcp_home = kin.fk(kin.q_arm0.unsqueeze(0).repeat(kin.n, 1))["tcp"][0].clone()
+    tcp_home = kin.fk(q0.unsqueeze(0).repeat(kin.n, 1))["tcp"][0].clone()
 
     # TRANSIT: one Cartesian chain, still solved backwards from the grasp.
     #
@@ -511,7 +515,7 @@ def plan_episode(kin: ArmKin, cube_xy, cube_yaw, box_xy, clutter, verbose=False,
     # the desk where a re-orientation is both safe and followable. Doing that twist low down,
     # next to the cube, is what every earlier attempt was implicitly asking for.
     in_pts = _densify(tcp_home, high)
-    q_in, e_in = _chain(kin, kin.q_arm0, in_pts, None, avoid=avoid, iters=25)
+    q_in, e_in = _chain(kin, q0, in_pts, None, avoid=avoid, iters=25)
     seg_home = q_in + _joint_line(q_in[-1], q_high)
 
     # `fk` takes exactly `kin.n` rows (it is the CEM population width). Pad a short path by

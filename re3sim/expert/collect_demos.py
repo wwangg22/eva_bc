@@ -55,6 +55,10 @@ parser.add_argument("--record-width", type=int, default=960)
 parser.add_argument("--record-height", type=int, default=540)
 parser.add_argument("--record-quality", type=int, default=9,
                     help="ffmpeg quality 0-10. 8 was the old hardcoded value.")
+parser.add_argument("--record-keep-pad", action="store_true",
+                    help="Film env 0 even while it is only being held for the batch (it has "
+                         "run out of its own waypoints, or finished and is waiting out another "
+                         "env's regrasp). Off by default: those steps are 41 %% of an episode.")
 parser.add_argument("--record-warmup", type=int, default=180,
                     help="Throwaway renders after aiming the camera, before the first frame "
                          "is kept. The gaussian desk needs ~100 to become resident.")
@@ -182,15 +186,32 @@ TRANSIT_SETTLE = int(os.environ.get('TRANSIT_SETTLE', '40'))
 PH_APPROACH, PH_CLOSE, PH_LIFT, PH_CARRY, PH_RELEASE, PH_RETREAT = range(6)
 
 
-def pad(segs: list[list[torch.Tensor]], dev) -> torch.Tensor:
-    """Stack per-env waypoint lists into (T, n, 6), padding short ones by holding the last."""
+def pad(segs: list[list[torch.Tensor]], dev):
+    """Stack per-env waypoint lists into (T, n, 6). Returns ``(waypoints, own)``.
+
+    Short segments are padded by repeating their last waypoint, because the batch steps in
+    lockstep and an env that has run out of plan has to be driven with *something*. ``own[t,
+    i]`` says whether env i is still on its OWN waypoints at step t, and that distinction is
+    not cosmetic:
+
+    MEASURED on the filmed episode -- **41 % of it is the arm essentially motionless, and the
+    single longest run of an unchanged command is 412 steps**, i.e. 8.2 s of a 20.4 s video.
+    That is not a settle anyone designed. It is env 0 finishing its transit early and then
+    holding while the slowest of 32 envs catches up. Every one of those steps was being
+    recorded as a demonstration that says "when you are here, freeze" -- directly contradicting
+    the neighbouring samples that say "descend". The deliberate settles are a different thing
+    and stay unmasked: `GRASP_SETTLE` alone measured +14 points and the policy *should*
+    reproduce it.
+    """
     n = len(segs)
     T = max(len(s) for s in segs)
     out = torch.zeros(T, n, 6, device=dev)
+    own = torch.zeros(T, n, dtype=torch.bool, device=dev)
     for i, s in enumerate(segs):
         for t in range(T):
             out[t, i] = s[min(t, len(s) - 1)]
-    return out
+            own[t, i] = t < len(s)
+    return out, own
 
 
 def main() -> None:
@@ -284,6 +305,16 @@ def main() -> None:
         # problem statement, not part of the state a screen may leave behind.
         quat0 = {nm: e.scene[nm].data.root_state_w.torch[:, 3:7].clone()
                  for nm in mdp.OBJECT_NAMES}
+        # ⭐ Where each env's arm ACTUALLY starts. Captured here, before any planning teleport,
+        # because with `RE3SIM_ARM_START_JITTER` set this is no longer `kin.q_arm0` and every
+        # plan's transit has to be solved from the pose its own env is really in.
+        q_start = kin.robot.data.joint_pos.torch()[:, kin.arm_dof].clone() \
+            if callable(getattr(kin.robot.data.joint_pos, "torch", None)) \
+            else kin.robot.data.joint_pos[:, kin.arm_dof].clone()
+        spread = float((q_start - kin.q_arm0.unsqueeze(0)).abs().max())
+        if spread > 1e-4:
+            print(f"[batch {b}] arm start jittered: max |q - q_default| = {spread:.3f} rad",
+                  flush=True)
 
         # ---------------------------------------------------------------- plan, serially
         def plan_i(i, choices=None):
@@ -292,7 +323,7 @@ def main() -> None:
                 (clut["tapemeasure"][i], mdp.TAPEMEASURE_LONG / 2, mdp.TAPEMEASURE_HEIGHT),
             ]
             return plan_episode(kin, cube[i, :2], float(cube_yaw[i]), boxc[i], obstacles,
-                                verbose=args_cli.chatty, choices=choices)
+                                verbose=args_cli.chatty, choices=choices, q_start=q_start[i])
 
         def plan_goalset(i):
             """Up to ``GOALSET`` COMPLETE trajectories for env i, one per goalset member.
@@ -364,7 +395,7 @@ def main() -> None:
                 q0 = torch.stack([p["home"][-1] for p in sub])
                 kin.teleport_arm(q0, q_fing=Q_OPEN)
                 kin.hold_phys(q0, 8 * TRANSIT_SETTLE, q_fing=Q_OPEN)
-                Wd = pad([p["grasp"] for p in sub], dev)
+                Wd, _ = pad([p["grasp"] for p in sub], dev)
                 q_prev = q0
                 for t in range(Wd.shape[0]):
                     kin.run_phys(q_prev, Wd[t], args_cli.steps_per_wp, q_fing=Q_OPEN)
@@ -543,7 +574,12 @@ def main() -> None:
             last_obs = o["policy"]
             if args_cli.record_video:
                 _rec_t[0] += 1
-                if _rec_t[0] % args_cli.record_stride == 0:
+                # Do not film env 0 being held for the batch's sake. Those steps are 41 % of
+                # the episode and include a single 412-step (8.2 s) run of an unchanged
+                # command -- env 0 finished its transit and waited for the slowest of 32 envs.
+                # `--record-keep-pad` puts them back.
+                filmed = args_cli.record_keep_pad or mask is None or bool(mask[0])
+                if filmed and _rec_t[0] % args_cli.record_stride == 0:
                     grab()
             q_now = kin.robot.data.joint_pos.torch()[:, kin.arm_dof] \
                 if callable(getattr(kin.robot.data.joint_pos, "torch", None)) \
@@ -556,7 +592,10 @@ def main() -> None:
         # it to `seg_pre` would mean every recorded episode starts from a state `env.reset()`
         # never produces, and the policy would meet an unseen observation at step 0 of every
         # evaluation. The plan's `home` segment drives that approach with actions instead.
-        q_home = kin.q_arm0.unsqueeze(0).repeat(n, 1)
+        # Back to where each env STARTED, not to the shared default -- planning teleported
+        # the arm all over the workspace, and restoring it to `q_arm0` would silently undo the
+        # start randomisation the plans were just solved against.
+        q_home = q_start
         kin.teleport_arm(q_home, q_fing=Q_OPEN)
         # those same teleports swept the arm through the objects; PhysX would resolve the
         # overlap on the first real step, so restore the layout the plans were solved against
@@ -667,9 +706,12 @@ def main() -> None:
                 step((1 - f) * prev + f * q, close, phase, mask)
             prev = q
 
-        def go(W, close, phase, mask):
+        def go(Wo, close, phase, mask):
+            W, own = Wo
             for t in range(W.shape[0]):
-                go1(W[t], close, phase, mask)
+                # An env past the end of its own segment is only being held for the batch's
+                # sake; those steps are not demonstration data for it.
+                go1(W[t], close, phase, own[t] if mask is None else (mask & own[t]))
 
         def stay(steps, close, phase, mask):
             for _ in range(steps):
@@ -738,9 +780,9 @@ def main() -> None:
             # holding env off the pose it is parked at.
             GB = torch.stack([goals[i][cur[i]]["bias"] for i in range(n)]) \
                 * todo.unsqueeze(1).float()
-            Wg = pack([goals[i][cur[i]]["grasp"] for i in range(n)], todo)
+            Wg, own_g = pack([goals[i][cur[i]]["grasp"] for i in range(n)], todo)
             for t in range(Wg.shape[0]):
-                go1(Wg[t] + ((t + 1) / Wg.shape[0]) * GB, got, PH_APPROACH, todo)
+                go1(Wg[t] + ((t + 1) / Wg.shape[0]) * GB, got, PH_APPROACH, todo & own_g[t])
             # Settle at the grasp pose before closing, for exactly the reason the transit
             # settles above -- and the omission here is why the two legs measured so
             # differently. MEASURED 2026-08-06, 64 envs: with a 40-step settle the transit
