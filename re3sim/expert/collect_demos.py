@@ -53,6 +53,20 @@ parser.add_argument("--record-stride", type=int, default=2, help="record every N
 parser.add_argument("--record-fps", type=int, default=25)
 parser.add_argument("--record-width", type=int, default=960)
 parser.add_argument("--record-height", type=int, default=540)
+parser.add_argument("--record-quality", type=int, default=9,
+                    help="ffmpeg quality 0-10. 8 was the old hardcoded value.")
+parser.add_argument("--record-warmup", type=int, default=180,
+                    help="Throwaway renders after aiming the camera, before the first frame "
+                         "is kept. The gaussian desk needs ~100 to become resident.")
+parser.add_argument("--record-cams", choices=("both", "wrist", "station"), default="both",
+                    help="Which cameras to mount. `Camera` REQUIRES one prim per env "
+                         "(it raises if `_view.count != num_envs`), so N envs always means N "
+                         "cameras per view and the render-product count -- not the resolution "
+                         "-- is what OOMs a 10 GB card. Filming one view per run therefore "
+                         "halves the memory and lets the run keep enough envs to plan with: "
+                         "`ArmKin` uses the env count as its CEM population, and at 16 envs "
+                         "the goalset planner solves only 8/16. Runs are deterministic in the "
+                         "seed, so two single-view runs at the same seed are frame-aligned.")
 AppLauncher.add_app_launcher_args(parser)
 args_cli = parser.parse_args()
 if args_cli.record_video:
@@ -184,15 +198,19 @@ def main() -> None:
     env_cfg = parse_env_cfg(args_cli.task, device=args_cli.device, num_envs=args_cli.num_envs)
     env_cfg.episode_length_s = 1.0e5          # the expert owns episode boundaries, not the MDP
     env_cfg.seed = args_cli.seed
+    want = {"both": ("wrist", "station"), "wrist": ("wrist",), "station": ("station",)}[
+        args_cli.record_cams]
     if args_cli.record_video:
-        env_cfg.scene.wrist_cam = WRIST_CAM_CFG.replace(
-            width=args_cli.record_width, height=args_cli.record_height,
-            data_types=["rgb"], update_period=0.0)
-        env_cfg.scene.station_cam = CameraCfg(
-            prim_path="{ENV_REGEX_NS}/StationCam", update_period=0.0,
-            width=args_cli.record_width, height=args_cli.record_height, data_types=["rgb"],
-            spawn=sim_utils.PinholeCameraCfg(focal_length=17.0, horizontal_aperture=20.955,
-                                             clipping_range=(0.02, 20.0)))
+        if "wrist" in want:
+            env_cfg.scene.wrist_cam = WRIST_CAM_CFG.replace(
+                width=args_cli.record_width, height=args_cli.record_height,
+                data_types=["rgb"], update_period=0.0)
+        if "station" in want:
+            env_cfg.scene.station_cam = CameraCfg(
+                prim_path="{ENV_REGEX_NS}/StationCam", update_period=0.0,
+                width=args_cli.record_width, height=args_cli.record_height, data_types=["rgb"],
+                spawn=sim_utils.PinholeCameraCfg(focal_length=17.0, horizontal_aperture=20.955,
+                                                 clipping_range=(0.02, 20.0)))
     env = gym.make(args_cli.task, cfg=env_cfg)
     e = env.unwrapped
     dev, n = e.device, e.num_envs
@@ -200,7 +218,7 @@ def main() -> None:
 
     rec_frames = {"wrist": [], "station": []}
     if args_cli.record_video:
-        wrist_cam, station_cam = e.scene["wrist_cam"], e.scene["station_cam"]
+        cams = {k: e.scene[f"{k}_cam"] for k in want}
         origin0 = e.scene.env_origins[0]
 
         # The splats are spawned ONCE at `/World/Splats` (see workstation_env_cfg.py) on the
@@ -209,7 +227,9 @@ def main() -> None:
         # backdrop sits between envs and the filmed env has no desk under it at all -- the arm
         # and objects float on the bare ground plane. Move it onto whichever env we are
         # filming. Appearance-only, so this changes nothing the MDP can see.
-        if float(origin0.abs().max()) > 1e-6:
+        def place_splats():
+            if float(origin0.abs().max()) <= 1e-6:
+                return
             import omni.usd  # noqa: PLC0415
             from pxr import Gf, UsdGeom  # noqa: PLC0415
             prim = omni.usd.get_context().get_stage().GetPrimAtPath("/World/Splats")
@@ -222,27 +242,29 @@ def main() -> None:
                            if o.GetOpType() == UsdGeom.XformOp.TypeTranslate), None)
                 (op or xf.AddTranslateOp()).Set(
                     Gf.Vec3d(*[float(v) for v in origin0.cpu().numpy()]))
-                print(f"[record] moved /World/Splats onto env 0 at "
-                      f"{np.round(origin0.cpu().numpy(), 3)}", flush=True)
             else:
                 print("[record] WARNING: no /World/Splats prim -- filming without the desk",
                       flush=True)
 
         def aim_station():
             # re-aimed after every reset: `reset_scene_to_default` restores prim poses, and a
-            # camera left at the default pose films the floor.
-            station_cam.set_world_poses_from_view(
-                (torch.tensor([list(STATION_CAM_EYE)], device=e.device) + origin0),
-                (torch.tensor([list(STATION_CAM_TARGET)], device=e.device) + origin0))
+            # camera left at the default pose films the floor. One pose PER CAMERA:
+            # `set_world_poses_from_view(env_ids=None)` builds `arange(num_envs)` for the
+            # indices but does NOT broadcast a single row to match, so handing it one pose at
+            # num_envs > 1 leaves every camera but the first at its spawn pose.
+            if "station" not in cams:
+                return
+            org = e.scene.env_origins
+            cams["station"].set_world_poses_from_view(
+                org + torch.tensor(STATION_CAM_EYE, device=e.device),
+                org + torch.tensor(STATION_CAM_TARGET, device=e.device))
 
         def grab():
             e.sim.render()
-            wrist_cam.update(dt=0.0)
-            station_cam.update(dt=0.0)
-            rec_frames["wrist"].append(
-                wrist_cam.data.output["rgb"][0, ..., :3].cpu().numpy().astype(np.uint8))
-            rec_frames["station"].append(
-                station_cam.data.output["rgb"][0, ..., :3].cpu().numpy().astype(np.uint8))
+            for k, cam in cams.items():
+                cam.update(dt=0.0)
+                rec_frames[k].append(
+                    cam.data.output["rgb"][0, ..., :3].cpu().numpy().astype(np.uint8))
 
     all_obs, all_act, all_ph, all_ok = [], [], [], []
     all_seed, all_planned, all_msk, all_att = [], [], [], []
@@ -548,7 +570,32 @@ def main() -> None:
         e.sim.forward()
         e.scene.update(e.physics_dt)
         if args_cli.record_video:
+            place_splats()
             aim_station()
+            e.sim.forward()
+            e.scene.update(e.physics_dt)
+            # ⭐ PRE-ROLL with real env steps, then throw the frames away.
+            #
+            # Three cheaper warm-ups were tried and all three failed the same way: the first
+            # frame comes out at the camera's spawn pose and the 356k-gaussian desk is absent
+            # for the next ~120 frames, so the arm and the cube appear to float on a bare grid
+            # floor while everything else looks correct. `sim.render()` in a loop does not fix
+            # it, with or without an annotator read, and neither does `sim.forward()` after
+            # the pose write -- because a render outside a simulation step does not produce a
+            # new frame at all. `render_workstation.py` gets clean frames because it steps the
+            # env 60 times before it renders anything, and that -- not the render call -- is
+            # what the gaussian field needs.
+            #
+            # So: step the arm at its own home pose, grab exactly as the recording does, and
+            # discard. Only ever runs under `--record-video`, so it cannot touch a
+            # measurement run.
+            for _ in range(args_cli.record_warmup):
+                env.step(act_of(q_home, False))
+                grab()
+            for _v in rec_frames.values():
+                _v.clear()
+            print(f"[record] pre-rolled {args_cli.record_warmup} steps and discarded them; "
+                  f"splats on env 0 at {np.round(origin0.cpu().numpy(), 3)}", flush=True)
         last_obs = e.observation_manager.compute()["policy"]
 
         ok_plan = torch.tensor(planned, device=dev)
@@ -774,8 +821,8 @@ def main() -> None:
                 if not frames:
                     continue
                 path = os.path.join(args_cli.record_video, f"expert_{name}.mp4")
-                imageio.mimwrite(path, frames, fps=args_cli.record_fps, quality=8,
-                                 macro_block_size=1)
+                imageio.mimwrite(path, frames, fps=args_cli.record_fps,
+                                 quality=args_cli.record_quality, macro_block_size=1)
                 print(f"[record] {path}  ({len(frames)} frames, "
                       f"{len(frames) / args_cli.record_fps:.1f} s)  env 0 = {tag}", flush=True)
                 frames.clear()
