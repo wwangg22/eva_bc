@@ -8,7 +8,7 @@ one. The student contract is identical at 23-D, so the asserts port unchanged.
 Loads the per-episode .pt shards written by scripts/collect_vision.py:
     wrist_rgb / workspace_rgb  (T, 90, 160, 3) uint8
     proprio                    (T, 23) float32
-    obs34                      (T, 34) float32   TEACHER-ONLY -- never loaded here
+    obs_teacher                (T, 36) float32   TEACHER-ONLY -- never loaded here
     actions                    (T, 7)  float32
     success                    bool
 
@@ -20,7 +20,7 @@ episode, mirroring act/dataset.py's RebotDemoDataset:
     action                        (chunk_size, 7) float32
     action_is_pad                 (chunk_size,) bool  (past-episode-end padding)
 
-The privileged obs34 array is deliberately NOT read (VISION_PLAN section 0: nothing
+The privileged obs_teacher array is deliberately NOT read (VISION_PLAN section 0: nothing
 privileged may reach the student pipeline -- and for the slot task that includes
 ``slot_frame[3] = is_inserted``, which is the success predicate itself). Images stay uint8 in
 RAM (~86 KB/step for both cameras) and are converted per sample.
@@ -36,7 +36,7 @@ from torch.utils.data import Dataset
 ACTION_DIM = 7
 STUDENT_STATE_DIM = 23
 
-# Keys a student sample is built from. obs34 is teacher-only and must never be here.
+# Keys a student sample is built from. obs_teacher is teacher-only and must never be here.
 _STUDENT_KEYS = ("wrist_rgb", "workspace_rgb", "proprio", "actions")
 # DAgger variant (scripts/collect_vision_dagger.py): champion chunk labels instead
 # of executed actions; auto-detected via the label_chunks key.
@@ -76,7 +76,7 @@ class VisionShardDataset(Dataset):
                         self.render = r
                     else:
                         assert r == self.render, f'render config differs: {shard_path}'
-                # keep ONLY the student keys -- drop obs34 (privileged) immediately
+                # keep ONLY the student keys -- drop obs_teacher (privileged) immediately
                 self.episodes.append({k: shard[k] for k in (_DAGGER_KEYS if is_dagger else _STUDENT_KEYS)})
         if not self.episodes:
             raise ValueError(f"no episodes loaded from {data_dirs}")

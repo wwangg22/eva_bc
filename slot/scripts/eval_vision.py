@@ -49,7 +49,7 @@ import reBot_RL.tasks  # noqa: F401,E402
 import slot_mdp as mdp  # noqa: E402
 from isaaclab_tasks.utils import parse_env_cfg  # noqa: E402
 
-from slot_act.cameras import attach_cameras, rgb_native  # noqa: E402
+from slot_act.cameras import attach_cameras, rgb_native, student_inputs  # noqa: E402
 from slot_act.eval_flow_vision import VisionController, load_vision_checkpoint  # noqa: E402
 
 IMAGE_KEYS = ("observation.images.wrist", "observation.images.workspace")
@@ -90,9 +90,7 @@ def main() -> None:
     zero_img = None
     while len(records) < args.episodes:
         # student view -- privileged obs is used below for METRICS only
-        stu = {"joint_pos": obs[:, 0:8], "joint_vel": obs[:, 8:16], "actions": obs[:, 27:34],
-               "wrist_rgb": rgb_native(u, "wrist_cam"),
-               "workspace_rgb": rgb_native(u, "workspace_cam")}
+        stu = student_inputs(obs, rgb_native(u, "wrist_cam"), rgb_native(u, "workspace_cam"))
         if args.blind:
             if zero_img is None:
                 zero_img = torch.zeros_like(stu["wrist_rgb"])

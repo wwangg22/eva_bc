@@ -95,10 +95,18 @@ vision number becomes a clean measure of perception rather than of geometry.
   ```
   along   =  d.x*c + d.y*s          # depth axis
   across  = -d.x*s + d.y*c          # cross axis
-  insertion_depth = along - SLOT_DEPTH/2
+  insertion_depth = along - SLOT_DEPTH/2      # <-- WRONG SIGN, see below
   lateral_error   = |across|
   yaw_error       = |wrap(yaw_of(block_quat) - θ)|
   ```
+
+  > **Correction (post-implementation).** That depth line is wrong: depth is measured from the
+  > mouth and the mouth is at `along = -SLOT_DEPTH/2`, so it is `along + SLOT_DEPTH/2`. Taken
+  > literally it puts the success threshold 70 mm too deep — past the back stop — and every
+  > episode scores zero. Caught by the θ = 0 regression gate. The shipped code is correct; see
+  > [`ANGLED_SLOT.md`](ANGLED_SLOT.md) §2a. Two further corrections to this plan are recorded
+  > there: "bit-for-bit at θ = 0" is not achievable (§2b), and the observation had to grow from
+  > 34-D to 36-D, which this plan did not anticipate (§2c).
 
   Note `wrap` to (−π, π] — a naive subtraction breaks at the branch cut and would score a
   perfectly aligned block as maximally misaligned near ±π.

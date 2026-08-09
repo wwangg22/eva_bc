@@ -59,6 +59,11 @@ parser.add_argument("--slot_dx", type=float, default=0.0,
                          "positions' from 'the POLICY is'. Only x: plan.py hardcodes y = 0 for the "
                          "align and insert waypoints (:203-204), so a dy control would need "
                          "real surgery rather than a flag.")
+parser.add_argument("--slot_yaw", type=float, nargs="+", default=None,
+                    help="override the env's per-episode slot yaw range [rad]. One value pins "
+                         "the angle exactly (this is how the theta sweep is run); two values "
+                         "give a uniform range. Omit to use the cfg default. `--slot_yaw 0` "
+                         "reproduces the axis-aligned task every earlier number was measured on.")
 parser.add_argument("--seed", type=int, default=0)
 parser.add_argument("--out_dir", type=str, default=None)
 parser.add_argument("--seed_file", type=str, default="logs/expert/seed_q.json",
@@ -124,6 +129,10 @@ def main() -> None:
                             retreat=not args_cli.no_retreat, seed_file=args_cli.seed_file)
 
     env_cfg = parse_env_cfg(args_cli.task, device=args_cli.device, num_envs=args_cli.num_envs)
+    if args_cli.slot_yaw is not None:
+        lo, hi = (args_cli.slot_yaw * 2)[:2] if len(args_cli.slot_yaw) == 1 else args_cli.slot_yaw
+        env_cfg.events.reset_slot.params["yaw_range"] = (float(lo), float(hi))
+        print(f"[expert] slot yaw range forced to ({lo:+.3f}, {hi:+.3f}) rad")
     if args_cli.video:
         env_cfg.scene.workspace_cam = WORKSPACE_CAM_CFG.replace(width=960, height=540)
     env = gym.make(args_cli.task, cfg=env_cfg)
@@ -188,10 +197,13 @@ def main() -> None:
 
         # -------------------------------------------------------------- plan (block untouched)
         bp0, byaw0 = block_pose()
+        slot_yaw0 = mdp.slot_yaw(e).clone()
         print(f"  spawn: x {float(bp0[:, 0].min()):.3f}-{float(bp0[:, 0].max()):.3f}, "
               f"y {float(bp0[:, 1].min()):.3f}-{float(bp0[:, 1].max()):.3f}, "
               f"|yaw| <= {float(byaw0.abs().max()):.3f} rad")
-        out = P.plan(ik, params, bp0, byaw0, seed["q_seed"], seed["axis_slot"], seed["sign"])
+        print(f"  slot yaw: {float(slot_yaw0.min()):+.3f} to {float(slot_yaw0.max()):+.3f} rad "
+              f"({float(slot_yaw0.min()) * 57.2958:+.1f} to {float(slot_yaw0.max()) * 57.2958:+.1f} deg)")
+        out = P.plan(ik, params, bp0, byaw0, seed["q_seed"], seed["sign"], slot_yaw0)
         plans, segs = out["plans"], out["segs"]
 
         print(f"  {'phase':>8} {'wps':>5} {'max pos err':>12} {'max axis err':>13} {'converged':>10}")
@@ -218,7 +230,9 @@ def main() -> None:
         # ------------------------------------------------------------------------- execute
         env.reset()
         resets = torch.zeros(n, dtype=torch.bool, device=dev)
-        # the reset re-randomises the block, so restore the pose the plan was built for
+        # the reset re-randomises the block AND the slot yaw, so restore both -- the plan was
+        # solved for one specific fixture angle and is meaningless against any other
+        mdp.set_slot_yaw(e, torch.arange(n, device=dev), slot_yaw0)
         block.write_root_state_to_sim(torch.cat([
             bp0 + e.scene.env_origins,
             torch.stack([torch.zeros(n, device=dev), torch.zeros(n, device=dev),
@@ -248,7 +262,7 @@ def main() -> None:
                 ax_ang = torch.atan2(ax[:, 0], ax[:, 1].abs().clamp(min=1e-9))
                 print(f"  {'':>13}{s.wp:4d} {float(segs[s.phase][s.wp][:, 1].mean()) * 1000:7.2f}m "
                       f"{float(tcp[:, 1].mean()) * 1000:7.2f}m "
-                      f"{float(1.0 - (ax * seed['axis_slot']).sum(1).abs().mean()):9.6f} "
+                      f"{float(1.0 - (ax * out['axis_slot']).sum(1).abs().mean()):9.6f} "
                       f"{float(byaw.mean()):8.4f} {float((byaw + ax_ang).abs().mean()):8.4f} "
                       f"{float(ik.finger_gap_mm().mean()):6.2f}m")
             if nxt == s.phase:
@@ -277,7 +291,10 @@ def main() -> None:
                                   "blk_x_mm": float(bp[:, 0].mean()) * 1000,
                                   "blk_y_mm": float(bp[:, 1].mean()) * 1000,
                                   "blk_z_mm": float(bp[:, 2].mean()) * 1000,
-                                  "yaw_mean": float(byaw.abs().mean()),
+                                  # slot-RELATIVE, not world: at a rotated slot the block is
+                                  # meant to end up at yaw = theta, so a world-frame |yaw|
+                                  # would read every correctly-squared block as misaligned
+                                  "yaw_mean": float(mdp.yaw_error(e).mean()),
                                   "lag_mm": float((tcp[:, 0] - bp[:, 0]).mean()) * 1000,
                                   "seated": int((seated() & ~resets).sum())}
                 print(f"  {s.phase.upper():>8}: block ({stats[s.phase]['blk_x_mm']:.1f}, "
@@ -293,6 +310,10 @@ def main() -> None:
         gap = ik.finger_gap_mm()
         bpf, byawf = block_pose()
         depth, lat = mdp.insertion_depth(e), mdp.lateral_error(e)
+        # slot-relative yaw error. `byawf` is the block's WORLD yaw, which equals the slot's
+        # angle when the insert is perfect -- using it in the success attribution would count
+        # every angled success as a yaw failure.
+        yerr = mdp.yaw_error(e)
 
         print("\n" + "=" * 78)
         print(f"  RESULT  task={args_cli.task}  n={n}")
@@ -303,8 +324,8 @@ def main() -> None:
               f"{float(torch.quantile(depth, 0.1)) * 1000:.1f}  (need >= 40.0)")
         print(f"  lateral mean {float(lat.mean()) * 1000:.2f} mm  p90 "
               f"{float(torch.quantile(lat, 0.9)) * 1000:.2f}")
-        print(f"  |yaw|   mean {float(byawf.abs().mean()):.4f} rad  p90 "
-              f"{float(torch.quantile(byawf.abs(), 0.9)):.4f}  (need <= 0.12)")
+        print(f"  |yaw|   mean {float(yerr.mean()):.4f} rad  p90 "
+              f"{float(torch.quantile(yerr, 0.9)):.4f}  (need <= 0.12, slot-relative)")
         print(f"  block z mean {float(bpf[:, 2].mean()) * 1000:.1f} mm (seat 55.0)")
         budget = int(e.max_episode_length)
         print(f"  plan converged {int(plan_ok.sum())}/{n}, envs reset mid-episode {int(resets.sum())}")
@@ -312,16 +333,16 @@ def main() -> None:
               + ("  <-- OVER BUDGET, every env times out" if nsteps >= budget else ""))
         # Attribute every failure to the first predicate it breaks.
         fail_depth = int(((depth < mdp.SUCCESS_DEPTH) & ~ok).sum())
-        fail_yaw = int(((byawf.abs() > mdp.SUCCESS_YAW) & (depth >= mdp.SUCCESS_DEPTH) & ~ok).sum())
+        fail_yaw = int(((yerr > mdp.SUCCESS_YAW) & (depth >= mdp.SUCCESS_DEPTH) & ~ok).sum())
         fail_seat = int((((bpf[:, 2] - seat_z).abs() >= 0.006) & (depth >= mdp.SUCCESS_DEPTH)
-                         & (byawf.abs() <= mdp.SUCCESS_YAW) & ~ok).sum())
+                         & (yerr <= mdp.SUCCESS_YAW) & ~ok).sum())
         fail_drop = int((~((gap > 26.0) & (gap < 34.0)) & ~ok).sum())
         print(f"  failures: too shallow {fail_depth}, yawed {fail_yaw}, not seated {fail_seat}, "
               f"lost grip before release {fail_drop}")
         print("=" * 78)
         stats["result"] = {"seated": int(ok.sum()), "rate": float(ok.float().mean()),
                            "raw": int(raw.sum()), "depth_mm": float(depth.mean()) * 1000,
-                           "lat_mm": float(lat.mean()) * 1000, "yaw": float(byawf.abs().mean()),
+                           "lat_mm": float(lat.mean()) * 1000, "yaw": float(yerr.mean()),
                            "plan_converged": int(plan_ok.sum()), "resets": int(resets.sum()),
                            "fail_depth": fail_depth, "fail_yaw": fail_yaw,
                            "fail_seat": fail_seat, "fail_grip": fail_drop,

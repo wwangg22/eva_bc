@@ -11,9 +11,12 @@ Two jobs, deliberately in one small module so there is exactly one place each ca
    and ``precision_slot_env_cfg.py`` builds its ``ee_frame`` from the identical chain. Patching
    is post-``parse_env_cfg``, exactly as ``--slot-dx`` and ``--arm-jitter`` already do.
 
-2. **Cut the 34-D privileged observation down to the 23-D student view, in one function.**
+2. **Cut the 36-D privileged observation down to the 23-D student view, in one function.**
    ``student_proprio`` is the single source of truth; collection, training and eval all call it,
    and so does the blind control arm. A privileged dim can only leak by editing this file.
+   ``student_inputs`` builds the whole policy input dict, so no call site indexes the raw
+   observation by hand -- the teacher width has already changed once (34 -> 36 when the slot
+   gained a yaw) and four separate scripts carried the same magic numbers.
 
 Inherited from eva_bc EXP08, which paid for each of these in debugging hours (docs/slot/
 VISION_PLAN.md section 3):
@@ -34,14 +37,20 @@ from __future__ import annotations
 
 import torch
 
-# 34-D privileged layout (precision_slot_env_cfg.py ObservationsCfg.PolicyCfg):
+# 36-D privileged layout (precision_slot_env_cfg.py ObservationsCfg.PolicyCfg):
 #   [0:8] joint_pos_rel | [8:16] joint_vel_rel | [16:23] block_pose_in_root
-#   [23:27] slot_frame  | [27:34] last_action
+#   [23:29] slot_frame  | [29:36] last_action
 # The student may see encoders and its own command, and nothing else. slot_frame is the worst
-# of the privileged terms: its 4th element IS the success predicate.
-STUDENT_PROPRIO_SLICES = (slice(0, 16), slice(27, 34))
+# of the privileged terms: it carries the slot's own orientation AND the success predicate.
+# Withholding it is the entire point of the angled task -- the slot's angle is exactly what the
+# cameras are there to recover.
+TEACHER_OBS_DIM = 36
+JOINT_POS_SLICE = slice(0, 8)
+JOINT_VEL_SLICE = slice(8, 16)
+LAST_ACTION_SLICE = slice(29, TEACHER_OBS_DIM)
+STUDENT_PROPRIO_SLICES = (slice(0, 16), LAST_ACTION_SLICE)
 STUDENT_STATE_DIM = 23
-PRIVILEGED_SLICES = {"block_pose_in_root": slice(16, 23), "slot_frame": slice(23, 27)}
+PRIVILEGED_SLICES = {"block_pose_in_root": slice(16, 23), "slot_frame": slice(23, 29)}
 
 CAM_WIDTH, CAM_HEIGHT = 160, 90          # what the POLICY consumes
 CAM_SHAPE = (3, CAM_HEIGHT, CAM_WIDTH)
@@ -77,12 +86,24 @@ CAMERA_NAMES = ("wrist_cam", "workspace_cam")
 SUPERSAMPLE = 4
 
 
-def student_proprio(obs34: torch.Tensor) -> torch.Tensor:
-    """(N, 34) privileged obs -> (N, 23) student proprioception. The ONLY way to build it."""
-    assert obs34.shape[-1] == 34, obs34.shape
-    out = torch.cat([obs34[..., s] for s in STUDENT_PROPRIO_SLICES], dim=-1)
+def student_proprio(obs: torch.Tensor) -> torch.Tensor:
+    """(N, 36) privileged obs -> (N, 23) student proprioception. The ONLY way to build it."""
+    assert obs.shape[-1] == TEACHER_OBS_DIM, obs.shape
+    out = torch.cat([obs[..., s] for s in STUDENT_PROPRIO_SLICES], dim=-1)
     assert out.shape[-1] == STUDENT_STATE_DIM, out.shape
     return out
+
+
+def student_inputs(obs: torch.Tensor, wrist: torch.Tensor, works: torch.Tensor) -> dict:
+    """The full input dict the vision policy consumes, built from the privileged obs + frames.
+
+    Exists so that no rollout loop indexes the observation by hand. Four scripts each carried
+    ``obs[:, 27:34]`` for the last-action term; the teacher width has changed once already and
+    every one of them would have silently fed the network the wrong seven numbers.
+    """
+    assert obs.shape[-1] == TEACHER_OBS_DIM, obs.shape
+    return {"joint_pos": obs[:, JOINT_POS_SLICE], "joint_vel": obs[:, JOINT_VEL_SLICE],
+            "actions": obs[:, LAST_ACTION_SLICE], "wrist_rgb": wrist, "workspace_rgb": works}
 
 
 def attach_cameras(env_cfg, width: int | None = None, height: int | None = None,

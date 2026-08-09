@@ -15,7 +15,7 @@ Shard (``ep_XXXX.pt``), matching slot_act/dataset_vision.py:
     wrist_rgb / workspace_rgb  (T, 90, 160, 3) uint8   <- box-averaged from the 8x render
     proprio                    (T, 23) float32          <- student, via cameras.student_proprio
     actions                    (T, 7)  float32
-    obs34                      (T, 34) float32          TEACHER-ONLY, never read by the student
+    obs_teacher                (T, 36) float32          TEACHER-ONLY, never read by the student
     success                    bool
     render                     dict                     the contract
 
@@ -61,6 +61,7 @@ from isaaclab_tasks.utils import parse_env_cfg  # noqa: E402
 from slot_act.cameras import (  # noqa: E402
     CAMERA_NAMES,
     SUPERSAMPLE,
+    TEACHER_OBS_DIM,
     attach_cameras,
     rgb_native,
     student_proprio,
@@ -84,17 +85,23 @@ def main() -> None:
     env_cfg.rewards.toppling_penalty = None
     env_cfg.seed = args.seed
     attach_cameras(env_cfg, supersample=ss)
+    # The COLLECTION CONTRACT, not only the render settings: dataset_vision asserts every
+    # shard in a pool carries an identical copy, so anything that must not be mixed across
+    # shards belongs in here. `slot_yaw_range` is in it because axis-aligned and angled
+    # episodes are structurally identical -- same widths, same keys -- and would concatenate
+    # silently into a pool that is half a different task.
     render = {"supersample": ss, "width": 160, "height": 90, "antialiasing": "Off",
-              "update_period": env_cfg.decimation * env_cfg.sim.dt}
+              "update_period": env_cfg.decimation * env_cfg.sim.dt,
+              "slot_yaw_range": tuple(env_cfg.events.reset_slot.params["yaw_range"])}
 
     env = gym.make(args.task, cfg=env_cfg)
     u = env.unwrapped
     n = args.num_envs
     obs = env.reset()[0]["policy"]
-    assert obs.shape == (n, 34), obs.shape
+    assert obs.shape == (n, TEACHER_OBS_DIM), obs.shape
 
     ep_idx = torch.zeros(n, dtype=torch.long)
-    buf = [{"wrist": [], "workspace": [], "proprio": [], "actions": [], "obs34": []}
+    buf = [{"wrist": [], "workspace": [], "proprio": [], "actions": [], "obs_teacher": []}
            for _ in range(n)]
     kept = 0
     n_succ = 0
@@ -111,7 +118,7 @@ def main() -> None:
             b = buf[i]
             b["wrist"].append(wrist[i].cpu())
             b["workspace"].append(works[i].cpu())
-            b["obs34"].append(obs[i].cpu())
+            b["obs_teacher"].append(obs[i].cpu())
             b["actions"].append(action[i].cpu())
         obs_next, _, term, trunc, _ = env.step(action.to(u.device))
         obs_next = obs_next["policy"]
@@ -121,14 +128,14 @@ def main() -> None:
         for i in done.tolist():
             b = buf[i]
             if ep_idx[i] >= args.warmup_episodes and kept < args.episodes:
-                o34 = torch.stack(b["obs34"])
+                o_t = torch.stack(b["obs_teacher"])
                 shard = {
                     "wrist_rgb": torch.stack(b["wrist"]),
                     "workspace_rgb": torch.stack(b["workspace"]),
                     # computed AFTER the rollout of this episode, from recorded state
-                    "proprio": student_proprio(o34),
+                    "proprio": student_proprio(o_t),
                     "actions": torch.stack(b["actions"]),
-                    "obs34": o34,
+                    "obs_teacher": o_t,
                     "success": bool(success_now[i]),
                     "render": render,
                     "env": i, "episode_index_in_env": int(ep_idx[i]), "seed": args.seed,

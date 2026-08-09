@@ -5,9 +5,13 @@
 
 ``act/`` was written against ``reBot_RL.tasks.manager_based.pick_place.mdp`` and calls exactly
 four things on it: ``OBJECT_NAMES``, ``object_pos_local``, ``placed_mask`` and
-``basket_centers_local``. This shim supplies them for ``Rebot-PrecisionSlot-*`` so that
-**nothing in `eva_rl` has to be edited** -- it is a shared asset repo carrying someone else's
-authored task and an existing 87.9 % pick-place result.
+``basket_centers_local``. This shim supplies them for ``Rebot-PrecisionSlot-*``.
+
+Historical note: this module was written so that **nothing in `eva_rl` had to be edited** -- it
+is a shared asset repo carrying someone else's authored task and an existing 87.9 % pick-place
+result. That rule was lifted by Big Will for the angled-slot change (``docs/slot/ANGLED_SLOT.md``),
+which does edit the precision-slot task and the slot-only terms in ``challenge/mdp``. The shim
+stays: routing through it is still the reason the three sibling tasks were unaffected.
 
 Everything not defined here falls through to the challenge mdp via PEP 562 ``__getattr__``,
 so ``slot_mdp.insertion_depth``, ``slot_mdp.yaw_of``, ``slot_mdp.SLOT_CENTER`` and friends all

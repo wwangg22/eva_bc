@@ -2,17 +2,17 @@
 """HDF5 demo dataset for the reBot **slot-insertion** ACT pipeline.
 
 Ported from the pick-place version; the only structural change is the observation width,
-41 -> 34. See ``docs/slot/PORT_MAP.md`` for the full remap table.
+41 -> 36. See ``docs/slot/PORT_MAP.md`` for the full remap table.
 
 File layout (written by ``slot/scripts/collect_demos.py``):
     data/demo_{i}/
-        obs/policy   (T, 34) float32   full privileged observation
+        obs/policy   (T, 36) float32   full privileged observation
         actions      (T, 7)  float32   expert actions
         train_mask   (T,)    uint8     1 = trainable, 0 = loss-censored (expert miss/loss
                                        segments)
     attrs: success (bool), num_samples, episode_kind, segments / outcomes (JSON strings)
 
-34-D observation layout — read from the env config, NOT guessed. Source of truth:
+36-D observation layout — read from the env config, NOT guessed. Source of truth:
 reBot_RL/.../tasks/manager_based/challenge/precision_slot_env_cfg.py ObservationsCfg.PolicyCfg
 (concatenate_terms=True, so terms concat in declaration order), robot = 8 joints
 (joint1..joint6 + joint_left + joint_right):
@@ -20,15 +20,22 @@ reBot_RL/.../tasks/manager_based/challenge/precision_slot_env_cfg.py Observation
     [ 8:16]  joint_vel   (mdp.joint_vel_rel, 8)        / observation.state (proprio, 16)
     [16:23]  block_pose  (mdp.block_pose_in_root, 7: pos 3 + quat 4 XYZW,      \
                           robot-ROOT frame -- not the env frame)                |
-    [23:27]  slot_error  (mdp.slot_frame, 4: depth, lateral, yaw, inserted)     | observation.
-    [27:34]  actions     (mdp.last_action, 7)                                   | environment_state
-                                                                               / (18)
+    [23:29]  slot_error  (mdp.slot_frame, 6: depth, across, dyaw,               | observation.
+                          cos(slot_yaw), sin(slot_yaw), inserted)               | environment_
+    [29:36]  actions     (mdp.last_action, 7)                                   | state (20)
 
-``slot_error[3]`` is the env's own ``is_inserted`` flag, which is weaker than it looks --
-it bounds the block's height only from below. It is left in the observation as authored (the
-env is a shared tracked file) but is never used to judge anything; see ``slot/slot_mdp.py``.
+**This was 34-D until the slot gained a per-episode yaw.** ``slot_error`` grew from 4 to 6:
+its lateral and yaw entries are now signed rather than absolute, and it carries the slot's
+orientation as a unit vector. Without that last pair the privileged teacher cannot see which
+way the slot points either, and the task would be impossible rather than hard. **Every
+checkpoint and every HDF5 pool from before that change is incompatible and was deleted** --
+loading one raises on the width check below rather than silently mis-slicing.
 
-The alignment invariant ``obs[t, 27:34] == actions[t-1]`` is asserted by
+``slot_error[5]`` is the env's own ``is_inserted`` flag, which is weaker than it looks --
+it bounds the block's height only from below. It is left in the observation as authored but
+is never used to judge anything; see ``slot/slot_mdp.py``.
+
+The alignment invariant ``obs[t, 29:36] == actions[t-1]`` is asserted by
 ``slot/scripts/verify_demos.py`` and holds exactly on the collected data.
 """
 
@@ -44,11 +51,11 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset
 
-OBS_DIM = 34
+OBS_DIM = 36
 STATE_SLICE = slice(0, 16)  # joint_pos_rel(8) + joint_vel_rel(8)
-ENV_STATE_SLICE = slice(16, 34)  # block_pose(7) + slot_error(4) + last_action(7)
+ENV_STATE_SLICE = slice(16, OBS_DIM)  # block_pose(7) + slot_error(6) + last_action(7)
 STATE_DIM = 16
-ENV_STATE_DIM = 18
+ENV_STATE_DIM = 20
 ACTION_DIM = 7
 
 

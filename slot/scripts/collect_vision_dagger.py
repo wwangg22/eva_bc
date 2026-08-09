@@ -18,7 +18,7 @@ Shard (matches slot_act/dataset_vision.py's DAgger format, auto-detected via `la
     wrist_rgb / workspace_rgb  (40, 90, 160, 3) uint8   at the boundary states
     proprio                    (40, 23) float32
     label_chunks               (40, 50, 7) float32      CHAMPION actions, unnormalised
-    obs34                      (40, 34) float32         teacher-only, never read by the student
+    obs_teacher                      (40, 34) float32         teacher-only, never read by the student
     success                    bool                     the STUDENT's outcome
 
 **Built-in audit.** The student's driving success is printed and must land near its clean
@@ -65,7 +65,8 @@ import reBot_RL.tasks  # noqa: F401,E402
 import slot_mdp as mdp  # noqa: E402
 from isaaclab_tasks.utils import parse_env_cfg  # noqa: E402
 
-from slot_act.cameras import SUPERSAMPLE, attach_cameras, rgb_native, student_proprio  # noqa: E402
+from slot_act.cameras import (  # noqa: E402
+    SUPERSAMPLE, attach_cameras, rgb_native, student_inputs, student_proprio)
 from slot_act.dataset import ENV_STATE_SLICE, STATE_SLICE  # noqa: E402
 from slot_act.eval_act import load_checkpoint  # noqa: E402
 from slot_act.eval_flow_vision import VisionController, load_vision_checkpoint  # noqa: E402
@@ -73,15 +74,15 @@ from slot_act.normalize import MeanStdNormalizer  # noqa: E402
 
 
 @torch.no_grad()
-def champion_labels(policy, normalizer, obs34: torch.Tensor, batch: int) -> torch.Tensor:
+def champion_labels(policy, normalizer, obs_teacher: torch.Tensor, batch: int) -> torch.Tensor:
     """(T, 34) privileged states -> (T, chunk, 7) champion action chunks, UNNORMALISED.
 
     Pure function of the observation and the flow's x0 draw -- no controller queue state is
     involved, which is what makes post-hoc labelling exactly equivalent to labelling live.
     """
     out = []
-    for i in range(0, obs34.shape[0], batch):
-        sub = obs34[i : i + batch]
+    for i in range(0, obs_teacher.shape[0], batch):
+        sub = obs_teacher[i : i + batch]
         nb = normalizer.normalize({
             "observation.state": sub[:, STATE_SLICE],
             "observation.environment_state": sub[:, ENV_STATE_SLICE],
@@ -115,8 +116,14 @@ def main() -> None:
     env_cfg.rewards.toppling_penalty = None
     env_cfg.seed = args.seed
     attach_cameras(env_cfg, supersample=ss)
+    # The COLLECTION CONTRACT, not only the render settings: dataset_vision asserts every
+    # shard in a pool carries an identical copy, so anything that must not be mixed across
+    # shards belongs in here. `slot_yaw_range` is in it because axis-aligned and angled
+    # episodes are structurally identical -- same widths, same keys -- and would concatenate
+    # silently into a pool that is half a different task.
     render = {"supersample": ss, "width": 160, "height": 90, "antialiasing": "Off",
-              "update_period": env_cfg.decimation * env_cfg.sim.dt}
+              "update_period": env_cfg.decimation * env_cfg.sim.dt,
+              "slot_yaw_range": tuple(env_cfg.events.reset_slot.params["yaw_range"])}
 
     env = gym.make(args.task, cfg=env_cfg)
     u = env.unwrapped
@@ -125,7 +132,7 @@ def main() -> None:
     assert u.max_episode_length % window == 0, u.max_episode_length
 
     ep_idx = torch.zeros(n, dtype=torch.long)
-    buf = [{"wrist": [], "workspace": [], "obs34": []} for _ in range(n)]
+    buf = [{"wrist": [], "workspace": [], "obs_teacher": []} for _ in range(n)]
     kept = n_succ = steps = 0
     t0 = time.time()
 
@@ -139,10 +146,9 @@ def main() -> None:
             for i in range(n):
                 buf[i]["wrist"].append(wrist[i].cpu())
                 buf[i]["workspace"].append(works[i].cpu())
-                buf[i]["obs34"].append(obs[i].cpu())
+                buf[i]["obs_teacher"].append(obs[i].cpu())
 
-        stu = {"joint_pos": obs[:, 0:8], "joint_vel": obs[:, 8:16], "actions": obs[:, 27:34],
-               "wrist_rgb": wrist, "workspace_rgb": works}
+        stu = student_inputs(obs, wrist, works)
         obs_next, _, term, trunc, _ = env.step(controller.act(stu).to(u.device))
         obs_next = obs_next["policy"]
         steps += 1
@@ -153,15 +159,15 @@ def main() -> None:
             for i in done.tolist():
                 b = buf[i]
                 if ep_idx[i] >= args.warmup_episodes and kept < args.episodes:
-                    o34 = torch.stack(b["obs34"])
+                    o_t = torch.stack(b["obs_teacher"])
                     # ---- POST-HOC. The rollout for this episode is over; the teacher may run.
-                    labels = champion_labels(teacher, t_norm, o34.to(device), args.label_batch)
+                    labels = champion_labels(teacher, t_norm, o_t.to(device), args.label_batch)
                     shard = {
                         "wrist_rgb": torch.stack(b["wrist"]),
                         "workspace_rgb": torch.stack(b["workspace"]),
-                        "proprio": student_proprio(o34),
+                        "proprio": student_proprio(o_t),
                         "label_chunks": labels,
-                        "obs34": o34,
+                        "obs_teacher": o_t,
                         "success": bool(success_now[i]),
                         "render": render, "env": i, "seed": args.seed,
                         "episode_index_in_env": int(ep_idx[i]),

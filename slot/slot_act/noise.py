@@ -23,7 +23,7 @@ from slot_act.dataset import ACTION_DIM, OBS_DIM
 # internal bookkeeping, not a measurement, so a *sensor*-noise sweep must not touch it.
 # (Under --action-noise it does carry the corrupted command: last_action returns
 # env.action_manager.action, i.e. the noisy action actually passed to step().)
-LAST_ACTION_SLICE = slice(27, OBS_DIM)
+LAST_ACTION_SLICE = slice(29, OBS_DIM)
 
 
 def noise_sigmas(

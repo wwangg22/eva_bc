@@ -55,7 +55,8 @@ import reBot_RL.tasks  # noqa: F401,E402
 import slot_mdp as mdp  # noqa: E402
 from isaaclab_tasks.utils import parse_env_cfg  # noqa: E402
 
-from slot_act.cameras import CAM_HEIGHT, CAM_WIDTH, attach_cameras, rgb_native  # noqa: E402
+from slot_act.cameras import (  # noqa: E402
+    CAM_HEIGHT, CAM_WIDTH, attach_cameras, rgb_native, student_inputs)
 from slot_act.eval_flow_vision import VisionController, load_vision_checkpoint  # noqa: E402
 
 BAR = 34  # caption strip height, px
@@ -113,9 +114,7 @@ def main() -> None:
             frames.append((wrist, works))
             caps.append(f"step {step:3d}/599   depth {depth_mm:+7.1f} mm   |lateral| {lat_mm:5.2f} mm"
                         f"   {'SEATED' if placed else ''}")
-            stu = {"joint_pos": obs[:, 0:8], "joint_vel": obs[:, 8:16], "actions": obs[:, 27:34],
-                   "wrist_rgb": rgb_native(u, "wrist_cam"),
-                   "workspace_rgb": rgb_native(u, "workspace_cam")}
+            stu = student_inputs(obs, rgb_native(u, "wrist_cam"), rgb_native(u, "workspace_cam"))
             obs = env.step(controller.act(stu).to(u.device))[0]["policy"]
 
         label = "success" if success else "failure"

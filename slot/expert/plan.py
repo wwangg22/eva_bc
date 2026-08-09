@@ -90,23 +90,46 @@ def lerp_path(a: torch.Tensor, b: torch.Tensor, step_m: float = 0.004,
     return out
 
 
-def polar_turn(x: float, y0: torch.Tensor, z: float, dth: float = 0.018) -> list[torch.Tensor]:
-    """Swing the TCP to y = 0 at fixed x by sweeping the BASE ANGLE uniformly.
+def polar_turn(a: torch.Tensor, b: torch.Tensor, dth: float = 0.018) -> list[torch.Tensor]:
+    """Traverse the straight xy segment ``a`` -> ``b`` (n,3) with a UNIFORM base-angle sweep.
 
     A straight line in y is not smooth in joint space: the base yaw obeys
     ``dtheta1/dy = x / (x^2 + y^2)``, which grows ~50 % as y -> 0 at x = 0.180. Kept because
     it is harmless and slightly smoother, but note its motivating hypothesis was **refuted** --
     the grip loss it was written to fix turned out to be a collision (HANDOFF section 5a).
+
+    Generalised from "sweep to y = 0 at fixed x" when the slot gained a per-episode yaw and
+    the traverse stopped ending on the +x axis. The path is still the straight line joining
+    the two points, still parameterised so the base angle advances by smootherstep, and at
+    slot yaw 0 it reduces to the old ``(x, x tan(theta))`` **exactly**: the segment is then
+    ``x = const``, whose line equation gives ``r = x / cos(theta)``.
+
+    Falls back to a plain eased lerp in the two degenerate cases -- the segment nearly through
+    the base axis (no well-defined radius), or endpoints at the same azimuth (nothing to
+    sweep).
     """
-    th0 = torch.atan2(y0, torch.full_like(y0, x))
-    k = max(2, int(torch.ceil(th0.abs().max() / dth).item()) + 1)
+    th0 = torch.atan2(a[:, 1], a[:, 0])
+    th1 = torch.atan2(b[:, 1], b[:, 0])
+    d = b[:, :2] - a[:, :2]
+    nrm = torch.stack([-d[:, 1], d[:, 0]], dim=1)                       # normal to the segment
+    nrm = nrm / nrm.norm(dim=1, keepdim=True).clamp(min=1e-9)
+    c = (nrm * a[:, :2]).sum(1)                                         # line: n . p = c
+    flat = (c.abs() < 1e-3) | ((th1 - th0).abs() < 1e-6)
+
+    k = max(2, int(torch.ceil((th1 - th0).abs().max() / dth).item()) + 1)
     out = []
     for i in range(k):
         t = i / (k - 1)
         s = t * t * t * (t * (6 * t - 15) + 10)
-        th = th0 * (1.0 - s)
-        out.append(torch.stack([torch.full_like(th, x), x * torch.tan(th),
-                                torch.full_like(th, z)], dim=1))
+        th = th0 + (th1 - th0) * s
+        e = torch.stack([torch.cos(th), torch.sin(th)], dim=1)
+        den = (nrm * e).sum(1)
+        xy = torch.where((flat | (den.abs() < 1e-3)).unsqueeze(1),
+                         a[:, :2] + d * s,
+                         (c / torch.where(den.abs() < 1e-3, torch.ones_like(den), den)
+                          ).unsqueeze(1) * e)
+        z = a[:, 2] + (b[:, 2] - a[:, 2]) * s
+        out.append(torch.cat([xy, z.unsqueeze(1)], dim=1))
     return out
 
 
@@ -181,15 +204,35 @@ def solve_seed(env, ik, p: ExpertParams, verbose: bool = True) -> dict:
 
 
 def plan(ik, p: ExpertParams, bp0: torch.Tensor, byaw0: torch.Tensor,
-         q_seed: torch.Tensor, axis_slot: torch.Tensor, sign: torch.Tensor) -> dict:
+         q_seed: torch.Tensor, sign: torch.Tensor, slot_yaw: torch.Tensor) -> dict:
     """Solve every phase of the trajectory from the post-reset block pose (n,3)/(n,).
 
     **All IK runs before the block is touched.** ``write_joint_state_to_sim`` teleports the arm
     and re-opens the fingers, so any solve after the grasp destroys it.
 
-    Returns ``{"plans": {phase: solve_path output}, "segs": {phase: [waypoints]}}``.
+    ``slot_yaw`` (n,) is the per-episode fixture angle, read from ``mdp.slot_yaw(env)``. Every
+    waypoint downstream of the grasp is expressed in the slot's frame:
+
+    * the approach point sits ``stage_dist`` **back along the slot axis**, not at fixed x
+    * the push runs along that axis, not along +x
+    * the ``spin`` phase turns the block's finger axis to the SLOT's yaw, not to zero
+
+    The grasp itself is untouched -- the block still spawns where it always did, so the arm
+    picks it up exactly as before and only the delivery changed. That is deliberate: it keeps
+    the angle as the single new variable.
+
+    Returns ``{"plans": ..., "segs": ..., "axis_slot": (n,3)}``.
     """
     dev, n = ik.dev, ik.n
+    # The two measured constants are distances along the slot axis; they were only ever
+    # written as world x because the axis used to be +x. Keeping the CLI in world-x units
+    # means every number in EXPERT_RESULTS.md still means what it says.
+    stage_dist = mdp.SLOT_CENTER[0] - p.stage_x       # 0.080 m back from the fixture centre
+    insert_dist = p.insert_x - mdp.SLOT_CENTER[0]     # 0.0095 m past it
+    cth, sth = torch.cos(slot_yaw), torch.sin(slot_yaw)
+    centre = torch.tensor(list(mdp.SLOT_CENTER), device=dev).expand(n, 2)
+    axis_u = torch.stack([cth, sth], dim=1)           # unit vector INTO the slot
+    axis_slot = torch.stack([-sth, cth, torch.zeros_like(sth)], dim=1) * sign
 
     # Grasp axis = the block's own local y, so the pads squeeze its 30 mm width, not its
     # 45 mm length. Measured on this arm: 0 % -> 55-81 % insert rate when this is enforced.
@@ -199,13 +242,17 @@ def plan(ik, p: ExpertParams, bp0: torch.Tensor, byaw0: torch.Tensor,
     p_hover = torch.stack([bp0[:, 0], bp0[:, 1], gz + 0.045], dim=1)
     p_grasp = torch.stack([bp0[:, 0], bp0[:, 1], gz], dim=1)
     p_lift = torch.stack([bp0[:, 0], bp0[:, 1], carry], dim=1)
+    # The retract is still a straight pull in -x to clear the fixture's footprint before the
+    # traverse; the fixture only ever gets *closer* to the robot by 5 mm as it rotates (front
+    # corner x = 0.205 at 40 deg vs the mouth face at 0.210), so the 45 mm of clearance the
+    # measured stage_x buys is unaffected by the angle.
     p_stage = torch.stack([torch.full((n,), p.stage_x, device=dev), bp0[:, 1], carry], dim=1)
-    p_align = torch.tensor([p.stage_x, 0.0, p.carry_z], device=dev).expand(n, 3)
-    p_ins = torch.tensor([p.insert_x, 0.0, p.carry_z], device=dev).expand(n, 3)
+    p_align = torch.cat([centre - stage_dist * axis_u, carry.unsqueeze(1)], dim=1)
+    p_ins = torch.cat([centre + insert_dist * axis_u, carry.unsqueeze(1)], dim=1)
 
     def rot_axis(f: float) -> torch.Tensor:
-        """Finger axis interpolated from the block's yaw to the slot axis."""
-        a = byaw0 * (1.0 - f)
+        """Finger axis interpolated from the block's yaw to the SLOT's yaw."""
+        a = byaw0 * (1.0 - f) + slot_yaw * f
         return torch.stack([-torch.sin(a), torch.cos(a), torch.zeros_like(a)], dim=1) * sign
 
     segs = {}
@@ -217,7 +264,7 @@ def plan(ik, p: ExpertParams, bp0: torch.Tensor, byaw0: torch.Tensor,
     # while the wrist is also twisting it. The pads then see a 35 mm presented width instead of
     # 30 mm and are forced open (measured gap 29.96 -> 35.00 mm).
     segs["spin"] = [p_stage] * 24
-    segs["turn"] = polar_turn(p.stage_x, bp0[:, 1], p.carry_z)
+    segs["turn"] = polar_turn(p_stage, p_align)
     segs["push"] = lerp_path(p_align, p_ins, 0.002)
 
     axes = {"reach": axis_grasp, "lift": axis_grasp, "back": axis_grasp,
@@ -237,7 +284,7 @@ def plan(ik, p: ExpertParams, bp0: torch.Tensor, byaw0: torch.Tensor,
         segs["retreat"] = lerp_path(p_ins, p_align, RETREAT_STEP_M)
         plans["retreat"] = ik.solve_path(segs["retreat"], axis_slot, q, 0.045)
 
-    return {"plans": plans, "segs": segs}
+    return {"plans": plans, "segs": segs, "axis_slot": axis_slot}
 
 
 @dataclass

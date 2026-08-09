@@ -1,6 +1,20 @@
 # START HERE — `Rebot-PrecisionSlot-*` with `eva_bc`
 
-*Orientation doc. Everything else in `docs/slot/` is depth; this is the map. Written 2026-08-03.*
+*Orientation doc. Everything else in `docs/slot/` is depth; this is the map. Written 2026-08-03,
+last updated 2026-08-09.*
+
+> ## ⚠ THE TASK CHANGED ON 2026-08-09
+>
+> The slot used to be welded pointing at the robot. It now gets a **random yaw every episode**,
+> at Big Will's request, because a fixed slot let a *blind* policy score 0.254 by aiming at the
+> one place the slot was ever going to be. **Read [`ANGLED_SLOT.md`](ANGLED_SLOT.md) first.**
+>
+> **Everything below this box, and every number in every other document here, was measured on
+> the axis-aligned slot.** The 0.979 champion, all of `EXP_ROBUSTNESS`, all of `EXP_STEER`, the
+> vision 0.804 and the DAgger −31.3 are true statements about a task that no longer exists.
+> Several of their *lessons* carry over; none of their *numbers* do. The privileged observation
+> is also 36-D now, not 34-D, so every checkpoint and data pool from before that date is
+> incompatible.
 
 ---
 
@@ -36,7 +50,8 @@ The last row is session 7's result and the most surprising thing the project has
 
 | if you want to know… | read |
 |---|---|
-| **the visual policy (live work)** | `VISION_PLAN.md` — §0 contract, §11 the renderer verdict, then `HANDOFF.md` S8-STATE |
+| **the angled slot (live work)** | `ANGLED_SLOT.md` — the implementation record and its gates; `ANGLED_SLOT_PLAN.md` for the plan it was built from |
+| **the visual policy (axis-aligned)** | `VISION_PLAN.md` — §0 contract, §11 the renderer verdict, then `HANDOFF.md` S8-STATE |
 | what happened in the x0/steering session | `EXP_STEER.md` — Status block, then §8 → §9 → §11 → §12 → §13 |
 | the current state, what is running, what is next | `HANDOFF.md` §1, §1-NEXT, §1a |
 | how robust the policy is to a changed world | `EXP_ROBUSTNESS.md` (long; §8 and §13b are the load-bearing bits) |

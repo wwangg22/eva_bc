@@ -207,12 +207,15 @@ def main() -> None:
         for r in range(args_cli.rollouts):
             env.reset()
             bp0, byaw0 = block_pose()
-            out = P.plan(ik, params, bp0, byaw0, seed["q_seed"], seed["axis_slot"], seed["sign"])
+            slot_yaw0 = mdp.slot_yaw(e).clone()
+            out = P.plan(ik, params, bp0, byaw0, seed["q_seed"], seed["sign"], slot_yaw0)
             plans = out["plans"]
             plan_ok = torch.stack([plans[k]["converged"] for k in P.PHASES], dim=1).all(dim=1)
 
             env.reset()
-            # The reset re-randomises the block, so restore the pose the plan was built for.
+            # The reset re-randomises the block AND the slot yaw, so restore both -- the plan
+            # was solved for one specific fixture angle and is meaningless against any other.
+            mdp.set_slot_yaw(e, torch.arange(n, device=dev), slot_yaw0)
             block.write_root_state_to_sim(torch.cat([
                 bp0 + e.scene.env_origins,
                 torch.stack([torch.zeros(n, device=dev), torch.zeros(n, device=dev),

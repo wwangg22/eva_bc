@@ -138,7 +138,7 @@ class BatchedACTController:
 
     @torch.no_grad()
     def act(self, obs_batch: torch.Tensor) -> torch.Tensor:
-        """(N, 34) observation batch -> (N, 7) actions, refilling empty queues first."""
+        """(N, 36) observation batch -> (N, 7) actions, refilling empty queues first."""
         obs_batch = obs_batch.to(self.device, dtype=torch.float32)
         self._refill(obs_batch)
         actions = self._buf[torch.arange(self._buf.shape[0], device=self.device), self._idx]
@@ -297,7 +297,7 @@ def main() -> None:
                         help="gaussian sensor noise on the observation, as a fraction of each "
                              "channel's OWN training std (so one scalar is meaningful across "
                              "radians, metres and quaternion components). Applied to obs[0:27] "
-                             "only: [27:34] is the policy's own last commanded action, which is "
+                             "only: [29:36] is the policy's own last commanded action, which is "
                              "internal state, not a measurement, and corrupting it would test "
                              "something else. The env's enable_corruption is False, so the "
                              "policy trained on noiseless observations.")
@@ -584,7 +584,7 @@ def main() -> None:
         actions = controller.act(obs_in).to(u.device)
         if act_sigma is not None:
             # after the controller, so the noise corrupts the COMMAND rather than the plan.
-            # NOTE the policy DOES see the corruption on the next step: obs[27:34] is
+            # NOTE the policy DOES see the corruption on the next step: obs[29:36] is
             # mdp.last_action, which returns env.action_manager.action -- the action actually
             # passed to step(), i.e. the noisy one -- and obs[0:16] carries its physical
             # consequences anyway. (An earlier version of this comment claimed the policy saw a
