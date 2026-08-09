@@ -283,13 +283,94 @@ This is Big Will's *"ensure the task is solvable by the arm"*, answered with the
 on real physics rather than with an IK-convergence probe — IK says "reachable" for plenty of
 poses the gripper cannot actually hold a block through.
 
-**Results: pending.** `DEFAULT_SLOT_YAW_RANGE` is currently a **provisional ±0.50 rad** and is
-labelled as a guess in the source. It gets set from this table.
+**Results so far** (n = 128 per cell; ±0.5, ±0.7, ±0.9 still running):
 
-The failure *kind* matters as much as the rate: `grip` means the wrist ran out of travel,
-`depth`/`seat` mean the traverse or the push missed. They call for different fixes, and if θmax
-lands under ~15° the task has become arm-limited rather than perception-limited — at which point
-the right move is rotating the block spawn region with the slot, not accepting a tiny angle.
+| θ | deg | seated | depth mean / p10 | lateral | steps used | traverse | block lead at end of turn |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| −0.350 | −20.1° | **90/128 = 0.703** | 42.0 / **35.6** mm | 1.02 mm | **585**/600 | 157.0 mm | **−8.8 mm** |
+| −0.175 | −10.0° | 128/128 | 47.3 / 47.0 | 0.97 | 573/600 | 143.4 mm | −2.9 mm |
+| 0.000 | 0° | 128/128 | 46.6 / 45.9 | 0.53 | 558/600 | 129.5 mm | +2.9 mm |
+| +0.175 | +10.0° | 128/128 | 46.9 / — | 0.46 | 543/600 | 115.6 mm | +7.0 mm |
+| +0.350 | +20.1° | 128/128 | 47.3 / 46.9 | 0.63 | 531/600 | 102.2 mm | +4.6 mm |
+
+### 8a. The failure is asymmetric, and it is MY planner's, not the robot's
+
+−20° scores 0.703 while +20° scores 1.000. That asymmetry is the whole finding, and it has a
+mechanism that the table above makes visible.
+
+**The block spawns at y ≈ −0.13 and the slot's approach point swings with θ.**
+`p_align = SLOT_CENTER − 0.080·û`, so at +20° it sits at y = −0.027 and at −20° at y = +0.027 —
+a traverse of 102 mm one way and **157 mm** the other, a 55 % difference across the sign of θ.
+
+The carried block hangs 33 mm below the grip point: a pendulum of period
+2π√(0.033/9.81) = 0.365 s. A longer sideways traverse swings it more, and it is **still
+swinging when the push starts**. The last column measures exactly that — the block's position
+along the slot axis relative to the TCP at the end of the turn. It runs monotonically from
++7.0 mm to −8.8 mm as the traverse lengthens. The push then moves the TCP a fixed distance, so
+whatever in-hand offset exists at the start of the push survives to the end of it:
+
+* lead +4.6 mm at +20° → final depth **47.3 mm**
+* lag **−8.8 mm** at −20° → final depth **42.0 mm**, against a 40 mm threshold, with p10 at
+  **35.6 mm**. Roughly 30 % of episodes fall under the bar.
+
+**This is not an envelope limit.** At −20° the arm holds the block 128/128 all the way through
+the push, the IK converges 128/128, the lateral error is 1.02 mm and the yaw error 0.0026 rad.
+Nothing is out of reach. The block simply arrives late because my trajectory does not wait for
+it to stop swinging. So the answer to Big Will's *"is the task solvable by the arm"* at ±20° is
+**yes** — what fails is the expert's timing.
+
+**A second, purely artificial failure is about to bite.** Steps used grows with the traverse:
+531 → 585 out of a 600-step budget across the range measured so far. The −0.5 and −0.7 cells
+will overflow it, and every env in them will time out *regardless of the physics*. Any rate
+below ~0.7 at large negative θ must therefore be read as a budget artifact until the horizon is
+raised, not as a reachability result.
+
+### 8a-2. +0.5 rad fails, and NOT for the same reason
+
+| θ | seated | resets mid-episode | held at push | finger gap at push | yaw err at push |
+|---:|---:|---:|---:|---:|---:|
+| +0.350 | 128/128 | 0 | **128**/128 | 29.97 mm | 0.0035 rad |
+| +0.500 | 103/128 = 0.805 | **25** | **108**/128 | **25.08 mm** | **0.0918 rad** |
+
+At +0.5 the traverse is 91.7 mm — the *shortest* in the sweep — so the pendulum story of §8a
+cannot apply, and indeed the block's lead at the end of the turn is a healthy +2.0 mm. Through
+the turn everything is nominal: held 128/128, gap 29.95 mm, yaw error 0.0047 rad, and the block
+sits within 0.1 mm of the slot centreline.
+
+**It goes wrong during the push.** The finger gap closes from 29.95 to 25.08 mm — the fingers
+have shut past where the block was, which is what happens when the block is levered out of the
+pads — and 25 episodes terminate early. This is the failure mode `EXP_NOISE_SWEEP` already
+named on the axis-aligned task: inside the channel, the block gets forced out of the grasp.
+
+I do not yet know *what* it hits. The two candidates are a wrist joint running out of travel
+(the IK would then clamp and the commanded finger axis would deviate) and a collision between
+the gripper and the fixture that only opens up past 20°. **The IK's per-waypoint position and
+axis error would separate them, and the sweep script threw that output away** — it greps stdout
+down to the summary lines. That is my instrumentation bug, not an unknown: the sweep will keep
+the full per-cell log and the failing cells get re-run with `--trace push`.
+
+Note `plan converged 128/128` at +0.5, so whatever happens is not IK failing to find a
+solution — it is either a clamped solution that still reports converged, or contact.
+
+### 8b. The fix that follows from the diagnosis
+
+1. **Damp the swing before the push.** `SETTLE["turn"]` is 25 steps = 0.50 s = 1.4 pendulum
+   periods. Raise it so the block is actually still when the push begins.
+2. **Raise the episode budget** from 600 steps (12.0 s) so the horizon stops being the binding
+   constraint. It must stay divisible by the 15-step action window — 720 steps (14.4 s) does,
+   600 → 700 would not.
+
+**Rejected: rotating the block spawn region with the slot.** It equalises the traverse, and the
+plan named it as the contingency, but it would make the block's spawn position a function of θ —
+handing the vision policy a shortcut to the very quantity it is supposed to read off the
+fixture. A task that can be solved by looking at the block instead of the slot is not the task.
+
+*Instrument note:* the "lost grip before release" counter was reading the finger gap at
+**episode end**, when the gripper is open (89 mm) in every env — so it was an alias for "number
+of failures" and diagnosed nothing. It now samples the gap at the end of the push, the last
+moment the block is held. Fixed mid-sweep, so cells from +0.500 onward carry the corrected
+value; the `fail_grip` field in the five cells above equals their failure count and should be
+ignored. No other field is affected.
 
 ---
 

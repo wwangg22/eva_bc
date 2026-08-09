@@ -240,6 +240,7 @@ def main() -> None:
             torch.zeros((n, 6), device=dev)], dim=1))
 
         stats: dict = {}
+        gap_held = None   # per-env finger gap sampled at the end of the push; see below
         steps = list(P.action_stream(plans, params))
         traced_wp = {i for i, s in enumerate(steps)
                      if s.phase == args_cli.trace and s.wp >= 0
@@ -304,6 +305,11 @@ def main() -> None:
                       f"seated {stats[s.phase]['seated']}/{n}")
             if s.phase == "push":
                 stats["raw_gripped"] = int(mdp.is_inserted(e).sum())
+                # per-env finger gap at the END OF THE PUSH, i.e. the last moment the block is
+                # still held. The failure attribution below used to read the gap at episode
+                # end, when the gripper is open (89 mm) in every env -- so "lost grip before
+                # release" was an alias for "number of failures" and diagnosed nothing.
+                gap_held = ik.finger_gap_mm().clone()
 
         ok = seated() & ~resets
         raw = mdp.is_inserted(e)
@@ -336,7 +342,8 @@ def main() -> None:
         fail_yaw = int(((yerr > mdp.SUCCESS_YAW) & (depth >= mdp.SUCCESS_DEPTH) & ~ok).sum())
         fail_seat = int((((bpf[:, 2] - seat_z).abs() >= 0.006) & (depth >= mdp.SUCCESS_DEPTH)
                          & (yerr <= mdp.SUCCESS_YAW) & ~ok).sum())
-        fail_drop = int((~((gap > 26.0) & (gap < 34.0)) & ~ok).sum())
+        held = gap_held if gap_held is not None else gap
+        fail_drop = int((~((held > 26.0) & (held < 34.0)) & ~ok).sum())
         print(f"  failures: too shallow {fail_depth}, yawed {fail_yaw}, not seated {fail_seat}, "
               f"lost grip before release {fail_drop}")
         print("=" * 78)
