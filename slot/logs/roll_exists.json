@@ -1,0 +1,266 @@
+{
+  "args": {
+    "task": "Rebot-PrecisionSlot-v0",
+    "num_envs": 512,
+    "thetas": [
+      0.0,
+      -0.35,
+      -0.5,
+      -0.7
+    ],
+    "iters": 400,
+    "pos_tol": 0.001,
+    "axis_tol": 0.001,
+    "out": "logs/roll_exists.json",
+    "seed": 0,
+    "enable_cameras": false,
+    "xr": false,
+    "device": "cuda:0",
+    "visualizer": [],
+    "cpu": false,
+    "verbose": false,
+    "info": false,
+    "deterministic": false,
+    "rendering_mode": null,
+    "kit_args": "",
+    "anim_recording_enabled": false,
+    "anim_recording_start_time": 0,
+    "anim_recording_stop_time": 10,
+    "headless": true,
+    "hide_ui": true,
+    "create_new_stage": false,
+    "physics_gpu": 0,
+    "active_gpu": 0
+  },
+  "tilt_ref_v": [
+    -0.5132752656936646,
+    -3.824826853815466e-05,
+    0.8582240343093872
+  ],
+  "results": {
+    "+0.000": {
+      "align": {
+        "expert_tilt_deg": 23.318187713623047,
+        "expert_converged": 512,
+        "restarts_converged": 183,
+        "min_tilt_deg": 15.847519874572754,
+        "p10_tilt_deg": 28.8405704498291,
+        "median_tilt_deg": 67.36199188232422,
+        "max_tilt_deg": 106.44013214111328,
+        "frac_below_5deg": 0.0,
+        "local": {
+          "sigma_0.1": {
+            "converged": 512,
+            "min_tilt_deg": 15.400835037231445,
+            "dq_at_min_tilt": 0.24424317479133606
+          },
+          "sigma_0.3": {
+            "converged": 512,
+            "min_tilt_deg": 13.721417427062988,
+            "dq_at_min_tilt": 0.3061038553714752
+          },
+          "sigma_0.6": {
+            "converged": 503,
+            "min_tilt_deg": 13.687644004821777,
+            "dq_at_min_tilt": 0.3002062141895294
+          }
+        }
+      },
+      "insert": {
+        "expert_tilt_deg": 0.03956468030810356,
+        "expert_converged": 512,
+        "restarts_converged": 275,
+        "min_tilt_deg": 0.39762094616889954,
+        "p10_tilt_deg": 14.894478797912598,
+        "median_tilt_deg": 51.008934020996094,
+        "max_tilt_deg": 92.55107116699219,
+        "frac_below_5deg": 0.03999999910593033,
+        "local": {
+          "sigma_0.1": {
+            "converged": 512,
+            "min_tilt_deg": 0.01978234015405178,
+            "dq_at_min_tilt": 0.0013977885246276855
+          },
+          "sigma_0.3": {
+            "converged": 511,
+            "min_tilt_deg": 0.01978234015405178,
+            "dq_at_min_tilt": 0.002605616580694914
+          },
+          "sigma_0.6": {
+            "converged": 477,
+            "min_tilt_deg": 0.03956468030810356,
+            "dq_at_min_tilt": 0.004264326300472021
+          }
+        }
+      }
+    },
+    "-0.350": {
+      "align": {
+        "expert_tilt_deg": 38.006935119628906,
+        "expert_converged": 512,
+        "restarts_converged": 244,
+        "min_tilt_deg": 1.65894615650177,
+        "p10_tilt_deg": 22.47446632385254,
+        "median_tilt_deg": 57.43779373168945,
+        "max_tilt_deg": 108.67170715332031,
+        "frac_below_5deg": 0.032786883413791656,
+        "local": {
+          "sigma_0.1": {
+            "converged": 512,
+            "min_tilt_deg": 27.516490936279297,
+            "dq_at_min_tilt": 0.1817624419927597
+          },
+          "sigma_0.3": {
+            "converged": 512,
+            "min_tilt_deg": 3.5737433433532715,
+            "dq_at_min_tilt": 0.8395197987556458
+          },
+          "sigma_0.6": {
+            "converged": 508,
+            "min_tilt_deg": 0.10835235565900803,
+            "dq_at_min_tilt": 0.7623324990272522
+          }
+        }
+      },
+      "insert": {
+        "expert_tilt_deg": 4.674537181854248,
+        "expert_converged": 512,
+        "restarts_converged": 246,
+        "min_tilt_deg": 0.39958450198173523,
+        "p10_tilt_deg": 5.680320739746094,
+        "median_tilt_deg": 49.36327362060547,
+        "max_tilt_deg": 94.05815124511719,
+        "frac_below_5deg": 0.0731707289814949,
+        "local": {
+          "sigma_0.1": {
+            "converged": 512,
+            "min_tilt_deg": 0.03426402062177658,
+            "dq_at_min_tilt": 0.08124465495347977
+          },
+          "sigma_0.3": {
+            "converged": 512,
+            "min_tilt_deg": 0.03426402062177658,
+            "dq_at_min_tilt": 0.05047060549259186
+          },
+          "sigma_0.6": {
+            "converged": 493,
+            "min_tilt_deg": 0.02797645516693592,
+            "dq_at_min_tilt": 0.16230720281600952
+          }
+        }
+      }
+    },
+    "-0.500": {
+      "align": {
+        "expert_tilt_deg": 44.50614929199219,
+        "expert_converged": 512,
+        "restarts_converged": 248,
+        "min_tilt_deg": 0.03956468030810356,
+        "p10_tilt_deg": 16.343061447143555,
+        "median_tilt_deg": 60.11684036254883,
+        "max_tilt_deg": 111.01828002929688,
+        "frac_below_5deg": 0.024193547666072845,
+        "local": {
+          "sigma_0.1": {
+            "converged": 512,
+            "min_tilt_deg": 34.77332305908203,
+            "dq_at_min_tilt": 0.15664254128932953
+          },
+          "sigma_0.3": {
+            "converged": 512,
+            "min_tilt_deg": 15.387185096740723,
+            "dq_at_min_tilt": 0.54274582862854
+          },
+          "sigma_0.6": {
+            "converged": 504,
+            "min_tilt_deg": 0.07401874661445618,
+            "dq_at_min_tilt": 0.8534822463989258
+          }
+        }
+      },
+      "insert": {
+        "expert_tilt_deg": 8.181389808654785,
+        "expert_converged": 512,
+        "restarts_converged": 253,
+        "min_tilt_deg": 0.5770910382270813,
+        "p10_tilt_deg": 10.448075294494629,
+        "median_tilt_deg": 50.51313781738281,
+        "max_tilt_deg": 95.7028579711914,
+        "frac_below_5deg": 0.02766798436641693,
+        "local": {
+          "sigma_0.1": {
+            "converged": 512,
+            "min_tilt_deg": 0.25178831815719604,
+            "dq_at_min_tilt": 0.11324289441108704
+          },
+          "sigma_0.3": {
+            "converged": 511,
+            "min_tilt_deg": 0.03956468030810356,
+            "dq_at_min_tilt": 0.1465011090040207
+          },
+          "sigma_0.6": {
+            "converged": 482,
+            "min_tilt_deg": 0.11014343053102493,
+            "dq_at_min_tilt": 0.20033316314220428
+          }
+        }
+      }
+    },
+    "-0.700": {
+      "align": {
+        "expert_tilt_deg": 51.91261672973633,
+        "expert_converged": 512,
+        "restarts_converged": 245,
+        "min_tilt_deg": 1.1504606008529663,
+        "p10_tilt_deg": 14.994523048400879,
+        "median_tilt_deg": 60.850257873535156,
+        "max_tilt_deg": 115.48323822021484,
+        "frac_below_5deg": 0.03265305981040001,
+        "local": {
+          "sigma_0.1": {
+            "converged": 512,
+            "min_tilt_deg": 40.603309631347656,
+            "dq_at_min_tilt": 0.17936795949935913
+          },
+          "sigma_0.3": {
+            "converged": 512,
+            "min_tilt_deg": 23.107954025268555,
+            "dq_at_min_tilt": 0.5166405439376831
+          },
+          "sigma_0.6": {
+            "converged": 509,
+            "min_tilt_deg": 0.07401874661445618,
+            "dq_at_min_tilt": 0.883607029914856
+          }
+        }
+      },
+      "insert": {
+        "expert_tilt_deg": 18.34294891357422,
+        "expert_converged": 512,
+        "restarts_converged": 277,
+        "min_tilt_deg": 1.198609709739685,
+        "p10_tilt_deg": 13.022587776184082,
+        "median_tilt_deg": 53.507484436035156,
+        "max_tilt_deg": 98.98082733154297,
+        "frac_below_5deg": 0.03249097615480423,
+        "local": {
+          "sigma_0.1": {
+            "converged": 512,
+            "min_tilt_deg": 6.369352340698242,
+            "dq_at_min_tilt": 0.18574172258377075
+          },
+          "sigma_0.3": {
+            "converged": 512,
+            "min_tilt_deg": 0.1312212347984314,
+            "dq_at_min_tilt": 0.30326181650161743
+          },
+          "sigma_0.6": {
+            "converged": 503,
+            "min_tilt_deg": 0.10467831790447235,
+            "dq_at_min_tilt": 0.29839789867401123
+          }
+        }
+      }
+    }
+  }
+}

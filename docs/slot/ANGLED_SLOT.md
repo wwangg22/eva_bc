@@ -463,11 +463,65 @@ Note `solve_path` *already* biases each waypoint's nullspace toward the previous
 the obvious fix — "keep the roll continuous along the path" — is in place and insufficient: the
 roll drifts from 2.47° to 23.27° across the traverse anyway.
 
-**Not yet established:** whether a level-gripper solution *exists* at those poses. If it does,
-the fix is a soft roll objective in the IK (a hard constraint is what was measured to
-over-constrain). If it does not, the arm genuinely cannot carry a square block to a slot at that
-angle and the task range is a hardware fact. **That is the next measurement, and it is the one
-that decides whether θmax can be lifted.**
+### 8e. Does a level-gripper solution EXIST? **Yes — and it is nearby**
+
+`slot/scripts/probe_roll_exists.py`, 512 random restarts per pose. The solution set at a fixed
+(position, finger-axis) target is a 1-D curve, so it is sampled by seeding the IK from 512
+uniformly random joint configurations in parallel — one per env — and keeping only solutions
+that hit the target to 1 mm and 1e-3 of axis error.
+
+| θ | pose | expert lands at | best of 512 restarts | below 5° | nearest level solution |
+|---:|---|---:|---:|---:|---:|
+| 0.00 | align | 23.32° | 15.85° | 0.0 % | 13.7° @ Δq 0.30 |
+| 0.00 | insert | 0.04° | 0.40° | 4.0 % | 0.0° @ Δq 0.00 |
+| −0.35 | align | 38.01° | **1.66°** | 3.3 % | **0.1° @ Δq 0.76** |
+| −0.35 | insert | 4.67° | **0.40°** | 7.3 % | **0.0° @ Δq 0.16** |
+| −0.50 | align | 44.51° | **0.04°** | 2.4 % | **0.1° @ Δq 0.85** |
+| −0.50 | insert | 8.18° | **0.58°** | 2.8 % | **0.1° @ Δq 0.20** |
+| −0.70 | align | 51.91° | **1.15°** | 3.3 % | **0.1° @ Δq 0.88** |
+| −0.70 | insert | 18.34° | **1.20°** | 3.2 % | **0.1° @ Δq 0.30** |
+
+Two separate questions, both answered:
+
+1. **Does a level solution exist anywhere?** Yes, at every pose out to −40°: the best restart is
+   within 1.7° of level, and 2–7 % of all converged restarts are below 5°.
+2. **Is it reachable from where the expert already is?** Yes. Seeding locally around the
+   expert's own solution (Gaussian perturbations at σ = 0.1, 0.3, 0.6 rad) finds level solutions
+   at **Δq ≈ 0.2–0.3 rad at the insert pose** and **Δq ≈ 0.8 rad at the align pose**. That
+   second question matters independently: if the only level solutions lived in a different elbow
+   branch, no soft bias could reach them while carrying a block, and the fix would need a
+   replanned branch rather than a nudge.
+
+**So the 23–52° roll is a CHOICE the null-space bias makes, not a kinematic necessity. θmax is
+expert-limited and can be lifted.** The fix is to steer the free DOF toward level. Because the
+level configuration at the align pose sits ~0.8 rad away in joint space, it has to be chosen
+during *planning* — pick the level branch at the align pose and carry it through the push —
+rather than applied as a small correction at execution time.
+
+**Two caveats, stated because they bound the claim:**
+
+* Existence at two isolated waypoints is not a continuous level path. The push is 46 waypoints
+  from align to insert; both endpoints admit level solutions, so a level path is plausible, but
+  it is **untested**.
+* Some roll is clearly tolerable. At θ = 0 the expert sits at 23.32° at the align pose — and no
+  restart out of 183 beat 15.85° there — yet θ = 0 scores 128/128, because the channel
+  straightens the block during the push (block tilt 6.38° → 1.49°). What breaks the insert is
+  the growth to 44–52°, not roll as such.
+
+#### A metric that had to be fixed twice before it could be believed
+
+The first version reduced the reference orientation to its single largest component and measured
+"the angle of one body axis from vertical" — a quantity with an arbitrary offset. It reported the
+canonical seed itself at **30.88°** when that pose is the zero by construction, and disagreed
+with physics by 48°. The corrected metric uses the whole vector `v = R_ref^T ẑ` — the world
+vertical written in the gripper's own frame, which is env-independent because a grasp differing
+by a yaw about the vertical leaves `ẑ` unchanged.
+
+The second fix was to the *validation*, not the metric. Demanding that commanded gripper roll
+equal measured block tilt flagged a correct metric as broken. The grasp is compliant: gravity
+pulls the block back toward vertical, so it follows only about half the gripper's roll —
+14.01° → 6.38° (ratio 0.46) and 43.35° → 23.27° (ratio 0.54). Gripper roll is the causal
+quantity and the one the IK controls; block tilt is its damped consequence.
 
 **Rejected: rotating the block spawn region with the slot.** It equalises the traverse, and the
 plan named it as the contingency, but it would make the block's spawn position a function of θ —
