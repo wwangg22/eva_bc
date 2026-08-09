@@ -1,0 +1,240 @@
+{
+  "task": "Rebot-PrecisionSlot-v0",
+  "n": 128,
+  "args": {
+    "task": "Rebot-PrecisionSlot-v0",
+    "num_envs": 128,
+    "cem_iters": 120,
+    "grasp_h": 0.031,
+    "carry_z": 0.095,
+    "stage_x": 0.165,
+    "insert_x": 0.2545,
+    "turn_per_wp": 3,
+    "turn_settle": 25,
+    "no_retreat": false,
+    "trace": "",
+    "slot_dx": 0.0,
+    "slot_yaw": [
+      -0.175
+    ],
+    "seed": 0,
+    "out_dir": "logs/slip",
+    "seed_file": "logs/expert/seed_q.json",
+    "video": false,
+    "fps": 25,
+    "enable_cameras": false,
+    "xr": false,
+    "device": "cuda:0",
+    "visualizer": [],
+    "cpu": false,
+    "verbose": false,
+    "info": false,
+    "deterministic": false,
+    "rendering_mode": null,
+    "kit_args": "",
+    "anim_recording_enabled": false,
+    "anim_recording_start_time": 0,
+    "anim_recording_stop_time": 10,
+    "headless": true,
+    "hide_ui": true,
+    "create_new_stage": false,
+    "physics_gpu": 0,
+    "active_gpu": 0
+  },
+  "jerk": {
+    "reach": {
+      "max_dq_rad": 0.030039668083190918,
+      "worst_joint": 2
+    },
+    "lift": {
+      "max_dq_rad": 0.02472984790802002,
+      "worst_joint": 2
+    },
+    "back": {
+      "max_dq_rad": 0.08839631080627441,
+      "worst_joint": 4
+    },
+    "spin": {
+      "max_dq_rad": 0.029799461364746094,
+      "worst_joint": 6
+    },
+    "turn": {
+      "max_dq_rad": 0.11534269899129868,
+      "worst_joint": 1
+    },
+    "push": {
+      "max_dq_rad": 0.025721386075019836,
+      "worst_joint": 4
+    },
+    "retreat": {
+      "max_dq_rad": 0.050306931138038635,
+      "worst_joint": 4
+    }
+  },
+  "plan": {
+    "reach": {
+      "waypoints": 14,
+      "max_pos_err_mm": 0.1467271795263514,
+      "max_axis_err": 9.173154830932617e-05,
+      "converged": 128
+    },
+    "lift": {
+      "waypoints": 9,
+      "max_pos_err_mm": 0.004990142770111561,
+      "max_axis_err": 1.1920928955078125e-07,
+      "converged": 128
+    },
+    "back": {
+      "waypoints": 16,
+      "max_pos_err_mm": 0.04653686119127087,
+      "max_axis_err": 8.046627044677734e-06,
+      "converged": 128
+    },
+    "spin": {
+      "waypoints": 24,
+      "max_pos_err_mm": 0.013530961950891651,
+      "max_axis_err": 5.364418029785156e-07,
+      "converged": 128
+    },
+    "turn": {
+      "waypoints": 49,
+      "max_pos_err_mm": 0.3790660703089088,
+      "max_axis_err": 0.00022935867309570312,
+      "converged": 128
+    },
+    "push": {
+      "waypoints": 46,
+      "max_pos_err_mm": 0.009180895176541526,
+      "max_axis_err": 1.7881393432617188e-07,
+      "converged": 128
+    },
+    "retreat": {
+      "waypoints": 24,
+      "max_pos_err_mm": 0.01241248901351355,
+      "max_axis_err": 2.980232238769531e-07,
+      "converged": 128
+    }
+  },
+  "stats": {
+    "reach": {
+      "tcp_err_mm": -1.0300091234967113,
+      "slip_mm": 1.029999810270965,
+      "gap_mm": 89.06510925292969,
+      "still_held": 0,
+      "blk_x_mm": 219.58351135253906,
+      "blk_y_mm": -129.17116284370422,
+      "blk_z_mm": 31.999927014112473,
+      "yaw_mean": 0.24529758095741272,
+      "lag_mm": -0.8438898948952556,
+      "seated": 0
+    },
+    "grasp": {
+      "gap_mm_mean": 29.951671600341797,
+      "gap_mm_p10": 29.928787231445312,
+      "grasped": 128,
+      "dx_mm": 0.5252950359135866,
+      "dy_mm": 0.4465945530682802,
+      "dz_mm": 33.171460032463074,
+      "dyaw": 0.003943919204175472
+    },
+    "lift": {
+      "tcp_err_mm": 0.4051987489219755,
+      "slip_mm": 2.615910954773426,
+      "gap_mm": 29.94979476928711,
+      "still_held": 128,
+      "blk_x_mm": 222.5535809993744,
+      "blk_y_mm": -129.7248899936676,
+      "blk_z_mm": 61.16587668657303,
+      "yaw_mean": 0.24732846021652222,
+      "lag_mm": -2.6307599619030952,
+      "seated": 0
+    },
+    "back": {
+      "tcp_err_mm": 1.1151048820465803,
+      "slip_mm": -1.27023842651397,
+      "gap_mm": 29.94936752319336,
+      "still_held": 128,
+      "blk_x_mm": 164.78025913238525,
+      "blk_y_mm": -129.52303886413574,
+      "blk_z_mm": 61.82946264743805,
+      "yaw_mean": 0.2464381605386734,
+      "lag_mm": 1.3224767753854394,
+      "seated": 0
+    },
+    "spin": {
+      "tcp_err_mm": -0.2403847611276433,
+      "slip_mm": 0.19041910127270967,
+      "gap_mm": 29.949419021606445,
+      "still_held": 128,
+      "blk_x_mm": 164.9945080280304,
+      "blk_y_mm": -128.91536951065063,
+      "blk_z_mm": 61.35208159685135,
+      "yaw_mean": 0.009855383075773716,
+      "lag_mm": -0.18599536269903183,
+      "seated": 0
+    },
+    "turn": {
+      "tcp_err_mm": -0.1289643405470997,
+      "slip_mm": -2.814366715028882,
+      "gap_mm": 29.949905395507812,
+      "still_held": 128,
+      "blk_x_mm": 163.3061170578003,
+      "blk_y_mm": 14.342729933559895,
+      "blk_z_mm": 61.70137971639633,
+      "yaw_mean": 0.004743046592921019,
+      "lag_mm": 2.7760411612689495,
+      "seated": 0
+    },
+    "push": {
+      "tcp_err_mm": -1.0648760944604874,
+      "slip_mm": 2.9113783966749907,
+      "gap_mm": 29.94619369506836,
+      "still_held": 128,
+      "blk_x_mm": 256.1095356941223,
+      "blk_y_mm": -2.3354925215244293,
+      "blk_z_mm": 60.62973290681839,
+      "yaw_mean": 0.0028065121732652187,
+      "lag_mm": -2.8355014510452747,
+      "seated": 82
+    },
+    "raw_gripped": 128,
+    "release": {
+      "gap_mm": 89.06500244140625,
+      "still_held": 0,
+      "blk_x_mm": 256.9151222705841,
+      "blk_y_mm": -3.091472201049328,
+      "blk_z_mm": 54.99996244907379,
+      "yaw_mean": 0.0033865843433886766,
+      "lag_mm": -2.8437827713787556,
+      "seated": 128
+    },
+    "retreat": {
+      "tcp_err_mm": 11.10192108899355,
+      "slip_mm": 81.16945624351501,
+      "gap_mm": 89.06498718261719,
+      "still_held": 0,
+      "blk_x_mm": 256.9151520729065,
+      "blk_y_mm": -3.0914340168237686,
+      "blk_z_mm": 54.99996244907379,
+      "yaw_mean": 0.0033850413747131824,
+      "lag_mm": -79.58418875932693,
+      "seated": 128
+    },
+    "result": {
+      "seated": 128,
+      "rate": 1.0,
+      "raw": 128,
+      "depth_mm": 47.27138578891754,
+      "lat_mm": 0.9736285428516567,
+      "yaw": 0.0033850413747131824,
+      "plan_converged": 128,
+      "resets": 0,
+      "fail_depth": 0,
+      "fail_yaw": 0,
+      "fail_seat": 0,
+      "fail_grip": 0,
+      "steps_used": 573,
+      "step_budget": 720
+    }
+  }
+}

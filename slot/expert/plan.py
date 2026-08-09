@@ -59,12 +59,16 @@ class ExpertParams:
     stage_x: float = 0.165      # x to retract to before traversing in y
     insert_x: float = 0.2545    # target TCP x at the end of the push
     turn_per_wp: int = 3
+    turn_settle: int = 25       # steps held at the end of the traverse; see SETTLE below
     cem_iters: int = 120
     retreat: bool = True        # back the open gripper out of the slot after releasing
     seed_file: str = "logs/expert/seed_q.json"
 
     def per_wp(self) -> dict[str, int]:
         return {**PER_WP, "turn": self.turn_per_wp}
+
+    def settle(self) -> dict[str, int]:
+        return {**SETTLE, "turn": self.turn_settle}
 
 
 def lerp_path(a: torch.Tensor, b: torch.Tensor, step_m: float = 0.004,
@@ -304,7 +308,7 @@ def action_stream(plans: dict, p: ExpertParams, budget: int | None = None) -> It
     and no auto-reset fires mid-recording. The 600-step episode budget is HARD: an earlier
     expert ran 659 steps, timed out every env and read as 0 % success.
     """
-    per_wp = p.per_wp()
+    per_wp, settle = p.per_wp(), p.settle()
     n_emitted = 0
 
     def emit(phase: str, wp: int, q: torch.Tensor, close: bool, k: int) -> Iterator[Step]:
@@ -320,7 +324,7 @@ def action_stream(plans: dict, p: ExpertParams, budget: int | None = None) -> It
         close = name != "reach"
         for t in range(qs.shape[1]):
             yield from emit(name, t, qs[:, t, :], close, per_wp[name])
-        yield from emit(name, -1, qs[:, -1, :], close, SETTLE.get(name, 8))
+        yield from emit(name, -1, qs[:, -1, :], close, settle.get(name, 8))
         if name == "reach":
             yield from emit("close", -1, qs[:, -1, :], True, CLOSE_STEPS)
 

@@ -48,6 +48,11 @@ parser.add_argument("--carry_z", type=float, default=0.095, help="TCP z while ca
 parser.add_argument("--stage_x", type=float, default=0.165, help="x to retract to before traversing [m]")
 parser.add_argument("--insert_x", type=float, default=0.2545, help="target block CENTRE x [m]")
 parser.add_argument("--turn_per_wp", type=int, default=3)
+parser.add_argument("--turn_settle", type=int, default=25,
+                    help="steps held at the end of the traverse before the push. The carried "
+                         "block lags the TCP along the slot axis by up to 8.8 mm after a long "
+                         "traverse (ANGLED_SLOT.md 8a); this is the knob that decides whether "
+                         "that lag is transient swing or a permanent slip in the pads.")
 parser.add_argument("--no_retreat", action="store_true", help="skip backing the gripper out after release")
 parser.add_argument("--trace", type=str, default="", help="phase to trace per-waypoint")
 parser.add_argument("--slot_dx", type=float, default=0.0,
@@ -84,6 +89,7 @@ simulation_app = app_launcher.app
 import gymnasium as gym
 import torch
 
+from isaaclab.utils.math import quat_apply
 from isaaclab_tasks.utils import parse_env_cfg
 
 import reBot_RL.tasks  # noqa: F401
@@ -125,7 +131,8 @@ def main() -> None:
         args_cli.insert_x = insert_x
     params = P.ExpertParams(grasp_h=args_cli.grasp_h, carry_z=args_cli.carry_z,
                             stage_x=args_cli.stage_x, insert_x=insert_x,
-                            turn_per_wp=args_cli.turn_per_wp, cem_iters=args_cli.cem_iters,
+                            turn_per_wp=args_cli.turn_per_wp, turn_settle=args_cli.turn_settle,
+                            cem_iters=args_cli.cem_iters,
                             retreat=not args_cli.no_retreat, seed_file=args_cli.seed_file)
 
     env_cfg = parse_env_cfg(args_cli.task, device=args_cli.device, num_envs=args_cli.num_envs)
@@ -288,7 +295,32 @@ def main() -> None:
                       f"dy {stats['grasp']['dy_mm']:.2f} mm, TCP is "
                       f"{stats['grasp']['dz_mm']:.1f} mm above the block centre")
             elif s.phase in P.PHASES or s.phase in ("release", "retreat"):
-                stats[s.phase] = {"gap_mm": float(gap.mean()), "still_held": int(held.sum()),
+                # Separates the two ways the block can end up short of where the plan put it:
+                #   tcp_err_mm  -- the ARM did not reach its own commanded waypoint
+                #   slip_mm     -- the arm got there and the BLOCK moved inside the pads
+                # Both read as "shallow insert" downstream, and they have opposite fixes.
+                # Measured along the SLOT axis, signed, + meaning ahead of where it should be.
+                cmd = segs[s.phase][-1] if s.phase in segs else None
+                if cmd is not None:
+                    ux = torch.cos(slot_yaw0); uy = torch.sin(slot_yaw0)
+                    tcp_e = (tcp[:, 0] - cmd[:, 0]) * ux + (tcp[:, 1] - cmd[:, 1]) * uy
+                    slip = (bp[:, 0] - tcp[:, 0]) * ux + (bp[:, 1] - tcp[:, 1]) * uy
+                    # Is the block SLIDING along the pad faces or ROTATING about the grip
+                    # point? A block hanging at roll phi displaces its centre by ~33*sin(phi)
+                    # -- 12 mm of "slip" would be 22 deg of roll -- so the two are not
+                    # distinguishable from the displacement alone, and they need different
+                    # fixes. tilt_deg is the angle of the block's own +z off world +z.
+                    up = quat_apply(mdp.object_quat(e, "block"),
+                                    torch.tensor([0.0, 0.0, 1.0], device=dev).expand(n, 3))
+                    extra = {"tcp_err_mm": float(tcp_e.mean()) * 1000,
+                             "slip_mm": float(slip.mean()) * 1000,
+                             "tilt_deg": float(torch.rad2deg(
+                                 torch.arccos(up[:, 2].clamp(-1, 1))).mean()),
+                             "blk_dz_mm": float((bp[:, 2] - tcp[:, 2]).mean()) * 1000}
+                else:
+                    extra = {}
+                stats[s.phase] = {**extra,
+                                  "gap_mm": float(gap.mean()), "still_held": int(held.sum()),
                                   "blk_x_mm": float(bp[:, 0].mean()) * 1000,
                                   "blk_y_mm": float(bp[:, 1].mean()) * 1000,
                                   "blk_z_mm": float(bp[:, 2].mean()) * 1000,

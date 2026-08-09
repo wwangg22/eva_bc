@@ -319,11 +319,35 @@ Nothing is out of reach. The block simply arrives late because my trajectory doe
 it to stop swinging. So the answer to Big Will's *"is the task solvable by the arm"* at ±20° is
 **yes** — what fails is the expert's timing.
 
-**A second, purely artificial failure is about to bite.** Steps used grows with the traverse:
-531 → 585 out of a 600-step budget across the range measured so far. The −0.5 and −0.7 cells
-will overflow it, and every env in them will time out *regardless of the physics*. Any rate
-below ~0.7 at large negative θ must therefore be read as a budget artifact until the horizon is
-raised, not as a reachability result.
+**A prediction I made here was wrong, and checking it is what confirmed the mechanism.** Steps
+used grows with the traverse (531 → 585 out of 600), so I expected the −0.5 cell to overflow the
+budget and time out for reasons unrelated to physics. It did not: **594/600**, no timeouts, 0
+resets, and all 128 envs still holding the block at the end of the push. The step count grows
+more slowly than the Euclidean traverse because the turn's waypoint count scales with the
+*azimuth* sweep, not the distance.
+
+So the negative-θ failure is **purely the depth deficit**, and it is monotone in traverse length
+with nothing else contaminating it:
+
+| θ | traverse | depth mean | seated |
+|---:|---:|---:|---:|
+| −0.175 | 143.4 mm | 47.3 mm | 1.000 |
+| −0.350 | 157.0 mm | 42.0 mm | 0.703 |
+| −0.500 | 168.2 mm | **34.2 mm** | **0.250** |
+
+≈ 0.5 mm of depth lost per mm of traverse past ~143 mm.
+
+**…and then the horizon *does* bind, one cell further out.** −0.700 reports 0/128 with all 128
+failures attributed to *yaw* — which would be the classic signature of the wrist running out of
+travel, and is not what happened. It used **603 of 600 steps**: every env timed out, auto-reset,
+and the final measurement was taken on a freshly randomised block. Read the phase trace instead
+and the expert was fine right up to the release — held 128/128, gap 29.95 mm, yaw error
+**0.0036 rad**. The cell is a pure horizon artifact and says nothing about reachability at −40°.
+
+Two lessons, both worth keeping: an end-of-episode metric is meaningless in any env that reset,
+so `resets` and `steps_used` must be read *before* any failure attribution; and my earlier guess
+that the overflow would hit at −0.5 was wrong by one cell, because the turn's waypoint count
+scales with the azimuth sweep rather than the distance.
 
 ### 8a-2. +0.5 rad fails, and NOT for the same reason
 
@@ -352,13 +376,98 @@ the full per-cell log and the failing cells get re-run with `--trace push`.
 Note `plan converged 128/128` at +0.5, so whatever happens is not IK failing to find a
 solution — it is either a clamped solution that still reports converged, or contact.
 
-### 8b. The fix that follows from the diagnosis
+### 8b. The horizon fix — done
 
-1. **Damp the swing before the push.** `SETTLE["turn"]` is 25 steps = 0.50 s = 1.4 pendulum
-   periods. Raise it so the block is actually still when the push begins.
-2. **Raise the episode budget** from 600 steps (12.0 s) so the horizon stops being the binding
-   constraint. It must stay divisible by the 15-step action window — 720 steps (14.4 s) does,
-   600 → 700 would not.
+The episode budget is now **720 steps (14.4 s)**, up from 600. It had become the binding
+constraint at large negative θ (603 steps at −40°, 609 at −51.6°), and 14.4 s rather than 14.0 s
+because the action chunking executes in 15-step windows and 700 is not divisible by 15.
+
+### 8c. "The block is still swinging" — FALSIFIED
+
+The obvious reading of §8a is that the block is mid-swing when the push begins, so holding
+longer at the end of the traverse should fix it. **It does not.** θ = −0.350, n = 128, the only
+variable being the hold at the end of the traverse:
+
+| `turn_settle` | steps used | depth mean | depth p10 | lateral | seated |
+|---:|---:|---:|---:|---:|---:|
+| 25 (default) | 585/720 | 42.0 mm | 35.6 mm | 1.02 mm | 0.703 |
+| 60 | 620/720 | **42.0 mm** | **35.6 mm** | 1.03 mm | 0.688 |
+| 120 | 680/720 | **42.0 mm** | **35.6 mm** | 1.01 mm | 0.703 |
+
+Identical to 0.1 mm across a 5× change in hold time. Nearly two extra seconds of standing still
+recovers **nothing**, which means the block is already at rest at the default hold and the
+deficit is a **static offset established during the traverse**, not residual motion.
+
+*(The first attempt at this probe was worthless and looked meaningful: at 600 steps the 60 and
+120 cells ran 620 and 680 steps, timed out, and reported 0/128 with identical post-reset garbage
+metrics. Same trap as the −0.7 sweep cell. The horizon fix above had to land first.)*
+
+That leaves two static causes, with opposite fixes:
+
+* **the arm never reached its own commanded waypoint** — a clamped IK solution would produce a
+  permanent shortfall that no amount of settling removes;
+* **the block slid inside the pads during the traverse** and friction is holding it there.
+
+**Do not read the IK table's "max pos err" as evidence here.** It shows 0.192 m for the turn at
+θ = −0.35 — and 0.905 m at θ = 0, which scores 100 %. Whatever it measures, it is not the
+tracking error at the end of the phase.
+
+### 8d. ROOT CAUSE: the gripper rolls, and the block is clamped to it
+
+`run_expert` now decomposes the deficit **along the slot axis**: `tcp_err_mm` (arm vs its own
+commanded waypoint) and `slip_mm` (block vs TCP), plus the block's tilt off vertical.
+
+| θ | rate | phase | tcp_err | block vs TCP | **tilt** | block dz | gap |
+|---:|---:|---|---:|---:|---:|---:|---:|
+| 0.000 | 1.000 | spin | −0.13 | −1.23 | 3.33° | −33.13 | 29.95 |
+| | | turn | **−0.10** | +3.01 | 6.38° | −32.91 | 29.95 |
+| −0.500 | 0.250 | spin | −0.25 | +1.49 | 2.47° | −33.14 | 29.95 |
+| | | turn | **−0.12** | **−12.46** | **23.27°** | **−30.63** | 29.95 |
+
+**The arm is exonerated.** `tcp_err` is −0.13 mm at the end of the traverse at *every* angle
+from +0.35 to −0.5. The arm goes exactly where it is told.
+
+**The block rotates; it does not slide.** A block clamped 33 mm below the grip point and pitched
+by φ displaces its centre by 33·sin φ along the push axis and *rises* by 33·(1 − cos φ):
+
+* predicted from 23.27°: **13.0 mm** displacement, **2.6 mm** rise
+* measured: **12.46 mm** displacement, **2.50 mm** rise (−30.63 vs −33.13 nominal)
+
+Two independent quantities, both matching. And the finger gap never moves off 29.95 mm, so the
+pads never lose the block — it is pitched, not slipping.
+
+**It is a static equilibrium, not a dynamic one.** Three separate falsifications:
+
+| hypothesis | test | result |
+|---|---|---|
+| still swinging | hold 25 → 60 → 120 steps | depth 42.0 / 42.0 / 42.0 mm — **no effect** |
+| inertial slip in the pads | traverse 67 % slower (`turn_per_wp` 3 → 5) | 32/128 both, depth 34.2 / 34.3 — **no effect** |
+| arm shortfall | `tcp_err` along the slot axis | −0.13 mm at every θ — **not the arm** |
+
+The per-phase numbers at `turn_per_wp` 3 and 5 are identical to two decimals (−12.46, 23.27°,
+−30.63) despite the trajectory taking 594 vs 706 steps. Nothing about the *motion* matters. The
+gripper simply ends up rolled, and it is rolled because **the expert's IK leaves rotation about
+the finger axis free**:
+
+> *"This is a 5-DOF task, not 6: position plus a direction. Pinning the full orientation was
+> measured to over-constrain the arm… The leftover roll about the finger axis is genuinely free
+> for this task, so it is steered by a nullspace bias toward `q_bias`."* — `expert/ik.py`
+
+That was a sound decision on the axis-aligned task, where the free DOF lands at 6.4° and the
+block stays near-upright. The commanded finger axis is horizontal by construction
+(`[−sin θ, cos θ, 0]`), so the free DOF is precisely a **pitch of the block along the push
+direction** — and at −28.6° the minimal-change solution lands at 23°, which pitches the block far
+enough that it can no longer enter the channel squarely.
+
+Note `solve_path` *already* biases each waypoint's nullspace toward the previous solution, so
+the obvious fix — "keep the roll continuous along the path" — is in place and insufficient: the
+roll drifts from 2.47° to 23.27° across the traverse anyway.
+
+**Not yet established:** whether a level-gripper solution *exists* at those poses. If it does,
+the fix is a soft roll objective in the IK (a hard constraint is what was measured to
+over-constrain). If it does not, the arm genuinely cannot carry a square block to a slot at that
+angle and the task range is a hardware fact. **That is the next measurement, and it is the one
+that decides whether θmax can be lifted.**
 
 **Rejected: rotating the block spawn region with the slot.** It equalises the traverse, and the
 plan named it as the contingency, but it would make the block's spawn position a function of θ —
