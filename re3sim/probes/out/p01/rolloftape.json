@@ -1,0 +1,61 @@
+{
+  "object": "rolloftape",
+  "shape": "cylinder",
+  "height_m": 0.024,
+  "across_m": 0.091,
+  "along_m": 0.091,
+  "mass_kg": 0.042,
+  "x": 0.245,
+  "pos_tol": 0.0015,
+  "o_align_min": 0.97,
+  "grid": [
+    {
+      "grip_z": 0.008,
+      "pos_err_m": 0.00043606740655377507,
+      "o_align": 0.7246707677841187,
+      "low_z_m": 0.0022325273603200912,
+      "gated": false,
+      "gap_m": 0.09107790142297745,
+      "enclose_rate": 1.0,
+      "rose_rate": 1.0,
+      "near_rate": 1.0,
+      "held_rate": 1.0
+    },
+    {
+      "grip_z": 0.012,
+      "pos_err_m": 0.0008352521690540016,
+      "o_align": 0.7989763617515564,
+      "low_z_m": 0.0037892144173383713,
+      "gated": false,
+      "gap_m": 0.09109976142644882,
+      "enclose_rate": 1.0,
+      "rose_rate": 1.0,
+      "near_rate": 1.0,
+      "held_rate": 1.0
+    },
+    {
+      "grip_z": 0.016,
+      "pos_err_m": 0.0009377291426062584,
+      "o_align": 0.818401038646698,
+      "low_z_m": 0.006791472434997559,
+      "gated": false,
+      "gap_m": 0.09138057380914688,
+      "enclose_rate": 1.0,
+      "rose_rate": 1.0,
+      "near_rate": 1.0,
+      "held_rate": 1.0
+    },
+    {
+      "grip_z": 0.02,
+      "pos_err_m": 0.0008997587719932199,
+      "o_align": 0.8237788081169128,
+      "low_z_m": 0.011872522532939911,
+      "gated": false,
+      "gap_m": 0.09160376340150833,
+      "enclose_rate": 1.0,
+      "rose_rate": 1.0,
+      "near_rate": 1.0,
+      "held_rate": 1.0
+    }
+  ]
+}

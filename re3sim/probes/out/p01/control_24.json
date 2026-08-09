@@ -1,0 +1,61 @@
+{
+  "object": "control_24",
+  "shape": "cuboid",
+  "height_m": 0.024,
+  "across_m": 0.04,
+  "along_m": 0.04,
+  "mass_kg": 0.05,
+  "x": 0.245,
+  "pos_tol": 0.0015,
+  "o_align_min": 0.97,
+  "grid": [
+    {
+      "grip_z": 0.008,
+      "pos_err_m": 0.0008117881370708346,
+      "o_align": 0.6622509360313416,
+      "low_z_m": 0.005689965095371008,
+      "gated": false,
+      "gap_m": -0.0012406755704432726,
+      "enclose_rate": 0.0,
+      "rose_rate": 0.046875,
+      "near_rate": 0.046875,
+      "held_rate": 0.0
+    },
+    {
+      "grip_z": 0.012,
+      "pos_err_m": 0.0006047236383892596,
+      "o_align": 0.7274042367935181,
+      "low_z_m": 0.00514264777302742,
+      "gated": false,
+      "gap_m": -0.001189286238513887,
+      "enclose_rate": 0.0703125,
+      "rose_rate": 0.1875,
+      "near_rate": 0.1875,
+      "held_rate": 0.0703125
+    },
+    {
+      "grip_z": 0.016,
+      "pos_err_m": 0.0009899534052237868,
+      "o_align": 0.8241692185401917,
+      "low_z_m": 0.005791543051600456,
+      "gated": false,
+      "gap_m": 0.040172554552555084,
+      "enclose_rate": 0.8671875,
+      "rose_rate": 0.8671875,
+      "near_rate": 0.8671875,
+      "held_rate": 0.8671875
+    },
+    {
+      "grip_z": 0.02,
+      "pos_err_m": 0.0007864760118536651,
+      "o_align": 0.7572508454322815,
+      "low_z_m": 0.013869363814592361,
+      "gated": false,
+      "gap_m": 0.02400820329785347,
+      "enclose_rate": 0.4765625,
+      "rose_rate": 0.53125,
+      "near_rate": 0.53125,
+      "held_rate": 0.4765625
+    }
+  ]
+}
