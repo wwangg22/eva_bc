@@ -7,7 +7,7 @@ The concern
 -- the recorded action is an essentially deterministic, smooth function of the observation. That
 is good news for fitting, but it exposes a specific degenerate solution. Every demo follows the
 same phase schedule with the same step counts (cross-demo nearest neighbours land a median of
-1-2 timesteps apart), and observation dims 27:34 carry `last_action`. A policy can therefore
+1-2 timesteps apart), and observation dims 29:36 carry `last_action`. A policy can therefore
 integrate its own previous output and replay a trajectory indexed by *time* and by the *initial*
 block pose, never looking at where the block is now. On the demo distribution that strategy
 scores very well. It is also not a manipulation policy.

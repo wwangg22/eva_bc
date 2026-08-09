@@ -140,7 +140,7 @@ def attach_cameras(env_cfg, width: int | None = None, height: int | None = None,
 
 def audit_no_privileged(sample: dict) -> None:
     """Fail loudly if anything privileged reached a student sample (VISION_PLAN section 0)."""
-    banned = ("block_pose", "slot_frame", "obs34", "insertion_depth", "lateral_error",
+    banned = ("block_pose", "slot_frame", "obs_teacher", "insertion_depth", "lateral_error",
               "is_inserted", "object_pose")
     for key in sample:
         low = key.lower()

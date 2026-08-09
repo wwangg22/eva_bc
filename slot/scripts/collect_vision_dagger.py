@@ -18,7 +18,7 @@ Shard (matches slot_act/dataset_vision.py's DAgger format, auto-detected via `la
     wrist_rgb / workspace_rgb  (40, 90, 160, 3) uint8   at the boundary states
     proprio                    (40, 23) float32
     label_chunks               (40, 50, 7) float32      CHAMPION actions, unnormalised
-    obs_teacher                      (40, 34) float32         teacher-only, never read by the student
+    obs_teacher                (40, 36) float32         teacher-only, never read by the student
     success                    bool                     the STUDENT's outcome
 
 **Built-in audit.** The student's driving success is printed and must land near its clean
@@ -75,7 +75,7 @@ from slot_act.normalize import MeanStdNormalizer  # noqa: E402
 
 @torch.no_grad()
 def champion_labels(policy, normalizer, obs_teacher: torch.Tensor, batch: int) -> torch.Tensor:
-    """(T, 34) privileged states -> (T, chunk, 7) champion action chunks, UNNORMALISED.
+    """(T, 36) privileged states -> (T, chunk, 7) champion action chunks, UNNORMALISED.
 
     Pure function of the observation and the flow's x0 draw -- no controller queue state is
     involved, which is what makes post-hoc labelling exactly equivalent to labelling live.

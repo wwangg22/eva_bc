@@ -52,7 +52,7 @@ def main() -> int:
           "eva_bc/act" not in str(pkg).replace("\\", "/"), str(pkg))
 
     # --- observation layout arithmetic
-    check("OBS_DIM == 34", D.OBS_DIM == 34, f"got {D.OBS_DIM}")
+    check("OBS_DIM == 36", D.OBS_DIM == 36, f"got {D.OBS_DIM}")
     check("STATE_SLICE + ENV_STATE_SLICE tile OBS_DIM exactly",
           D.STATE_SLICE.start == 0 and D.STATE_SLICE.stop == D.ENV_STATE_SLICE.start
           and D.ENV_STATE_SLICE.stop == D.OBS_DIM,

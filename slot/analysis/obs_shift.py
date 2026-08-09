@@ -27,13 +27,13 @@ import argparse
 import json
 from pathlib import Path
 
-# 34-D layout, from precision_slot_env_cfg.py ObservationsCfg.PolicyCfg
+# 36-D layout, from precision_slot_env_cfg.py ObservationsCfg.PolicyCfg
 GROUPS = [
     ("joint_pos_rel", 0, 8),
     ("joint_vel_rel", 8, 16),
     ("block_pose", 16, 23),
-    ("slot_frame", 23, 27),
-    ("last_action", 27, 34),
+    ("slot_frame", 23, 29),
+    ("last_action", 29, 36),
 ]
 EXP_ABS_Z = 0.7979  # E|z| for a standard normal -- what an in-distribution channel looks like
 

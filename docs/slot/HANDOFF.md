@@ -1896,7 +1896,64 @@ Full detail in `docs/slot/EXP_STEER.md` (867 lines). The short version:
 
 **READ `docs/slot/ANGLED_SLOT_PLAN.md` FIRST. Nothing has been implemented yet.**
 
-## S9-STATE. Nothing running. Nothing deleted. Plan written, awaiting execution.
+## S9-DONE. ✅ THE ANGLED ENV IS IMPLEMENTED AND VERIFIED (2026-08-09)
+
+*Supersedes the S9-STATE block below, which was written before any code. Read
+**`ANGLED_SLOT.md`** for the full record; this is the handoff summary.*
+
+**Gates A and C pass. Gate B (θmax) is the only thing running. Nothing has been deleted.**
+
+| gate | what it proves | result |
+|---|---|---|
+| **A** | the geometry and the predicate agree | **14/14 at n = 256** |
+| **C** | θ ≡ 0 reproduces the old task | **expert 128/128 = 100.0 %** |
+| siblings | the shared `challenge/mdp` edit broke nothing | PreGrasp / Clutter / Drawer all build, reset, step |
+| **B** | the arm can physically do it; sets θmax | ⏳ running, 11 cells |
+
+**The single most important consequence: the privileged observation is 36-D, not 34-D.** Every
+checkpoint and every data pool from before today is incompatible. `slot_frame` went 4-D → 6-D:
+signed lateral and yaw, plus `(cos θ, sin θ)`. Without that last pair the *teacher* cannot see
+where the slot points either, and the task would be impossible rather than hard. The student
+contract is still 23-D — `[0:16] ⊕ [29:36]` — by construction.
+
+**`DEFAULT_SLOT_YAW_RANGE = ±0.50 rad` is a GUESS**, labelled as one in the source. Gate B sets
+it. If it lands under ~15° the task is arm-limited rather than perception-limited and the block
+spawn region should rotate with the slot instead.
+
+**Three corrections to the plan, all recorded in `ANGLED_SLOT.md` §2:**
+1. The plan's depth formula had the **wrong sign** (`along − D/2`, should be `+`). Taken
+   literally it puts the threshold past the back stop and every episode scores zero. Caught by
+   the θ = 0 gate.
+2. "Bit-for-bit at θ = 0" is not achievable — `(x−cx)+D/2` and `x−(cx−D/2)` are different
+   floats. Measured deviation **1.49e-8 m**, one float32 ULP. The other two predicates *are*
+   bit-exact and `is_inserted` agrees exactly 256/256.
+3. The observation had to grow, which the plan did not anticipate.
+
+**The trap that would have silently corrupted every demo.** `run_expert.py` and
+`collect_demos.py` reset, read the block pose, plan, then reset **again** and teleport the block
+back. That second reset re-randomises the slot yaw. Unrestored, every episode runs a plan solved
+for one angle against a fixture at another — and it looks like an ordinary precision failure,
+not a bug. Both call sites now restore θ alongside the block pose. **Any new script that plans
+before a reset must do the same.**
+
+**Gotcha #40: axis-aligned and angled vision shards are structurally identical.** Same keys,
+same widths — `proprio` is 23-D in both, because the student contract did not change. Only the
+images differ. Concatenating them silently produces a pool that is half a different task.
+`slot_yaw_range` is now part of the per-shard collection contract that `dataset_vision` already
+asserts is uniform.
+
+**Gotcha #41: five camera viewports at 4× supersampling OOM an 11 GB card.** `Out of GPU memory
+allocating resource 'prevTargetMotion'` from the RTX layer, then a torch OOM. The stills script
+runs one camera at 2×.
+
+**Deletion decision from Big Will:** *"for small checkpoints you can keep, i am more worried
+about the data folders with many gbs."* So: keep the champion + vision v1 checkpoints and the
+eval JSONs; delete `slot/data/vision_bc/` (13 GB), `slot/data/vision_dagger/` (0.9 GB), the
+state demo pools, and the six `runs/bc_arm*` trees. **Not done yet — gate B first.**
+
+---
+
+## S9-STATE. *(historical — written before any code; see S9-DONE above)*
 
 Big Will's instruction, verbatim: *"we need to modify the env so the task is harder (modify the
 exact env, dont make a new one). We are now only having the policy really move the wedge into a

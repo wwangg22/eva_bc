@@ -19,7 +19,7 @@ import torch
 
 from slot_act.dataset import ACTION_DIM, OBS_DIM
 
-# obs[27:34] is mdp.last_action -- the command the harness itself issued last step. It is
+# obs[29:36] is mdp.last_action -- the command the harness itself issued last step. It is
 # internal bookkeeping, not a measurement, so a *sensor*-noise sweep must not touch it.
 # (Under --action-noise it does carry the corrupted command: last_action returns
 # env.action_manager.action, i.e. the noisy action actually passed to step().)

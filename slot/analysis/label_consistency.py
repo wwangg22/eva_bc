@@ -61,7 +61,7 @@ ARM_ACTION_SCALE = 0.5
 
 
 def load_frames(paths: list[Path], samples: int, rng: np.random.Generator, successful_only=True):
-    """-> obs (N, 34), act (N, 7), demo_id (N,), t (N,)."""
+    """-> obs (N, 36), act (N, 7), demo_id (N,), t (N,)."""
     obs_l, act_l, did_l, t_l = [], [], [], []
     d = 0
     for p in paths:
