@@ -1888,3 +1888,114 @@ Full detail in `docs/slot/EXP_STEER.md` (867 lines). The short version:
 * A contextual bandit over latents — oracle headroom is +6.2 pts and did not grow (§13b).
 * Screening latents offline by summary statistics — seeds 1 (0.771) and 3 (0.031) are
   indistinguishable on norm, DC, AC spread and gripper DC (§13c).
+
+---
+---
+
+# ▶▶▶ SESSION 9 (2026-08-09) — THE TASK IS CHANGING: ANGLED SLOT
+
+**READ `docs/slot/ANGLED_SLOT_PLAN.md` FIRST. Nothing has been implemented yet.**
+
+## S9-STATE. Nothing running. Nothing deleted. Plan written, awaiting execution.
+
+Big Will's instruction, verbatim: *"we need to modify the env so the task is harder (modify the
+exact env, dont make a new one). We are now only having the policy really move the wedge into a
+place that is orthogonal to the table. What if this wedge was angled arbitrarily? this would be a
+lot harder. Can we do this? we would need NEW expert, new demos, etc. After implementing this new
+env and VERIFYING it works, please delete the old data collection etc, but not the markdown
+files."* Followed by: *"Yes you can edit eva_rl, just make sure you only touch your assigned task
+(precision slot), and not any other task."*
+
+### S9-a. THE RULE THAT CHANGED
+
+**`eva_rl` may now be edited — precision-slot only.** Eight sessions of work routed around
+"never edit eva_rl" (post-parse patching for `--slot-dx`, `--arm-jitter`, the cameras). That
+constraint is lifted for this task and this task alone.
+
+**Measured blast radius** (`ANGLED_SLOT_PLAN.md` §0b) — `challenge/mdp/` is shared by **four**
+tasks (clutter, drawer, pregrasp, precision_slot):
+
+* **Safe to edit** (0 sibling users): `SLOT_*` constants, `SUCCESS_DEPTH`, `SUCCESS_YAW`,
+  `slot_clearance_to_halfwidth`, `insertion_depth`, `lateral_error`, `yaw_error`, `is_inserted`,
+  `slot_frame`.
+* **DO NOT TOUCH**: `BLOCK_HALF` (2 siblings), `block_lifted` / `block_dropped` /
+  `block_pose_in_root` (3 siblings each). `object_pos_local` / `object_quat` / `yaw_of` are
+  read-only — call them, never change them.
+* `slot_yaw` must **default to zeros** so the siblings see byte-identical behaviour.
+* The three sibling env cfgs are not touched at all, and a build+step smoke test on each is part
+  of "done".
+
+### S9-b. WHAT THE CHANGE IS
+
+A **per-episode slot yaw θ** about the table normal. The slot keeps its footprint but points in a
+random direction; the block must be carried in along that direction and squared to it. Three
+predicates in `mdp/common.py` currently hard-code the +x axis and must become slot-frame
+(projection onto `[cos θ, sin θ]` and its perpendicular, with a **wrapped** yaw difference — a
+naive subtraction breaks at ±π and would score an aligned block as maximally misaligned).
+
+The fixture is four **static** boxes with no writable root pose; it becomes **one kinematic rigid
+body** so a single pose write rotates the whole thing and the parts cannot drift apart.
+
+Pitch (tilting out of the table plane) is **deferred** — the arm has 0.00 % top-down capability
+below z = 0.19 m, so a pitched slot is likely unreachable. Yaw first.
+
+**Why this is the right difficulty increase:** the largest caveat on every vision number is that
+*the slot never moves*, which is why the **blind** control still scored 0.254 by aiming at the
+mean spawn. Randomising θ should collapse blind toward 0.0 and make the visual number a measure
+of perception rather than of fixed geometry.
+
+### S9-c. GATES — VERIFY BEFORE DELETING ANYTHING
+
+* **A** — θ = 0 reproduces today's predicates **bit-for-bit**; analytic in/out-of-slot poses score
+  correctly at random θ; **rendered stills at θ = 0, ±20°, ±40° for Big Will** (the predicate
+  agreeing with itself proves nothing if the geometry did not move).
+* **B** — expert θ sweep (0, ±10, ±20, ±30, ±40°, 128 eps each). **θmax = the largest angle
+  holding ≥ 0.95.** This is a feasibility gate: under ~15° means the task is arm-limited, not
+  perception-limited, and the block spawn region may need to rotate with the slot.
+* **C** — regression at θ ≡ 0: old expert ≈1.00, old champion ≈0.979.
+
+### S9-d. DELETION — one decision needed from Big Will
+
+Manifest in `ANGLED_SLOT_PLAN.md` §4. Deletes ~21 GB of demos, shards and runs; keeps every
+`docs/slot/*.md`, all scripts, analysis, `slot_act/`, `expert/`.
+
+**The open question:** the manifest destroys the champion checkpoint and the 116 eval JSONs that
+every number in the markdown cites, leaving the docs making claims nothing on disk can
+substantiate. **Recommended: keep `slot/archive_axis_aligned/` with the champion ckpt, the vision
+v1 ckpt and the eval JSONs (~150 MB); delete the rest.** Not yet actioned.
+
+### S9-e. WHAT TO REUSE AND WHAT NOT TO REPEAT
+
+**Reuse:** flow-BC chunk 50 / execute 15; DART noise **free-space only** (inside the channel a
+noised command levers the block out of the pads); the **blind control run before the visual
+number**; two seeds before any headline; later-cohort scoring; the render-contract assert;
+supersample 4 + AA off.
+
+**Do not repeat:** **DAgger with a BC-clone teacher** (−31.3 pts — it has no recovery behaviour to
+teach in the states the student reaches); **x0-steering as parameterised** (its action space is a
+uniform joint-bias term; every broadcast latent scored 0.000/96); **latent search** (oracle
+headroom +6.2 pts and it did not grow with the pool).
+
+**Untested lever, now more attractive:** policy **resolution**. 160×90 was EXP08's basket-drop
+pick; a 1.5 mm clearance at an arbitrary angle plausibly needs more pixels, and v1's failures were
+already precision-shaped at 0.52 mm.
+
+### S9-f. ALL PRIOR NUMBERS ARE NOW "AXIS-ALIGNED SLOT" NUMBERS
+
+State champion 0.979 · robustness cliff at the clearance · action-noise 0.146 · constant-latent
+0.823 · vision blind 0.254 / v1 **0.804** / v2 DAgger 0.491. **None of these describe the new
+env.** The markdown stays per Big Will's instruction, but every headline needs "measured on the
+axis-aligned slot" attached before it is quoted again.
+
+### S9-g. ORDER OF WORK
+
+1. slot-frame predicates + per-env `slot_yaw` (default 0) → **Gate A.1**
+2. kinematic fixture + reset event → **Gate A.2/A.3** (stills for Big Will)
+3. expert rewrite → **Gate B** θ sweep → sets θmax
+4. **Gate C** regression at θ ≡ 0 + sibling-task smoke test
+5. deletion, after Big Will's call on the archive
+6. re-collect demos → flow-BC → state champion on the angled task
+7. vision: cameras unchanged, **blind control first**, then the visual policy
+
+**Subject to change** — Gate B may force a smaller θmax or reveal that the block spawn region has
+to rotate with the slot to stay reachable.
