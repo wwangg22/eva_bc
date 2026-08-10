@@ -37,7 +37,11 @@ from isaaclab.app import AppLauncher
 _ROOT = "/home/eva/Desktop/isaacLab/eva_bc/re3sim"
 
 parser = argparse.ArgumentParser(description="Batched sim eval of the workstation vision student.")
-parser.add_argument("--task", type=str, default="Rebot-Workstation-PickPlace1-Play-v0")
+parser.add_argument("--task", type=str,
+                    default="Rebot-Workstation-PickPlace1-Vision-Play-v0",
+                    help="A -Vision- id: the cameras and the per-env gaussian desk "
+                         "come from the SCENE, so this cannot disagree with what the "
+                         "demos were recorded through.")
 parser.add_argument("--num_envs", type=int, default=32,
                     help="Rendering is pixel-bound; 64 x two 160x120 cameras is fine, "
                          "64 x 640x480 renders blank.")
@@ -70,16 +74,10 @@ import gymnasium as gym  # noqa: E402
 import numpy as np  # noqa: E402
 import torch  # noqa: E402
 
-import isaaclab.sim as sim_utils  # noqa: E402
-from isaaclab.sensors import CameraCfg  # noqa: E402
 from isaaclab_tasks.utils import parse_env_cfg  # noqa: E402
 
 import reBot_RL.tasks  # noqa: F401,E402
 from reBot_RL.tasks.manager_based.re3sim import mdp  # noqa: E402
-from reBot_RL.tasks.manager_based.lift.camera_cfg import WRIST_CAM_CFG  # noqa: E402
-from reBot_RL.tasks.manager_based.re3sim.workstation_env_cfg import (  # noqa: E402
-    STATION_CAM_EYE, STATION_CAM_TARGET,
-)
 
 _HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(_HERE.parents[1]))          # eva_bc, for the vendored act/ package
@@ -103,14 +101,17 @@ def main() -> None:
         args_cli.ckpt, device, args_cli.n_action_steps)
     h, w = int(cam_shape[1]), int(cam_shape[2])
 
+    # The cameras come from the scene cfg, not from here. They used to be re-declared by every
+    # tool that wanted a picture, and the copies drifted; the `-Vision-` task ids own the mount,
+    # the lens, the aim-after-reset event and the per-env gaussian desk.
     env_cfg = parse_env_cfg(args_cli.task, device=str(device), num_envs=args_cli.num_envs)
-    env_cfg.scene.wrist_cam = WRIST_CAM_CFG.replace(
-        width=w, height=h, data_types=["rgb"], update_period=0.0)
-    env_cfg.scene.station_cam = CameraCfg(
-        prim_path="{ENV_REGEX_NS}/StationCam", update_period=0.0, width=w, height=h,
-        data_types=["rgb"],
-        spawn=sim_utils.PinholeCameraCfg(focal_length=17.0, horizontal_aperture=20.955,
-                                         clipping_range=(0.02, 20.0)))
+    for nm in ("wrist_cam", "station_cam"):
+        cam_cfg = getattr(env_cfg.scene, nm, None)
+        if cam_cfg is None:
+            raise SystemExit(f"{args_cli.task} has no {nm}; use a -Vision- task id")
+        # The student's position embeddings are tied to the resolution it was trained at, so
+        # the checkpoint decides, not the env default.
+        cam_cfg.width, cam_cfg.height = w, h
     env = gym.make(args_cli.task, cfg=env_cfg)
     e = env.unwrapped
     n, dev = e.num_envs, e.device
@@ -118,23 +119,9 @@ def main() -> None:
     ctrl = VisionController(policy, normalizer, config, device)
     horizon = args_cli.horizon or int(e.max_episode_length)
 
-    if n > 1 and os.environ.get("RE3SIM_SPLATS_PER_ENV") != "1":
-        raise SystemExit("eval at num_envs > 1 needs RE3SIM_SPLATS_PER_ENV=1, or every env "
-                         "but one renders a bare floor -- which is not the distribution the "
-                         "student was trained on")
-
-    def aim_station():
-        # After every reset: `reset_scene_to_default` restores prim poses, and one pose PER
-        # camera -- `set_world_poses_from_view` does not broadcast.
-        org = e.scene.env_origins
-        cams["workspace"].set_world_poses_from_view(
-            org + torch.tensor(STATION_CAM_EYE, device=dev),
-            org + torch.tensor(STATION_CAM_TARGET, device=dev))
-
     rows, agg = [], {}
     for s in [int(x) for x in args_cli.seeds.split(",")]:
         env.reset(seed=s)
-        aim_station()
         # The gaussian desk is not resident for the first ~100 rendered steps; a policy
         # scored on those frames is scored on a scene with no desk in it.
         zero = torch.zeros((n, 7), device=dev)
@@ -142,7 +129,6 @@ def main() -> None:
             env.step(zero)
             e.sim.render()
         env.reset(seed=s)
-        aim_station()
         ctrl.reset()
 
         tnames = list(e.termination_manager.active_terms)
@@ -171,7 +157,6 @@ def main() -> None:
                 for k, nm in enumerate(tnames):
                     why[:, k] |= newly & e.termination_manager.get_term(nm)
                 ctrl.reset(newly.nonzero(as_tuple=False).squeeze(-1))
-                aim_station()
 
         idx = {nm: k for k, nm in enumerate(tnames)}
         drop = why[:, idx["target_dropped"]] if "target_dropped" in idx \

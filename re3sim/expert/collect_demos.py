@@ -375,7 +375,14 @@ def main() -> None:
                 imgs[k] = cam.data.output["rgb"][..., :3].to(torch.uint8).cpu()
             obs_c, act_c = last_obs.cpu(), a.cpu()
             for i in range(e.num_envs):
-                row = (imgs["wrist"][i], imgs["station"][i], obs_c[i], act_c[i])
+                # ⭐ CLONE. `imgs[k][i]` is a VIEW into that step's whole (n, H, W, 3) tensor,
+                # so keeping one env's row pins all n envs' frames for that step -- and since
+                # some env is unmasked at nearly every step, that retains the full frame
+                # buffer for the entire execution, padding and retries included, instead of
+                # only the steps that survive into shards. Measured: OOM-killed at 60 GB of
+                # anon RSS on a 128-env batch, against the ~12 GB the kept steps actually need.
+                row = (imgs["wrist"][i].clone(), imgs["station"][i].clone(),
+                       obs_c[i].clone(), act_c[i].clone())
                 if bool(mask[i]):
                     if _ring[i]:
                         for r in _ring[i]:
@@ -429,8 +436,11 @@ def main() -> None:
                 }, os.path.join(args_cli.shards, f"ep_{batch_seed}_{i:03d}.pt"))
                 n_w += 1
                 n_t += obs.shape[0]
+            held = sum(len(k["wrist"]) for k in _keep) * 2 * int(np.prod(
+                _keep[0]["wrist"][0].shape)) if any(k["wrist"] for k in _keep) else 0
             print(f"[shards] wrote {n_w} episodes, {n_t} steps "
-                  f"({n_t / max(1, n_w):.0f}/episode) -> {args_cli.shards}", flush=True)
+                  f"({n_t / max(1, n_w):.0f}/episode), buffer held {held / 1e9:.1f} GB "
+                  f"-> {args_cli.shards}", flush=True)
             shard_clear()
 
     # ------------------------------------------------------------------ DAgger takeover

@@ -56,10 +56,11 @@ _EVA_BC = Path(__file__).resolve().parents[2]      # .../eva_bc
 sys.path.insert(0, str(_EVA_BC))
 
 from act.configuration_act import ACTConfig, FeatureType, PolicyFeature  # noqa: E402
-from act.dataset_vision import (  # noqa: E402
-    ACTION_DIM,
-    STUDENT_STATE_DIM,
-    VisionShardDataset,
+sys.path.insert(0, str(Path(__file__).resolve().parent))   # for the local dataset filter
+
+from act.dataset_vision import ACTION_DIM, STUDENT_STATE_DIM  # noqa: E402
+from dataset_vision import (  # noqa: E402
+    WorkstationVisionDataset,
     compute_stats_vision,
 )
 from act.modeling_flow_vision import FlowMatchingVisionPolicy  # noqa: E402
@@ -131,6 +132,9 @@ def main() -> None:
     p.add_argument("--seed", type=int, default=None)
     p.add_argument("--include-failures", action="store_true",
                    help="train on failed episodes too (default: successes only)")
+    p.add_argument("--keep-black", action="store_true",
+                   help="keep samples whose camera frame is black (default: drop them -- see "
+                        "re3sim/act/dataset_vision.py)")
     args = p.parse_args()
 
     if args.seed is not None:
@@ -142,8 +146,9 @@ def main() -> None:
     out_dir.mkdir(parents=True, exist_ok=True)
     device = torch.device(args.device)
 
-    dataset = VisionShardDataset(args.data, chunk_size=args.chunk_size,
-                                 success_only=not args.include_failures)
+    dataset = WorkstationVisionDataset(args.data, chunk_size=args.chunk_size,
+                                       success_only=not args.include_failures,
+                                       drop_black=not args.keep_black)
     # Take the image shape FROM the data. Hardcoding it means a dataset collected at another
     # resolution trains a model whose position embeddings do not match the eval renderer, and
     # the only symptom is a policy that scores zero.
