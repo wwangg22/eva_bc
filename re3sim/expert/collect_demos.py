@@ -62,6 +62,42 @@ parser.add_argument("--record-keep-pad", action="store_true",
 parser.add_argument("--record-warmup", type=int, default=180,
                     help="Throwaway renders after aiming the camera, before the first frame "
                          "is kept. The gaussian desk needs ~100 to become resident.")
+parser.add_argument("--shards", type=str, default=None, metavar="DIR",
+                    help="Write per-episode VISION SHARDS (one `ep_*.pt` per successful env) "
+                         "for the no-privileged-info student: wrist_rgb / workspace_rgb uint8, "
+                         "proprio (23), obs41 (teacher-only), actions. Requires "
+                         "RE3SIM_SPLATS_PER_ENV=1 -- without it only one env has the gaussian "
+                         "desk and the rest render the arm floating on the ground plane.")
+parser.add_argument("--dagger-ckpt", type=str, default=None, metavar="CKPT",
+                    help="DAgger. Let this VISION student drive from the reset pose for a "
+                         "random number of steps, then run the expert from wherever it "
+                         "ended up. The shards are then expert labels on the STUDENT's state "
+                         "distribution, which is the whole point of DAgger -- BC only ever "
+                         "sees states the expert itself visits, so it has no idea what to do "
+                         "once it has drifted. Requires --shards.")
+parser.add_argument("--dagger-min", type=int, default=60)
+parser.add_argument("--dagger-max", type=int, default=300,
+                    help="Per-env takeover step, drawn uniformly in [min, max]. Capped well "
+                         "short of a full episode: past the grasp the student is usually "
+                         "holding the cube, and the expert's plan begins by reaching for a "
+                         "cube on the desk.")
+parser.add_argument("--shard-width", type=int, default=160)
+parser.add_argument("--shard-height", type=int, default=120,
+                    help="4:3 on purpose. The wrist camera carries the D405's MEASURED "
+                         "intrinsics, which are calibrated at 640x480; rendering it 16:9 "
+                         "changes the vertical FOV and silently decalibrates the mount.")
+parser.add_argument("--pad-keep", type=int, default=8,
+                    help="How many steps to keep at the END of each run of batch-padding / "
+                         "idle steps. Those runs are not demonstration data (see --record-keep-pad) "
+                         "but dropping ALL of them cuts the stream while the arm is still "
+                         "converging on the segment's last waypoint, so the next kept frame "
+                         "jumps. Keeping the tail preserves the settled pose at the seam.")
+parser.add_argument("--shard-warmup", type=int, default=120,
+                    help="Throwaway env steps before shard recording starts, so the gaussian "
+                         "desk is resident. Same reason as --record-warmup.")
+parser.add_argument("--shard-include-failures", action="store_true",
+                    help="Also write shards for episodes the expert failed. Off: the BC pool "
+                         "is success-filtered anyway and failures are pure disk.")
 parser.add_argument("--record-cams", choices=("both", "wrist", "station"), default="both",
                     help="Which cameras to mount. `Camera` REQUIRES one prim per env "
                          "(it raises if `_view.count != num_envs`), so N envs always means N "
@@ -73,9 +109,27 @@ parser.add_argument("--record-cams", choices=("both", "wrist", "station"), defau
                          "seed, so two single-view runs at the same seed are frame-aligned.")
 AppLauncher.add_app_launcher_args(parser)
 args_cli = parser.parse_args()
-if args_cli.record_video:
+if args_cli.record_video and args_cli.shards:
+    parser.error("--record-video and --shards want different camera resolutions; run them "
+                 "separately")
+#: True when cameras have to be mounted at all. Filming and shard recording share the mount,
+#: the splat placement and the warm-up; only the resolution and what is kept differ.
+_CAMS = bool(args_cli.record_video) or bool(args_cli.shards)
+if _CAMS:
     # must be set BEFORE AppLauncher starts Kit, or the render products never exist
     args_cli.enable_cameras = True
+if args_cli.dagger_ckpt and not args_cli.shards:
+    parser.error("--dagger-ckpt only makes sense with --shards: the point is to write vision "
+                 "shards labelled on the student's own state distribution")
+if args_cli.shards and args_cli.num_envs > 1:
+    import os as _os
+    if _os.environ.get("RE3SIM_SPLATS_PER_ENV") != "1":
+        # Refuse rather than warn. The failure is invisible downstream: every env but one
+        # renders the arm and the cube on the bare ground plane, and a dataset of mostly
+        # desk-less images trains a policy that has never seen the desk it will be deployed
+        # on. Nothing in training or eval would report it -- the images look like images.
+        parser.error("--shards at num_envs > 1 requires RE3SIM_SPLATS_PER_ENV=1, or only one "
+                     "env gets the gaussian desk and the rest render a bare floor")
 
 app_launcher = AppLauncher(args_cli)
 simulation_app = app_launcher.app
@@ -96,12 +150,14 @@ from isaaclab_tasks.utils import parse_env_cfg
 import reBot_RL.tasks  # noqa: F401
 from reBot_RL.tasks.manager_based.re3sim import mdp
 
-if args_cli.record_video:
+if _CAMS:
     import imageio.v2 as imageio  # noqa: E402
     import isaaclab.sim as sim_utils  # noqa: E402
     from isaaclab.sensors import CameraCfg  # noqa: E402
-    # The user's validated wrist mount: D405 at 84 deg HFOV, `tilt_x_m30`, optical axis 1.8
-    # deg off the TCP. Re-deriving one here would film a camera that is not on the rig.
+    # The user's validated wrist mount, imported rather than re-derived so this films the
+    # camera that is actually on the rig: as of eva_rl a12ca3b it is the tape-measured mount
+    # in the gripper_end body frame with the unit's own factory intrinsics (640x480, 4:3,
+    # 78.4 x 63.1 deg) and a tilt calibrated against the live D405 feed.
     from reBot_RL.tasks.manager_based.lift.camera_cfg import WRIST_CAM_CFG  # noqa: E402
     # In FRONT of the arm, per the 2026-08-09 directive. Imported from the env cfg rather than
     # written here: `scripts/render_workstation.py` inspects the same view, and the two used
@@ -221,15 +277,20 @@ def main() -> None:
     env_cfg.seed = args_cli.seed
     want = {"both": ("wrist", "station"), "wrist": ("wrist",), "station": ("station",)}[
         args_cli.record_cams]
-    if args_cli.record_video:
+    if args_cli.shards:
+        # The student is defined by its two cameras; a shard missing one is not a smaller
+        # dataset, it is a different observation space.
+        want = ("wrist", "station")
+    if _CAMS:
+        cam_w, cam_h = ((args_cli.shard_width, args_cli.shard_height) if args_cli.shards
+                        else (args_cli.record_width, args_cli.record_height))
         if "wrist" in want:
             env_cfg.scene.wrist_cam = WRIST_CAM_CFG.replace(
-                width=args_cli.record_width, height=args_cli.record_height,
-                data_types=["rgb"], update_period=0.0)
+                width=cam_w, height=cam_h, data_types=["rgb"], update_period=0.0)
         if "station" in want:
             env_cfg.scene.station_cam = CameraCfg(
                 prim_path="{ENV_REGEX_NS}/StationCam", update_period=0.0,
-                width=args_cli.record_width, height=args_cli.record_height, data_types=["rgb"],
+                width=cam_w, height=cam_h, data_types=["rgb"],
                 spawn=sim_utils.PinholeCameraCfg(focal_length=17.0, horizontal_aperture=20.955,
                                                  clipping_range=(0.02, 20.0)))
     env = gym.make(args_cli.task, cfg=env_cfg)
@@ -238,7 +299,7 @@ def main() -> None:
     kin = ArmKin(env)
 
     rec_frames = {"wrist": [], "station": []}
-    if args_cli.record_video:
+    if _CAMS:
         cams = {k: e.scene[f"{k}_cam"] for k in want}
         origin0 = e.scene.env_origins[0]
 
@@ -249,6 +310,8 @@ def main() -> None:
         # and objects float on the bare ground plane. Move it onto whichever env we are
         # filming. Appearance-only, so this changes nothing the MDP can see.
         def place_splats():
+            if os.environ.get("RE3SIM_SPLATS_PER_ENV") == "1":
+                return          # one desk per env already; there is no single prim to move
             if float(origin0.abs().max()) <= 1e-6:
                 return
             import omni.usd  # noqa: PLC0415
@@ -287,6 +350,165 @@ def main() -> None:
                 rec_frames[k].append(
                     cam.data.output["rgb"][0, ..., :3].cpu().numpy().astype(np.uint8))
 
+    # ------------------------------------------------------------------ vision shards
+    # Per env: the steps this env actually owns, plus a short settled tail of each run it
+    # does not (see --pad-keep). `_ring` is that tail, held back until the env is doing its
+    # own work again -- a run still open at the end of the episode is the post-success idle
+    # and is dropped, which is the same truncation exp08 applied to its champion rollouts.
+    if args_cli.shards:
+        from collections import deque  # noqa: PLC0415
+        _keep = [{"wrist": [], "station": [], "obs": [], "act": []}
+                 for _ in range(e.num_envs)]
+        _ring = [deque(maxlen=max(0, args_cli.pad_keep)) for _ in range(e.num_envs)]
+
+        def shard_grab(a, mask):
+            """Record the CURRENT state, BEFORE `env.step` consumes `a`.
+
+            The student is trained to map (image_t, proprio_t) -> a_t, so the frame has to be
+            of the state the action was chosen from. `grab()` runs after the step because a
+            film only has to look right; this one does not have that freedom.
+            """
+            e.sim.render()
+            imgs = {}
+            for k, cam in cams.items():
+                cam.update(dt=0.0)
+                imgs[k] = cam.data.output["rgb"][..., :3].to(torch.uint8).cpu()
+            obs_c, act_c = last_obs.cpu(), a.cpu()
+            for i in range(e.num_envs):
+                row = (imgs["wrist"][i], imgs["station"][i], obs_c[i], act_c[i])
+                if bool(mask[i]):
+                    if _ring[i]:
+                        for r in _ring[i]:
+                            _push(i, r)
+                        _ring[i].clear()
+                    _push(i, row)
+                elif args_cli.pad_keep:
+                    _ring[i].append(row)
+
+        def _push(i, row):
+            k = _keep[i]
+            k["wrist"].append(row[0]); k["station"].append(row[1])
+            k["obs"].append(row[2]); k["act"].append(row[3])
+
+        def shard_clear():
+            for k in _keep:
+                for v in k.values():
+                    v.clear()
+            for r in _ring:
+                r.clear()
+
+        def shard_write(ok_t, att_t, batch_seed):
+            """One `ep_*.pt` per episode, in `act/dataset_vision.py`'s shard layout."""
+            os.makedirs(args_cli.shards, exist_ok=True)
+            n_w = n_t = 0
+            for i in range(e.num_envs):
+                if not (bool(ok_t[i]) or args_cli.shard_include_failures):
+                    continue
+                k = _keep[i]
+                if len(k["obs"]) < 2:
+                    continue
+                obs = torch.stack(k["obs"]).float()
+                # ⭐ The no-privileged-info contract, enforced where it is created rather than
+                # trusted downstream: proprio is BYTE-DERIVED from the observation slices a
+                # real robot can measure -- joint pos, joint vel, its own last action -- and
+                # nothing else. obs41[16:34] (cube pose, box pose, clutter, placed flag) is
+                # kept in the shard for the expert/DAgger side and must never be read by the
+                # student loader.
+                proprio = torch.cat([obs[:, 0:16], obs[:, 34:41]], dim=1)
+                assert proprio.shape[1] == 23, proprio.shape
+                torch.save({
+                    "wrist_rgb": torch.stack(k["wrist"]),
+                    "workspace_rgb": torch.stack(k["station"]),
+                    "proprio": proprio,
+                    "obs41": obs,                      # TEACHER-ONLY
+                    "actions": torch.stack(k["act"]).float(),
+                    "success": bool(ok_t[i]),
+                    "attempts": int(att_t[i]),
+                    "seed": int(batch_seed),
+                    "env_index": int(i),
+                }, os.path.join(args_cli.shards, f"ep_{batch_seed}_{i:03d}.pt"))
+                n_w += 1
+                n_t += obs.shape[0]
+            print(f"[shards] wrote {n_w} episodes, {n_t} steps "
+                  f"({n_t / max(1, n_w):.0f}/episode) -> {args_cli.shards}", flush=True)
+            shard_clear()
+
+    # ------------------------------------------------------------------ DAgger takeover
+    if args_cli.dagger_ckpt:
+        sys.path.insert(0, os.path.join(_HERE, "..", "act"))
+        from policy_runner_vision import (  # noqa: PLC0415
+            VisionController, build_student_batch, load_vision_checkpoint,
+        )
+        _pol, _nrm, _cfg, _cam_shape = load_vision_checkpoint(args_cli.dagger_ckpt, dev)
+        if tuple(_cam_shape[1:]) != (args_cli.shard_height, args_cli.shard_width):
+            raise SystemExit(
+                f"student was trained at {tuple(_cam_shape[1:])} but --shard-height/width say "
+                f"{(args_cli.shard_height, args_cli.shard_width)}; a student driven at a "
+                f"resolution it never saw is not the student whose states we want to label")
+        _ctrl = VisionController(_pol, _nrm, _cfg, dev)
+        print(f"[dagger] student {args_cli.dagger_ckpt} drives "
+              f"{args_cli.dagger_min}-{args_cli.dagger_max} steps before the expert takes over",
+              flush=True)
+
+        def dagger_drive():
+            """Let the student drive, then hand the scene to the expert wherever it ends up.
+
+            Runs BEFORE the batch captures the cube pose, the object orientations and
+            `q_start`, so everything downstream treats the state the student drifted into as
+            the episode's initial condition -- the expert plans from it, restores objects to
+            it, and the recorded demonstration starts there. No other code has to know that
+            DAgger happened.
+            """
+            place_splats()
+            aim_station()
+            # The desk is not resident for the first ~100 rendered steps. A student driven on
+            # frames with no desk in them is not the student being evaluated, and the states
+            # it reaches would be off-distribution for a reason that has nothing to do with
+            # DAgger.
+            q_now = kin.robot.data.joint_pos.torch()[:, kin.arm_dof].clone() \
+                if callable(getattr(kin.robot.data.joint_pos, "torch", None)) \
+                else kin.robot.data.joint_pos[:, kin.arm_dof].clone()
+            hold = torch.zeros((n, 7), device=dev)
+            hold[:, :6] = (q_now - kin.q_arm0.unsqueeze(0)) / 0.5
+            hold[:, 6] = 1.0
+            for _ in range(args_cli.shard_warmup):
+                env.step(hold)
+                e.sim.render()
+            _ctrl.reset()
+            # Per-env takeover step, so one batch spans the whole drift range instead of a
+            # single slice of it.
+            k = torch.randint(args_cli.dagger_min, args_cli.dagger_max + 1, (n,), device=dev)
+            obs = e.observation_manager.compute()["policy"]
+            q_freeze = None
+            for t in range(int(k.max())):
+                e.sim.render()
+                for c in cams.values():
+                    c.update(dt=0.0)
+                a = _ctrl.act(build_student_batch(obs, {"wrist": cams["wrist"],
+                                                        "workspace": cams["station"]}, dev))
+                a = a.to(dev)
+                # An env past its own takeover step holds the pose it stopped at rather than
+                # being driven on: its episode has already begun as far as the expert is
+                # concerned, and letting the student keep going would label a different state.
+                done = t >= k
+                if bool(done.any()):
+                    q_cur = kin.robot.data.joint_pos.torch()[:, kin.arm_dof] \
+                        if callable(getattr(kin.robot.data.joint_pos, "torch", None)) \
+                        else kin.robot.data.joint_pos[:, kin.arm_dof]
+                    q_freeze = q_cur.clone() if q_freeze is None else torch.where(
+                        done.unsqueeze(1) & (q_freeze == 0).all(1, keepdim=True),
+                        q_cur, q_freeze)
+                    frz = torch.zeros((n, 7), device=dev)
+                    frz[:, :6] = (q_freeze - kin.q_arm0.unsqueeze(0)) / 0.5
+                    frz[:, 6] = 1.0
+                    a = torch.where(done.unsqueeze(1), frz, a)
+                obs, _, _, _, _ = env.step(a)
+                obs = obs["policy"] if isinstance(obs, dict) else obs
+            print(f"[dagger] student drove {int(k.min())}-{int(k.max())} steps "
+                  f"(mean {float(k.float().mean()):.0f})", flush=True)
+    else:
+        dagger_drive = None
+
     all_obs, all_act, all_ph, all_ok = [], [], [], []
     all_seed, all_planned, all_msk, all_att = [], [], [], []
     t_start = time.time()
@@ -296,6 +518,8 @@ def main() -> None:
         # range: a policy scored on the layouts it was trained on measures memorisation.
         batch_seed = args_cli.seed * 1000 + b
         obs_d, _ = env.reset(seed=batch_seed)
+        if dagger_drive is not None:
+            dagger_drive()
         cube = mdp.object_pos_local(e, mdp.TARGET_NAME).clone()
         cube_yaw = mdp.yaw_of(mdp.object_quat(e, mdp.TARGET_NAME)).clone()
         boxc = mdp.box_centers_local(e).clone()
@@ -570,6 +794,8 @@ def main() -> None:
             # "wait here". Without this the retry machinery would poison every successful
             # demonstration it shares a batch with.
             rec_msk.append((_all if mask is None else mask).clone())
+            if args_cli.shards:
+                shard_grab(a, _all if mask is None else mask)
             o, _, _, _, _ = env.step(a)
             last_obs = o["policy"]
             if args_cli.record_video:
@@ -608,7 +834,7 @@ def main() -> None:
             obj.write_root_state_to_sim(st)
         e.sim.forward()
         e.scene.update(e.physics_dt)
-        if args_cli.record_video:
+        if _CAMS:
             place_splats()
             aim_station()
             e.sim.forward()
@@ -628,12 +854,13 @@ def main() -> None:
             # So: step the arm at its own home pose, grab exactly as the recording does, and
             # discard. Only ever runs under `--record-video`, so it cannot touch a
             # measurement run.
-            for _ in range(args_cli.record_warmup):
+            _warm = (args_cli.shard_warmup if args_cli.shards else args_cli.record_warmup)
+            for _ in range(_warm):
                 env.step(act_of(q_home, False))
                 grab()
             for _v in rec_frames.values():
                 _v.clear()
-            print(f"[record] pre-rolled {args_cli.record_warmup} steps and discarded them; "
+            print(f"[record] pre-rolled {_warm} steps and discarded them; "
                   f"splats on env 0 at {np.round(origin0.cpu().numpy(), 3)}", flush=True)
         last_obs = e.observation_manager.compute()["policy"]
 
@@ -868,6 +1095,9 @@ def main() -> None:
                 print(f"[record] {path}  ({len(frames)} frames, "
                       f"{len(frames) / args_cli.record_fps:.1f} s)  env 0 = {tag}", flush=True)
                 frames.clear()
+
+        if args_cli.shards:
+            shard_write(ok, att, batch_seed)
 
         all_obs.append(torch.stack(rec_obs).cpu().numpy())     # (T, n, obs)
         all_act.append(torch.stack(rec_act).cpu().numpy())     # (T, n, 7)
