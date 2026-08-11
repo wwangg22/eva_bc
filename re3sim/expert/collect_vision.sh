@@ -18,12 +18,16 @@ N=${2:-128}
 B=${3:-3}
 SEED=${4:-21}
 shift 4 2>/dev/null || true
+# The task decides whether DR renders at all — make the choice VISIBLE at launch, so a
+# DR round can never silently collect nominal shards on the default state task.
+TASK=${TASK:-Rebot-Workstation-PickPlace1-v0}
+echo "[collect_vision] task=$TASK envs=$N batches=$B seed=$SEED out=$OUT" >&2
 
 source ~/miniconda3/etc/profile.d/conda.sh
 conda activate env_isaaclab6
-cd /home/eva/Desktop/isaacLab/eva_bc
+cd "$(dirname "${BASH_SOURCE[0]}")/../.."
 
 RE3SIM_SPLATS_PER_ENV=1 RE3SIM_ARM_START_JITTER=${RE3SIM_ARM_START_JITTER:-0.15} \
-python -u re3sim/expert/collect_demos.py --headless \
+python -u re3sim/expert/collect_demos.py --headless --task "$TASK" \
     --num_envs "$N" --batches "$B" --seed "$SEED" \
     --shards "$OUT" --out "${OUT%/}_state.hdf5" "$@"

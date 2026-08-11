@@ -4,7 +4,7 @@
 set -uo pipefail
 source ~/miniconda3/etc/profile.d/conda.sh
 conda activate env_isaaclab6
-cd /home/eva/Desktop/isaacLab/eva_bc
+cd "$(dirname "${BASH_SOURCE[0]}")/.."
 RUN=re3sim/runs/prim
 
 until grep -aq "\[demos\] wrote" "$RUN/collect.log" 2>/dev/null; do sleep 60; done

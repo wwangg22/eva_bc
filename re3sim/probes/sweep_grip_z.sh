@@ -12,7 +12,7 @@
 set -uo pipefail
 source ~/miniconda3/etc/profile.d/conda.sh
 conda activate env_isaaclab6
-cd /home/eva/Desktop/isaacLab/eva_bc
+cd "$(dirname "${BASH_SOURCE[0]}")/../.."
 N=${N:-64}
 for Z in ${ZS:-0.032 0.040 0.048 0.056 0.064}; do
   L=re3sim/runs/gripz/z${Z}.log

@@ -12,7 +12,7 @@ set -euo pipefail
 
 source ~/miniconda3/etc/profile.d/conda.sh
 conda activate env_isaaclab6
-cd /home/eva/Desktop/isaacLab/eva_bc
+cd "$(dirname "${BASH_SOURCE[0]}")/.."
 
 TAG=${TAG:-recon}
 NENV=${NENV:-128}

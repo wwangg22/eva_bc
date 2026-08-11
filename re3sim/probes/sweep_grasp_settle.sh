@@ -20,7 +20,7 @@
 set -uo pipefail
 source ~/miniconda3/etc/profile.d/conda.sh
 conda activate env_isaaclab6
-cd /home/eva/Desktop/isaacLab/eva_bc
+cd "$(dirname "${BASH_SOURCE[0]}")/../.."
 N=${N:-64}
 OUT=re3sim/runs/settle
 mkdir -p "$OUT"
