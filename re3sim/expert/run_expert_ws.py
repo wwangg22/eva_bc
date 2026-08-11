@@ -64,8 +64,23 @@ parser.add_argument("--perturb", action="store_true")
 parser.add_argument("--diversify", action="store_true")
 parser.add_argument("--seed", type=int, default=None)
 parser.add_argument("--task", default="Rebot-Workstation-PickPlace1-Play-v0")
+parser.add_argument("--shards", type=str, default=None, metavar="DIR",
+                    help="Write per-episode VISION SHARDS (act/dataset_vision.py layout: "
+                         "wrist_rgb / workspace_rgb uint8, proprio 23, obs41, actions) for "
+                         "the student. Successful episodes only unless "
+                         "--shard-include-failures. Needs a -Vision*/-VisionDR task (the "
+                         "scene owns the student cameras) and --seed.")
+parser.add_argument("--shard-include-failures", action="store_true")
 AppLauncher.add_app_launcher_args(parser)
 args_cli = parser.parse_args()
+if args_cli.shards:
+    if args_cli.video or args_cli.video_all:
+        parser.error("--shards and --video record at different resolutions; separate runs")
+    if "Vision" not in args_cli.task:
+        parser.error("--shards needs a -Vision*/-VisionDR-* task: the scene owns the "
+                     "student cameras there (plain tasks have no cameras to record)")
+    if args_cli.seed is None:
+        parser.error("--shards requires --seed (shard filenames + reproducibility)")
 args_cli.headless = True
 args_cli.enable_cameras = True
 app = AppLauncher(args_cli).app
@@ -367,6 +382,11 @@ class Driver:
         self.pending_event = None
         self.grip_override = 0
         self.perturb_log = []
+        # -- vision-shard recording (see --shards) --
+        self.shards = args_cli.shards
+        self.shard_rec = False       # true only between post-warmup and episode end
+        self.sh = None               # per-episode buffers
+        self.last_pol = None         # obs["policy"][0] BEFORE the pending action
 
     # -- state --
     def q6(self):
@@ -447,6 +467,16 @@ class Driver:
         if self.h5_path is not None:
             self.ep_obs.append(self.last_obs)
             self.ep_act.append(a[0].cpu().numpy().astype("float32"))
+        if self.shard_rec:
+            # frame-precedes-action: the student learns (image_t, proprio_t) -> a_t, so
+            # grab the render + obs of the CURRENT state before this action steps the sim
+            for key, sensor in (("wrist", "wrist_cam"), ("station", "station_cam")):
+                cam = self.u.scene[sensor]
+                cam.update(dt=0.0)
+                fr = cam.data.output["rgb"][0, ..., :3].to(torch.uint8).cpu().clone()
+                self.sh[key].append(fr)
+            self.sh["obs"].append(self.last_pol.clone())
+            self.sh["act"].append(a[0].detach().cpu().clone())
         ev = self.pending_event
         if ev is not None and ev["fire_at"] is not None and ev["fire_at"] <= self.step_idx:
             if ev["type"] == "nudge":
@@ -460,6 +490,8 @@ class Driver:
         obs = self.env.step(a)[0]
         if self.h5_path is not None:
             self.last_obs = obs["policy"][0].cpu().numpy().astype("float32")
+        if self.shards is not None:
+            self.last_pol = obs["policy"][0].detach().cpu()
         self.step_idx += 1
         if self.record:
             for key, sensor in (("station", "station_cam"), ("wrist", "wrist_cam")):
@@ -723,6 +755,8 @@ class Driver:
             self.last_obs = obs["policy"][0].cpu().numpy().astype("float32")
             self.ep_obs = []
             self.ep_act = []
+        if self.shards is not None:
+            self.last_pol = obs["policy"][0].detach().cpu()
         self.q_default = self.robot.data.default_joint_pos[0, :6].clone()
         self.step_idx = 0
         self.segments = []
@@ -730,13 +764,16 @@ class Driver:
         self.perturb_log = []
         self.pending_event = None
         self.grip_override = 0
-        if self.record:
+        if self.record or self.shards is not None:
             # ⭐ the gaussian desk is not resident until real STEPS have run (HANDOFF
             # §4.9) — pre-roll at home with the frames discarded, or the film opens on
             # the arm floating over a bare grid
             rec, self.record = self.record, False
             self.hold(120, +1)
             self.record = rec
+        if self.shards is not None:
+            self.sh = {"wrist": [], "station": [], "obs": [], "act": []}
+            self.shard_rec = True
         if self.perturb:
             choices = [("nudge", "approach", CUBE), ("nudge", "lift", CLUTTER[0]),
                        ("slip", "transport", CUBE), ("nudge", "transport", CLUTTER[0])]
@@ -764,6 +801,36 @@ class Driver:
               f"plan_fail={m['plan_fail']} close_disp={m['close_disp']}")
         if self.h5_path:
             self.demos.append({"obs": np.stack(self.ep_obs), "act": np.stack(self.ep_act), "meta": m})
+        if self.shards is not None:
+            self.shard_rec = False
+            if m["success"] or args_cli.shard_include_failures:
+                os.makedirs(self.shards, exist_ok=True)
+                obs41 = torch.stack(self.sh["obs"])
+                # proprio is BYTE-DERIVED from the observation slices the student may see;
+                # obs41[16:34] (cube/box/clutter/placed) stays TEACHER-ONLY (same contract
+                # as collect_demos.py's shard writer)
+                proprio = torch.cat([obs41[:, 0:16], obs41[:, 34:41]], dim=1)
+                assert proprio.shape[1] == 23, proprio.shape
+                wrist = torch.stack(self.sh["wrist"])
+                station = torch.stack(self.sh["station"])
+                assert wrist.shape[1:] == station.shape[1:] == (120, 160, 3), \
+                    (wrist.shape, station.shape)
+                torch.save({
+                    "wrist_rgb": wrist,
+                    "workspace_rgb": station,
+                    "proprio": proprio,
+                    "obs41": obs41,                    # TEACHER-ONLY
+                    "actions": torch.stack(self.sh["act"]),
+                    "success": bool(m["success"]),
+                    "attempts": int(m["grasps"] + m["failed_grasps"]),
+                    "seed": int(args_cli.seed),
+                    "env_index": int(i),
+                }, os.path.join(self.shards, f"ep_{args_cli.seed}_{i:03d}.pt"))
+                print(f"[shards] ep {i}: wrote {obs41.shape[0]} steps "
+                      f"(success={m['success']}) -> {self.shards}", flush=True)
+            else:
+                print(f"[shards] ep {i}: FAILED episode, shard skipped", flush=True)
+            self.sh = None
         return m
 
 
