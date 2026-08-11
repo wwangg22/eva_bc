@@ -34,7 +34,8 @@ import argparse
 
 from isaaclab.app import AppLauncher
 
-_ROOT = "/home/eva/Desktop/isaacLab/eva_bc/re3sim"
+import os as _os
+_ROOT = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
 
 parser = argparse.ArgumentParser(description="Batched sim eval of the workstation vision student.")
 parser.add_argument("--task", type=str,

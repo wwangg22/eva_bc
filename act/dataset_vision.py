@@ -46,7 +46,11 @@ class VisionShardDataset(Dataset):
     labels used directly; ALL kept — the labels are champion-quality regardless of
     the student's outcome, and failed episodes are exactly where DAgger helps)."""
 
-    def __init__(self, data_dirs: list[str], chunk_size: int = 50, success_only: bool = True):
+    def __init__(self, data_dirs: list[str], chunk_size: int = 50, success_only: bool = True,
+                 augment=None):
+        # Optional callable (H, W, 3) uint8 -> (H, W, 3) uint8 applied per sample per camera
+        # (act/augment_vision.py). Train-time only — eval never augments.
+        self.augment = augment
         self.chunk_size = chunk_size
         self.episodes: list[dict[str, torch.Tensor]] = []
         n_skipped = n_dagger = 0
@@ -95,10 +99,13 @@ class VisionShardDataset(Dataset):
             is_pad = torch.ones(self.chunk_size, dtype=torch.bool)
             is_pad[: end - t] = False
 
+        wrist, workspace = ep["wrist_rgb"][t], ep["workspace_rgb"][t]
+        if self.augment is not None:
+            wrist, workspace = self.augment(wrist), self.augment(workspace)
         return {
             "observation.state": ep["proprio"][t],
-            "observation.images.wrist": ep["wrist_rgb"][t].permute(2, 0, 1).float() / 255.0,
-            "observation.images.workspace": ep["workspace_rgb"][t].permute(2, 0, 1).float() / 255.0,
+            "observation.images.wrist": wrist.permute(2, 0, 1).float() / 255.0,
+            "observation.images.workspace": workspace.permute(2, 0, 1).float() / 255.0,
             "action": chunk,
             "action_is_pad": is_pad,
         }

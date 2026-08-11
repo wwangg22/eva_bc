@@ -103,9 +103,18 @@ def main() -> None:
     wrist = e.scene["wrist_cam"]
     station = e.scene["station_cam"]
     origin = e.scene.env_origins[0]
-    station.set_world_poses_from_view(
-        (torch.tensor([[-0.62, -0.52, 0.46]], device=device) + origin),
-        (torch.tensor([[0.24, 0.02, 0.04]], device=device) + origin))
+
+    def aim_station():
+        # When the task cfg aims this camera itself (the -Vision* tasks; above all
+        # -VisionDR, whose reset event RANDOMISES the pose), the env owns the pose and a
+        # fixed re-aim here would silently undo the domain randomisation being filmed.
+        if getattr(e.cfg.events, "aim_station_cam", None) is not None:
+            return
+        station.set_world_poses_from_view(
+            (torch.tensor([[-0.62, -0.52, 0.46]], device=device) + origin),
+            (torch.tensor([[0.24, 0.02, 0.04]], device=device) + origin))
+
+    aim_station()
 
     os.makedirs(args_cli.out, exist_ok=True)
     print(f"\nckpt {args_cli.ckpt}  (step {cfg.get('step')})")
@@ -113,9 +122,7 @@ def main() -> None:
 
     for attempt, seed in enumerate([int(s) for s in args_cli.seeds.split(",")]):
         env.reset(seed=seed)
-        station.set_world_poses_from_view(
-            (torch.tensor([[-0.62, -0.52, 0.46]], device=device) + origin),
-            (torch.tensor([[0.24, 0.02, 0.04]], device=device) + origin))
+        aim_station()
         ctrl.reset()
         obs = e.observation_manager.compute()["policy"]
         fw, fs, ok = [], [], False

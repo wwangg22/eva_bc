@@ -50,8 +50,9 @@ class WorkstationVisionDataset(VisionShardDataset):
     """`VisionShardDataset` with black-camera samples removed from the index."""
 
     def __init__(self, data_dirs, chunk_size: int = 50, success_only: bool = True,
-                 drop_black: bool = True):
-        super().__init__(data_dirs, chunk_size=chunk_size, success_only=success_only)
+                 drop_black: bool = True, augment=None):
+        super().__init__(data_dirs, chunk_size=chunk_size, success_only=success_only,
+                         augment=augment)
         if not drop_black:
             return
         keep, n_black = [], 0

@@ -338,6 +338,12 @@ def main() -> None:
             # num_envs > 1 leaves every camera but the first at its spawn pose.
             if "station" not in cams:
                 return
+            # ⭐ When the task cfg itself aims this camera with a reset event (the -Vision*
+            # tasks, and above all -VisionDR, whose event RANDOMISES the pose), the env owns
+            # the pose and a fixed re-aim here would silently undo the domain randomisation
+            # every batch. The default state task has no such event and keeps this path.
+            if getattr(e.cfg.events, "aim_station_cam", None) is not None:
+                return
             org = e.scene.env_origins
             cams["station"].set_world_poses_from_view(
                 org + torch.tensor(STATION_CAM_EYE, device=e.device),
