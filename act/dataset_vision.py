@@ -17,19 +17,53 @@ episode, mirroring act/dataset.py's RebotDemoDataset:
     action_is_pad                 (chunk_size,) bool  (past-episode-end padding)
 
 The privileged obs41 array is deliberately NOT read (EXP08 section 4: nothing
-privileged may reach the student pipeline). Images stay uint8 in RAM (~86 KB/step for
-both cameras) and are converted per sample.
+privileged may reach the student pipeline). Images are held in RAM as JPEG (~12 KB/step
+for both cameras vs ~86 KB raw) and decoded per sample (~0.1 ms/frame, cv2).
 """
 
 from __future__ import annotations
 
 from pathlib import Path
 
+import cv2
+import numpy as np
 import torch
 from torch.utils.data import Dataset
 
 ACTION_DIM = 7
 STUDENT_STATE_DIM = 23
+
+#: In-RAM JPEG quality. Frames round-trip through cv2 without RGB<->BGR conversion —
+#: symmetric, so the student sees its original channel order; only the (negligible)
+#: chroma-subsampling error differs. 90 sits far above the train-time augmentation's
+#: own JPEG floor (q~30 at strength 1), so it adds no distribution shift that matters.
+_JPEG_Q = 90
+
+_IMAGE_KEYS = ("wrist_rgb", "workspace_rgb")
+
+
+def _compress_frames(arr: np.ndarray) -> tuple[np.ndarray, np.ndarray, torch.Tensor]:
+    """(T,H,W,3) uint8 -> (one flat JPEG byte buffer, offsets, per-frame int sums).
+
+    One numpy buffer per camera per episode, NOT a list of `bytes`: DataLoader workers
+    fork, and python objects' refcounts write to their pages on every access, so a
+    blob LIST would be copy-on-write-duplicated per worker over a long run. Numpy
+    array pages are never written after init. The per-frame integer sums come free in
+    this pass and serve the black-frame audit without decoding anything later."""
+    sums = torch.from_numpy(arr.reshape(arr.shape[0], -1).sum(axis=1, dtype=np.int64))
+    blobs = [cv2.imencode(".jpg", f, [cv2.IMWRITE_JPEG_QUALITY, _JPEG_Q])[1] for f in arr]
+    offsets = np.zeros(len(blobs) + 1, dtype=np.int64)
+    np.cumsum([b.size for b in blobs], out=offsets[1:])
+    buf = np.empty(int(offsets[-1]), dtype=np.uint8)
+    for b, o in zip(blobs, offsets[:-1]):
+        buf[o:o + b.size] = b.reshape(-1)
+    return buf, offsets, sums
+
+
+def _decode_frame(ep: dict, key: str, t: int) -> torch.Tensor:
+    o = ep[key + "_off"]
+    img = cv2.imdecode(ep[key][o[t]:o[t + 1]], cv2.IMREAD_COLOR)
+    return torch.from_numpy(img)
 
 # Keys a student sample is built from. obs41 is teacher-only and must never be here.
 _STUDENT_KEYS = ("wrist_rgb", "workspace_rgb", "proprio", "actions")
@@ -39,7 +73,7 @@ _DAGGER_KEYS = ("wrist_rgb", "workspace_rgb", "proprio", "label_chunks")
 
 
 class VisionShardDataset(Dataset):
-    """Memory-mapped (uint8 images) dataset over exp08 collection shards.
+    """In-RAM JPEG-compressed dataset over exp08 collection shards (~7x smaller than raw).
 
     Two shard formats, mixable freely: executed-action episodes (chunks sliced from
     the action stream, success-filtered) and DAgger chunk-labeled episodes (champion
@@ -56,10 +90,11 @@ class VisionShardDataset(Dataset):
         n_skipped = n_dagger = 0
         for d in data_dirs:
             for shard_path in sorted(Path(d).glob("ep_*.pt")):
-                # mmap: tensors stay file-backed, resident pages are page-cache (the kernel
-                # RECLAIMS them under pressure instead of OOM-killing the trainer). Measured
-                # necessity: 4 datasets = ~53 GB of images; anon-preloading them killed the
-                # vbc_vdr run at the 26 GB cgroup cap on the 31 GB box (2026-08-11).
+                # mmap the read (no anon copy of the raw images), then re-store the frames
+                # as in-RAM JPEG (~7x smaller). Both halves are load-bearing on the 31 GB
+                # box (2026-08-11, 4 datasets = ~66 GB raw): anon-preloading OOM-killed the
+                # trainer at the 26 GB cgroup cap, and TRAINING off the mmap thrashed page
+                # cache hard enough that systemd-oomd pressure-killed it (85.8% > 50%).
                 shard = torch.load(shard_path, map_location="cpu", mmap=True)
                 is_dagger = "label_chunks" in shard
                 if not is_dagger and success_only and not shard["success"]:
@@ -70,7 +105,17 @@ class VisionShardDataset(Dataset):
                     assert shard["label_chunks"].shape[1:] == (chunk_size, ACTION_DIM), shard_path
                     n_dagger += 1
                 # keep ONLY the student keys -- drop obs41 (privileged) immediately
-                self.episodes.append({k: shard[k] for k in (_DAGGER_KEYS if is_dagger else _STUDENT_KEYS)})
+                ep: dict = {}
+                for k in (_DAGGER_KEYS if is_dagger else _STUDENT_KEYS):
+                    if k in _IMAGE_KEYS:
+                        arr = shard[k].numpy()
+                        ep["frame_numel"] = int(arr[0].size)
+                        ep[k], ep[k + "_off"], ep[k + "_sums"] = _compress_frames(arr)
+                    else:
+                        # clone: small, and drops the last reference into the mmap so the
+                        # file mapping is released instead of accumulating per shard
+                        ep[k] = shard[k].clone()
+                self.episodes.append(ep)
         if not self.episodes:
             raise ValueError(f"no episodes loaded from {data_dirs}")
         self.index: list[tuple[int, int]] = [
@@ -79,10 +124,11 @@ class VisionShardDataset(Dataset):
             for t in range(ep["label_chunks" if "label_chunks" in ep else "actions"].shape[0])
         ]
         self._n_dagger = n_dagger
-        n_bytes = sum(ep["wrist_rgb"].numel() + ep["workspace_rgb"].numel() for ep in self.episodes)
+        n_bytes = sum(ep["wrist_rgb"].size + ep["workspace_rgb"].size for ep in self.episodes)
         print(
             f"[dataset_vision] {len(self.episodes)} episodes ({n_dagger} DAgger-labeled, "
-            f"{n_skipped} filtered out), {len(self.index)} samples, images ~{n_bytes / 1e9:.1f} GB mapped"
+            f"{n_skipped} filtered out), {len(self.index)} samples, "
+            f"images ~{n_bytes / 1e9:.1f} GB as in-RAM JPEG q{_JPEG_Q}"
         )
 
     def __len__(self) -> int:
@@ -103,7 +149,8 @@ class VisionShardDataset(Dataset):
             is_pad = torch.ones(self.chunk_size, dtype=torch.bool)
             is_pad[: end - t] = False
 
-        wrist, workspace = ep["wrist_rgb"][t], ep["workspace_rgb"][t]
+        wrist = _decode_frame(ep, "wrist_rgb", t)
+        workspace = _decode_frame(ep, "workspace_rgb", t)
         if self.augment is not None:
             wrist, workspace = self.augment(wrist), self.augment(workspace)
         return {

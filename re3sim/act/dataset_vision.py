@@ -57,13 +57,11 @@ class WorkstationVisionDataset(VisionShardDataset):
             return
         keep, n_black = [], 0
         for e, ep in enumerate(self.episodes):
-            bad = torch.zeros(ep["wrist_rgb"].shape[0], dtype=torch.bool)
+            bad = torch.zeros(len(ep["wrist_rgb_sums"]), dtype=torch.bool)
             for key in ("wrist_rgb", "workspace_rgb"):
-                img = ep[key]
-                # integer sum, not float mean: one pass over ~20 GB either way, but this does
-                # not materialise a float copy of every frame
-                per_frame = img.sum(dim=(1, 2, 3), dtype=torch.int64)
-                bad |= per_frame < int(BLACK_MEAN * img[0].numel())
+                # per-frame integer sums were precomputed during the base class's JPEG
+                # encode pass — the audit costs nothing and decodes nothing
+                bad |= ep[key + "_sums"] < int(BLACK_MEAN * ep["frame_numel"])
             n_black += int(bad.sum())
             keep.extend((e, t) for t in range(len(bad)) if not bad[t])
         dropped = len(self.index) - len(keep)
