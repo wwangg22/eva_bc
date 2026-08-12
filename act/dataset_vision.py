@@ -39,7 +39,7 @@ _DAGGER_KEYS = ("wrist_rgb", "workspace_rgb", "proprio", "label_chunks")
 
 
 class VisionShardDataset(Dataset):
-    """RAM-preloaded (uint8 images) dataset over exp08 collection shards.
+    """Memory-mapped (uint8 images) dataset over exp08 collection shards.
 
     Two shard formats, mixable freely: executed-action episodes (chunks sliced from
     the action stream, success-filtered) and DAgger chunk-labeled episodes (champion
@@ -56,7 +56,11 @@ class VisionShardDataset(Dataset):
         n_skipped = n_dagger = 0
         for d in data_dirs:
             for shard_path in sorted(Path(d).glob("ep_*.pt")):
-                shard = torch.load(shard_path, map_location="cpu")
+                # mmap: tensors stay file-backed, resident pages are page-cache (the kernel
+                # RECLAIMS them under pressure instead of OOM-killing the trainer). Measured
+                # necessity: 4 datasets = ~53 GB of images; anon-preloading them killed the
+                # vbc_vdr run at the 26 GB cgroup cap on the 31 GB box (2026-08-11).
+                shard = torch.load(shard_path, map_location="cpu", mmap=True)
                 is_dagger = "label_chunks" in shard
                 if not is_dagger and success_only and not shard["success"]:
                     n_skipped += 1
@@ -78,7 +82,7 @@ class VisionShardDataset(Dataset):
         n_bytes = sum(ep["wrist_rgb"].numel() + ep["workspace_rgb"].numel() for ep in self.episodes)
         print(
             f"[dataset_vision] {len(self.episodes)} episodes ({n_dagger} DAgger-labeled, "
-            f"{n_skipped} filtered out), {len(self.index)} samples, images ~{n_bytes / 1e9:.1f} GB RAM"
+            f"{n_skipped} filtered out), {len(self.index)} samples, images ~{n_bytes / 1e9:.1f} GB mapped"
         )
 
     def __len__(self) -> int:
