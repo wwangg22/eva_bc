@@ -71,6 +71,14 @@ parser.add_argument("--shards", type=str, default=None, metavar="DIR",
                          "--shard-include-failures. Needs a -Vision*/-VisionDR task (the "
                          "scene owns the student cameras) and --seed.")
 parser.add_argument("--shard-include-failures", action="store_true")
+parser.add_argument("--dagger-ckpt", type=str, default=None, metavar="CKPT",
+                    help="DAgger takeover (collect_demos.py's design, on THIS expert per "
+                         "directive): the vision student drives dagger-min..max steps after "
+                         "warmup, then the drifted state becomes the episode's initial "
+                         "condition — the cuRobo expert plans from it and the recorded "
+                         "shard starts there. Requires --shards.")
+parser.add_argument("--dagger-min", type=int, default=60)
+parser.add_argument("--dagger-max", type=int, default=300)
 AppLauncher.add_app_launcher_args(parser)
 args_cli = parser.parse_args()
 if args_cli.shards:
@@ -81,6 +89,9 @@ if args_cli.shards:
                      "student cameras there (plain tasks have no cameras to record)")
     if args_cli.seed is None:
         parser.error("--shards requires --seed (shard filenames + reproducibility)")
+if args_cli.dagger_ckpt and not args_cli.shards:
+    parser.error("--dagger-ckpt only makes sense with --shards: the point is to write "
+                 "vision shards from the states the student actually reaches")
 args_cli.headless = True
 args_cli.enable_cameras = True
 app = AppLauncher(args_cli).app
@@ -387,6 +398,25 @@ class Driver:
         self.shard_rec = False       # true only between post-warmup and episode end
         self.sh = None               # per-episode buffers
         self.last_pol = None         # obs["policy"][0] BEFORE the pending action
+        # -- DAgger takeover (see --dagger-ckpt) --
+        self.dagger = None
+        if args_cli.dagger_ckpt:
+            sys.path.insert(0, os.path.join(HERE, "..", "act"))
+            from policy_runner_vision import (  # noqa: PLC0415
+                VisionController, build_student_batch, load_vision_checkpoint,
+            )
+            pol, nrm, cfg, cam_shape = load_vision_checkpoint(args_cli.dagger_ckpt, "cuda:0")
+            got = tuple(self.u.scene["wrist_cam"].image_shape)
+            if tuple(cam_shape[1:]) != got:
+                raise SystemExit(
+                    f"student was trained at {tuple(cam_shape[1:])} but the task renders "
+                    f"{got}; a student driven at a resolution it never saw is not the "
+                    f"student whose states we want to label")
+            self.dagger = {"ctrl": VisionController(pol, nrm, cfg, "cuda:0"),
+                           "batch": build_student_batch}
+            print(f"[dagger] student {args_cli.dagger_ckpt} drives "
+                  f"{args_cli.dagger_min}-{args_cli.dagger_max} steps before the cuRobo "
+                  f"expert takes over", flush=True)
 
     # -- state --
     def q6(self):
@@ -525,6 +555,32 @@ class Driver:
         self.u.scene["station_cam"].set_world_poses_from_view(
             org + torch.tensor(STATION_CAM_EYE, device=self.u.device),
             org + torch.tensor(STATION_CAM_TARGET, device=self.u.device))
+
+    def dagger_drive(self):
+        """Let the student drive, then hand the scene to the expert wherever it ends up.
+
+        Mirrors collect_demos.py's takeover design: runs after the splat warmup (a student
+        driven on frames with no desk is not the student being evaluated) and BEFORE the
+        shard buffers open, so the drifted state is simply the episode's initial condition —
+        the expert plans from it via the live-state reads it already does, and no other code
+        knows DAgger happened. The settle hold that follows opens the gripper; if the student
+        was mid-grasp the cube lands wherever it lands, which is exactly the recovery state
+        worth labelling. Frame ordering matches step_action's frame-precedes-action: cameras
+        are update()d for the CURRENT state before the student acts on it."""
+        k = int(self.rng.integers(args_cli.dagger_min, args_cli.dagger_max + 1))
+        ctrl = self.dagger["ctrl"]
+        ctrl.reset()
+        obs41 = self.u.observation_manager.compute()["policy"]
+        for _ in range(k):
+            for name in ("wrist_cam", "station_cam"):
+                self.u.scene[name].update(dt=0.0)
+            batch = self.dagger["batch"](
+                obs41, {"wrist": self.u.scene["wrist_cam"],
+                        "workspace": self.u.scene["station_cam"]}, "cuda:0")
+            a = ctrl.act(batch).to("cuda:0")
+            obs41 = self.env.step(a)[0]["policy"]
+        self.last_pol = obs41[0].detach().cpu()
+        print(f"    [dagger] student drove {k} steps before takeover", flush=True)
 
     def sync_world(self, held=None):
         objs = {}
@@ -771,6 +827,8 @@ class Driver:
             rec, self.record = self.record, False
             self.hold(120, +1)
             self.record = rec
+        if self.dagger is not None:
+            self.dagger_drive()
         if self.shards is not None:
             self.sh = {"wrist": [], "station": [], "obs": [], "act": []}
             self.shard_rec = True
