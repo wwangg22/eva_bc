@@ -41,6 +41,15 @@ _JPEG_Q = 90
 
 _IMAGE_KEYS = ("wrist_rgb", "workspace_rgb")
 
+#: On-disk cache of the compressed episodes, one file per data dir. Building the
+#: cache streams the dir's raw shards ONCE through page cache — do that in a
+#: SEPARATE PROCESS PER DIR (`python act/dataset_vision.py <dir>`): encoding four
+#: ~16 GB dirs inside one 26 GB-capped cgroup keeps that cgroup in permanent
+#: reclaim, and systemd-oomd pressure-killed the trainer three times running
+#: (2026-08-11 22:14/22:30/23:23) before any training step. One dir per process
+#: never fills the cap, so there is no reclaim churn at all.
+_CACHE_NAME = f"jpeg_cache_q{_JPEG_Q}.pt"
+
 
 def _compress_frames(arr: np.ndarray) -> tuple[np.ndarray, np.ndarray, torch.Tensor]:
     """(T,H,W,3) uint8 -> (one flat JPEG byte buffer, offsets, per-frame int sums).
@@ -72,6 +81,64 @@ _STUDENT_KEYS = ("wrist_rgb", "workspace_rgb", "proprio", "actions")
 _DAGGER_KEYS = ("wrist_rgb", "workspace_rgb", "proprio", "label_chunks")
 
 
+def _load_shard_dir(d, chunk_size: int, success_only: bool):
+    """Compress ONE dir's raw shards to in-RAM JPEG episodes.
+
+    Returns (episodes, n_skipped, n_dagger). Streams the dir's raw bytes through
+    page cache exactly once (mmap read, no anon copy of the raw images) -- callers
+    must not run more than one big dir per process (see _CACHE_NAME)."""
+    episodes: list[dict] = []
+    n_skipped = n_dagger = 0
+    for shard_path in sorted(Path(d).glob("ep_*.pt")):
+        # anon-preloading the raw images OOM-killed the trainer at the 26 GB cgroup
+        # cap, and TRAINING off the mmap thrashed page cache hard enough that
+        # systemd-oomd pressure-killed it (85.8% > 50%) -- both halves load-bearing
+        # on the 31 GB box (2026-08-11, 4 datasets = ~66 GB raw).
+        shard = torch.load(shard_path, map_location="cpu", mmap=True)
+        is_dagger = "label_chunks" in shard
+        if not is_dagger and success_only and not shard["success"]:
+            n_skipped += 1
+            continue
+        assert shard["proprio"].shape[1] == STUDENT_STATE_DIM, shard_path
+        if is_dagger:
+            assert shard["label_chunks"].shape[1:] == (chunk_size, ACTION_DIM), shard_path
+            n_dagger += 1
+        # keep ONLY the student keys -- drop obs41 (privileged) immediately
+        ep: dict = {}
+        for k in (_DAGGER_KEYS if is_dagger else _STUDENT_KEYS):
+            if k in _IMAGE_KEYS:
+                arr = shard[k].numpy()
+                ep["frame_numel"] = int(arr[0].size)
+                ep[k], ep[k + "_off"], ep[k + "_sums"] = _compress_frames(arr)
+            else:
+                # clone: small, and drops the last reference into the mmap so the
+                # file mapping is released instead of accumulating per shard
+                ep[k] = shard[k].clone()
+        episodes.append(ep)
+    return episodes, n_skipped, n_dagger
+
+
+def build_cache(d: str, chunk_size: int = 50) -> Path:
+    """Encode one data dir and write its cache file (success-only episodes).
+
+    Written atomically (tmp + rename) so a killed build never leaves a partial
+    cache. The shard count is stored so a stale cache fails loudly instead of
+    silently training on old data."""
+    eps, n_skipped, n_dagger = _load_shard_dir(d, chunk_size, success_only=True)
+    n_shards = len(list(Path(d).glob("ep_*.pt")))
+    out = Path(d) / _CACHE_NAME
+    tmp = out.with_suffix(".pt.tmp")
+    torch.save(
+        {"episodes": eps, "n_shards": n_shards, "n_skipped": n_skipped, "n_dagger": n_dagger},
+        tmp,
+    )
+    tmp.rename(out)
+    n_bytes = sum(ep["wrist_rgb"].size + ep["workspace_rgb"].size for ep in eps)
+    print(f"[build_cache] {d}: {len(eps)} episodes ({n_skipped} filtered), "
+          f"~{n_bytes / 1e9:.1f} GB compressed -> {out}")
+    return out
+
+
 class VisionShardDataset(Dataset):
     """In-RAM JPEG-compressed dataset over exp08 collection shards (~7x smaller than raw).
 
@@ -89,33 +156,24 @@ class VisionShardDataset(Dataset):
         self.episodes: list[dict[str, torch.Tensor]] = []
         n_skipped = n_dagger = 0
         for d in data_dirs:
-            for shard_path in sorted(Path(d).glob("ep_*.pt")):
-                # mmap the read (no anon copy of the raw images), then re-store the frames
-                # as in-RAM JPEG (~7x smaller). Both halves are load-bearing on the 31 GB
-                # box (2026-08-11, 4 datasets = ~66 GB raw): anon-preloading OOM-killed the
-                # trainer at the 26 GB cgroup cap, and TRAINING off the mmap thrashed page
-                # cache hard enough that systemd-oomd pressure-killed it (85.8% > 50%).
-                shard = torch.load(shard_path, map_location="cpu", mmap=True)
-                is_dagger = "label_chunks" in shard
-                if not is_dagger and success_only and not shard["success"]:
-                    n_skipped += 1
-                    continue
-                assert shard["proprio"].shape[1] == STUDENT_STATE_DIM, shard_path
-                if is_dagger:
-                    assert shard["label_chunks"].shape[1:] == (chunk_size, ACTION_DIM), shard_path
-                    n_dagger += 1
-                # keep ONLY the student keys -- drop obs41 (privileged) immediately
-                ep: dict = {}
-                for k in (_DAGGER_KEYS if is_dagger else _STUDENT_KEYS):
-                    if k in _IMAGE_KEYS:
-                        arr = shard[k].numpy()
-                        ep["frame_numel"] = int(arr[0].size)
-                        ep[k], ep[k + "_off"], ep[k + "_sums"] = _compress_frames(arr)
-                    else:
-                        # clone: small, and drops the last reference into the mmap so the
-                        # file mapping is released instead of accumulating per shard
-                        ep[k] = shard[k].clone()
-                self.episodes.append(ep)
+            cache = Path(d) / _CACHE_NAME
+            if success_only and cache.exists():
+                # weights_only=False: the cache holds numpy byte buffers, not just tensors
+                c = torch.load(cache, map_location="cpu", weights_only=False)
+                if c["n_shards"] != len(list(Path(d).glob("ep_*.pt"))):
+                    raise ValueError(
+                        f"stale cache {cache}: shard count changed since it was built -- "
+                        f"rebuild with `python act/dataset_vision.py {d}` (one dir per process)"
+                    )
+                for ep in c["episodes"]:
+                    if "label_chunks" in ep:
+                        assert ep["label_chunks"].shape[1:] == (chunk_size, ACTION_DIM), cache
+                eps, skipped, dagger = c["episodes"], c["n_skipped"], c["n_dagger"]
+            else:
+                eps, skipped, dagger = _load_shard_dir(d, chunk_size, success_only)
+            self.episodes.extend(eps)
+            n_skipped += skipped
+            n_dagger += dagger
         if not self.episodes:
             raise ValueError(f"no episodes loaded from {data_dirs}")
         self.index: list[tuple[int, int]] = [
@@ -177,3 +235,14 @@ def compute_stats_vision(dataset: VisionShardDataset) -> dict[str, dict[str, tor
         "observation.state": {"mean": proprio.mean(dim=0), "std": proprio.std(dim=0)},
         "action": {"mean": actions.mean(dim=0), "std": actions.std(dim=0)},
     }
+
+
+if __name__ == "__main__":
+    import argparse
+
+    p = argparse.ArgumentParser(description="Build the per-dir JPEG cache. Run ONE dir "
+                                            "per process invocation (see _CACHE_NAME).")
+    p.add_argument("data_dir")
+    p.add_argument("--chunk-size", type=int, default=50)
+    a = p.parse_args()
+    build_cache(a.data_dir, chunk_size=a.chunk_size)
