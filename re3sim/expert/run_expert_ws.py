@@ -79,6 +79,15 @@ parser.add_argument("--dagger-ckpt", type=str, default=None, metavar="CKPT",
                          "shard starts there. Requires --shards.")
 parser.add_argument("--dagger-min", type=int, default=60)
 parser.add_argument("--dagger-max", type=int, default=300)
+parser.add_argument("--dagger-mode", choices=("takeover", "relabel"), default="relabel",
+                    help="takeover: student drifts, expert demonstrates from there "
+                         "(REJECTED by evidence 2026-08-13 -- plants a closed-loop "
+                         "recovery attractor at any dose, see 10_DAGGER_R1_POSTMORTEM). "
+                         "relabel (true DAgger): the student drives the WHOLE episode; "
+                         "every chunk boundary gets the expert's planned 50-step chunk "
+                         "from the student's actual state (label_chunks shards).")
+parser.add_argument("--dagger-horizon", type=int, default=450,
+                    help="relabel mode: student steps per episode (episode also ends on success)")
 AppLauncher.add_app_launcher_args(parser)
 args_cli = parser.parse_args()
 if args_cli.shards:
@@ -596,6 +605,125 @@ class Driver:
             objs[name] = (self.obj_pos(name), self.obj_yaw(name), name == held)
         self.expert.planner.update_world(build_scene(self.box_xy(), self.box_yaw(), objs))
 
+    # -- relabel DAgger (true DAgger: expert chunk labels at the student's own states) --
+    def label_from_state(self):
+        """The expert's next-50 action chunk from the LIVE state. Plans only -- no sim step.
+
+        Mirrors fetch_cube's executed grammar exactly: approach(+1), descend(+1),
+        settle 6(+1), close 15(-1), lift(-1) for a grasp; place traj(-1) then settle for a
+        carry. When no grasp plans (student in an unplannable pose), the expert's honest
+        action is the retreat home it executes in the same situation. Returns (50,7)
+        float32 or None when nothing plans -- an unlabeled state contributes nothing."""
+        q_now = self.q6()
+        cube = self.obj_pos(CUBE)
+        holding = cube[2] > LIFT_OK_Z and \
+            float(np.linalg.norm(self.pocket_now()[:2] - cube[:2])) < 0.05
+        seq = []
+        if holding:
+            self.sync_world(held=CUBE)
+            b = self.box_xy()
+            tgt = (float(b[0]), float(b[1]))
+            pres = self.expert.plan_place(q_now, tgt)
+            if pres is None or not bool(pres.success.any().item()):
+                pres = self.expert.plan_place(q_now, tgt, heights=PLACE_HEIGHTS_HIGH)
+            if pres is None or not bool(pres.success.any().item()):
+                return None
+            seq = [(q[:6], -1.0) for q in traj_to_qs(pres)]
+            seq += [(seq[-1][0], -1.0)] * 6      # settle over the box before the drop leg
+        else:
+            self.sync_world()
+            res = self.expert.plan_grasp(q_now, (cube[0], cube[1]), float(cube[2]),
+                                         self.cube_face_axis())
+            if res in ("no-candidates", None):
+                res = self.expert.plan_grasp(q_now, (cube[0], cube[1]), float(cube[2]), None)
+            if res in ("no-candidates", None):
+                hres = self.expert.plan_home(q_now)
+                if hres is None or not bool(hres.success.any().item()):
+                    return None
+                seq = [(q[:6], +1.0) for q in traj_to_qs(hres)]
+            else:
+                gq = traj_to_qs(res, "grasp")
+                seq = [(q[:6], +1.0) for q in traj_to_qs(res, "approach")]
+                seq += [(q[:6], +1.0) for q in gq]
+                seq += [(gq[-1][:6], +1.0)] * 6
+                seq += [(gq[-1][:6], -1.0)] * 15
+                seq += [(q[:6], -1.0) for q in traj_to_qs(res, "lift")]
+        if not seq:
+            return None
+        qd = self.q_default.cpu().numpy()
+        acts = [np.concatenate([(np.asarray(q6, dtype=np.float32) - qd) / 0.5,
+                                np.array([g], dtype=np.float32)]) for q6, g in seq[:50]]
+        while len(acts) < 50:
+            acts.append(acts[-1].copy())
+        return torch.from_numpy(np.stack(acts).astype(np.float32))
+
+    def relabel_episode(self, i):
+        """Student drives the whole episode; expert chunk labels at every chunk boundary."""
+        self.env.reset()
+        self.aim_station()
+        self.q_default = self.robot.data.default_joint_pos[0, :6].clone()
+        self.step_idx = 0
+        self.segments = []
+        self.outcomes = {}
+        self.perturb_log = []
+        self.pending_event = None
+        self.grip_override = 0
+        self.hold(120, +1)      # splat warmup, nothing recorded
+        ctrl = self.dagger["ctrl"]
+        ctrl.reset()
+        obs41 = self.u.observation_manager.compute()["policy"]
+        buf = {"wrist": [], "station": [], "obs": [], "labels": []}
+        n_nolabel = 0
+        for t in range(args_cli.dagger_horizon):
+            for name in ("wrist_cam", "station_cam"):
+                self.u.scene[name].update(dt=0.0)
+            if t % 15 == 0 and not self.placed():
+                lab = self.label_from_state()
+                if lab is None:
+                    n_nolabel += 1
+                else:
+                    for key, sensor in (("wrist", "wrist_cam"), ("station", "station_cam")):
+                        fr = self.u.scene[sensor].data.output["rgb"][0, ..., :3]
+                        buf[key].append(fr.to(torch.uint8).cpu().clone())
+                    buf["obs"].append(obs41[0].detach().cpu().clone())
+                    buf["labels"].append(lab)
+            batch = self.dagger["batch"](
+                obs41, {"wrist": self.u.scene["wrist_cam"],
+                        "workspace": self.u.scene["station_cam"]}, "cuda:0")
+            a = ctrl.act(batch).to("cuda:0")
+            obs41 = self.env.step(a)[0]["policy"]
+            if self.placed():
+                break
+        success = self.placed()
+        m = {"success": bool(success), "steps": t + 1, "labels": len(buf["labels"]),
+             "no_label": n_nolabel, "grasps": 0, "failed_grasps": 0, "clean_grasps": 0,
+             "plan_fail": n_nolabel, "place_plan_fail": 0, "close_disp": [],
+             "segments": [], "outcomes": {}, "perturb_steps": [],
+             "episode_kind": "dagger_relabel"}
+        if buf["labels"]:
+            os.makedirs(self.shards, exist_ok=True)
+            obs41s = torch.stack(buf["obs"])
+            proprio = torch.cat([obs41s[:, 0:16], obs41s[:, 34:41]], dim=1)
+            assert proprio.shape[1] == 23, proprio.shape
+            wrist = torch.stack(buf["wrist"])
+            station = torch.stack(buf["station"])
+            assert wrist.shape[1:] == station.shape[1:] == (120, 160, 3), \
+                (wrist.shape, station.shape)
+            torch.save({
+                "wrist_rgb": wrist,
+                "workspace_rgb": station,
+                "proprio": proprio,
+                "obs41": obs41s,                       # TEACHER-ONLY
+                "label_chunks": torch.stack(buf["labels"]),
+                "success": bool(success),              # the STUDENT's outcome; all kept
+                "attempts": 0,
+                "seed": int(args_cli.seed),
+                "env_index": int(i),
+            }, os.path.join(self.shards, f"ep_{args_cli.seed}_{i:03d}.pt"))
+        print(f"[ep {i}] RELABEL student_success={success} steps={self.step_idx} "
+              f"labels={len(buf['labels'])} no_label={n_nolabel}", flush=True)
+        return m
+
     # -- episode --
     def fetch_cube(self, metrics, tag="f0"):
         """Grasp + place the cube. Returns True if it ends placed, or "lost"."""
@@ -835,7 +963,7 @@ class Driver:
             rec, self.record = self.record, False
             self.hold(120, +1)
             self.record = rec
-        if self.dagger is not None:
+        if self.dagger is not None and args_cli.dagger_mode == "takeover":
             self.dagger_drive()
         if self.shards is not None:
             self.sh = {"wrist": [], "station": [], "obs": [], "act": []}
@@ -903,9 +1031,10 @@ class Driver:
 def main():
     drv = Driver()
     all_m = []
+    relabel = drv.dagger is not None and args_cli.dagger_mode == "relabel"
     for i in range(args_cli.episodes):
         drv.record = args_cli.video_all or (args_cli.video and i == args_cli.video_ep)
-        all_m.append(drv.episode(i))
+        all_m.append(drv.relabel_episode(i) if relabel else drv.episode(i))
         if drv.record and any(drv.frames.values()):
             import imageio
 
