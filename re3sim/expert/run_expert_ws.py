@@ -563,10 +563,13 @@ class Driver:
         driven on frames with no desk is not the student being evaluated) and BEFORE the
         shard buffers open, so the drifted state is simply the episode's initial condition —
         the expert plans from it via the live-state reads it already does, and no other code
-        knows DAgger happened. The settle hold that follows opens the gripper; if the student
-        was mid-grasp the cube lands wherever it lands, which is exactly the recovery state
-        worth labelling. Frame ordering matches step_action's frame-precedes-action: cameras
-        are update()d for the CURRENT state before the student acts on it."""
+        knows DAgger happened. Frame ordering matches step_action's frame-precedes-action:
+        cameras are update()d for the CURRENT state before the student acts on it.
+
+        The freeze at the end is UNRECORDED and mirrors collect_demos.py's frz hold: the
+        gripper opens and the world settles BEFORE the shard opens. Round 1 (dagger_vdr_s41)
+        omitted it, so 4.6% of shards opened on a held/falling cube with 'open the gripper'
+        as the first labels — supervision that directly contradicts the carry."""
         k = int(self.rng.integers(args_cli.dagger_min, args_cli.dagger_max + 1))
         ctrl = self.dagger["ctrl"]
         ctrl.reset()
@@ -579,6 +582,11 @@ class Driver:
                         "workspace": self.u.scene["station_cam"]}, "cuda:0")
             a = ctrl.act(batch).to("cuda:0")
             obs41 = self.env.step(a)[0]["policy"]
+        frz = torch.zeros(1, 7, device="cuda")
+        frz[0, :6] = (self.robot.data.joint_pos[0, :6] - self.q_default) / 0.5
+        frz[0, 6] = 1.0
+        for _ in range(40):
+            obs41 = self.env.step(frz)[0]["policy"]
         self.last_pol = obs41[0].detach().cpu()
         print(f"    [dagger] student drove {k} steps before takeover", flush=True)
 
