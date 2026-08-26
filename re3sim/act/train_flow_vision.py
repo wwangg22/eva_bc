@@ -93,11 +93,14 @@ def make_config(args: argparse.Namespace, cam_shape: tuple[int, int, int]) -> AC
     return config
 
 
-def save_checkpoint(path: Path, policy, normalizer, config, step, cam_shape):
+def save_checkpoint(path: Path, policy, normalizer, config, step, cam_shape,
+                    state_dict=None):
+    # state_dict overrides the live weights -- used to write the EMA weights, which are
+    # what eval should load (policy_runner_vision reads `policy_state_dict` unchanged).
     torch.save(
         {
             "step": step,
-            "policy_state_dict": policy.state_dict(),
+            "policy_state_dict": state_dict if state_dict is not None else policy.state_dict(),
             "normalizer_state_dict": normalizer.state_dict(),
             "config": {
                 "policy_type": "flow_vision",
@@ -126,6 +129,17 @@ def main() -> None:
     p.add_argument("--num-inference-steps", type=int, default=10)
     p.add_argument("--lr", type=float, default=1e-4)
     p.add_argument("--weight-decay", type=float, default=1e-4)
+    # ⭐ Stabilization (2026-08-25, Big Will's go-ahead). Ten runs showed the constant-LR
+    # no-averaging recipe converges to the good basin (final loss ~0.037, eval 20-27%)
+    # only on SOME sampling trajectories, and lands at ~0.05 / 3-12% on the rest --
+    # perfectly separated by final loss (10_DAGGER_R1_POSTMORTEM). Cosine decay + EMA are
+    # the standard flow/diffusion-policy remedies for exactly this.
+    p.add_argument("--lr-schedule", choices=("cosine", "const"), default="cosine",
+                   help="cosine: 1k-step linear warmup then cosine decay to lr/20 "
+                        "(the stabilized default). const: the original recipe.")
+    p.add_argument("--ema-decay", type=float, default=0.9999,
+                   help="EMA of policy weights; ckpt_final carries the EMA weights "
+                        "(raw weights in ckpt_final_raw.pt). 0 disables.")
     p.add_argument("--save-every", type=int, default=10_000)
     p.add_argument("--num-workers", type=int, default=4)
     p.add_argument("--device", default="cuda")
@@ -180,6 +194,22 @@ def main() -> None:
     policy.train()
     optimizer = torch.optim.AdamW(policy.parameters(), lr=args.lr,
                                   weight_decay=args.weight_decay)
+    scheduler = None
+    if args.lr_schedule == "cosine":
+        warmup = 1000
+        scheduler = torch.optim.lr_scheduler.SequentialLR(
+            optimizer,
+            [torch.optim.lr_scheduler.LinearLR(optimizer, start_factor=0.05,
+                                               total_iters=warmup),
+             torch.optim.lr_scheduler.CosineAnnealingLR(optimizer,
+                                                        T_max=max(1, args.steps - warmup),
+                                                        eta_min=args.lr / 20)],
+            milestones=[warmup])
+    # EMA shadow of every state-dict entry (buffers included -- BatchNorm running stats
+    # must track, and non-float buffers are just copied).
+    ema_sd = None
+    if args.ema_decay > 0:
+        ema_sd = {k: v.detach().clone() for k, v in policy.state_dict().items()}
 
     loader = DataLoader(
         dataset,
@@ -201,10 +231,22 @@ def main() -> None:
                 optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()
+                if scheduler is not None:
+                    scheduler.step()
                 step += 1
+                if ema_sd is not None:
+                    # warmup ramp: early steps track fast, then settle at ema_decay
+                    d = min(args.ema_decay, (1 + step) / (10 + step))
+                    with torch.no_grad():
+                        for k, v in policy.state_dict().items():
+                            if v.dtype.is_floating_point:
+                                ema_sd[k].mul_(d).add_(v, alpha=1 - d)
+                            else:
+                                ema_sd[k].copy_(v)
 
                 if step % 100 == 0:
                     rec = {"step": step, "loss": loss.item(), **loss_dict,
+                           "lr": optimizer.param_groups[0]["lr"],
                            "sec": round(time.time() - t0, 1)}
                     print(json.dumps(rec), flush=True)
                     log_f.write(json.dumps(rec) + "\n")
@@ -215,8 +257,16 @@ def main() -> None:
                 if step >= args.steps:
                     break
 
-    save_checkpoint(out_dir / "ckpt_final.pt", policy, normalizer, config, step, cam_shape)
-    print(f"done: {step} steps -> {out_dir / 'ckpt_final.pt'}")
+    if ema_sd is not None:
+        save_checkpoint(out_dir / "ckpt_final.pt", policy, normalizer, config, step,
+                        cam_shape, state_dict=ema_sd)
+        save_checkpoint(out_dir / "ckpt_final_raw.pt", policy, normalizer, config, step,
+                        cam_shape)
+        print(f"done: {step} steps -> {out_dir / 'ckpt_final.pt'} (EMA weights; raw in "
+              f"ckpt_final_raw.pt)")
+    else:
+        save_checkpoint(out_dir / "ckpt_final.pt", policy, normalizer, config, step, cam_shape)
+        print(f"done: {step} steps -> {out_dir / 'ckpt_final.pt'}")
 
 
 if __name__ == "__main__":
